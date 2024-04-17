@@ -80,12 +80,6 @@ def customer_list(request):
             "customer_name":customer_name,
             "product_form":product_form
             })
-    
-    
-    
-
-
-
     return render(request, 'order/order_create.html', {
         "customer_list": customer_list,
         "customer_selected":customer_selected
