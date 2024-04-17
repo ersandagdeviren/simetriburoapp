@@ -1,0 +1,46 @@
+{% extends "order/navbar.html" %}
+
+{%block content %}
+
+
+    <form action="{% url 'order:search' %}", method="POST">
+        {% csrf_token %}
+        {{ form }}
+        <input type="Submit" value="Ara">
+    </form>
+
+    {% if product %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Görsel</th>
+                <th>Kod</th>
+                <th>Açıklama</th>
+                <th>Birim</th>
+                <th>Marka</th>
+                <th>Kategori</th>
+                <th>Fiyat</th>
+                <th>Stok</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in product %}
+            <tr>
+                <td><img src="{{ item.photoPath }}" alt="" width="100"></td>
+                <td>{{ item.codeUyum }}</td>
+                <td>{{ item.description }}</td>
+                <td>{{ item.unit }}</td>
+                <td>{{ item.brand }}</td>
+                <td>{{ item.mainCategory }}</td>
+                <td>{{item.currency}} {{ item.priceSelling }}</td>
+                <td>{{ item.stockAmount }}</td>
+                <td></td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+
+{% endblock %}
