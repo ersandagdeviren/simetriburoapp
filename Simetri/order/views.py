@@ -53,6 +53,7 @@ def comparison(request):
 
 def customer_list(request):
     customer_list = []
+    term=1
     customer_selected=request.session['customers']
     product_form=ProductSearchForm(request.POST)
 
