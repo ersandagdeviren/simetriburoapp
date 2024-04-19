@@ -50,7 +50,7 @@ def main(request):
 def comparison(request):
     return render(request, "order/comparison.html")
 
-
+@login_required
 def customer_list(request):
 
     if "customner" not in request.session:
