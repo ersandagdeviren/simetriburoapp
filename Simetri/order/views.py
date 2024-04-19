@@ -53,6 +53,10 @@ def comparison(request):
 
 def customer_list(request):
     customer_list = []
+    
+    if 'customers' not in request.session:
+        request.session['customers']=[]
+
     customer_selected=request.session['customers']
     product_form=ProductSearchForm(request.POST)
 
@@ -64,10 +68,6 @@ def customer_list(request):
         return render(request, 'order/order_create.html', {
             "customer_list": customer_list,
             "customer_selected":customer_selected,
-            
-            
-            
-
             })
 
     elif request.method == "POST" and "customer_selected" in request.POST:
