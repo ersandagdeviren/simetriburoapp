@@ -49,9 +49,52 @@
 <form method=POST>
     {% csrf_token %}
     <div class="form-group">
-        <label> Ürün Ara </label>
         {{product_form.product_name}}
         <input type="submit" class="btn btn-primary" name="product_submit" value="Ara" style="padding: 4px 8px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+
+        {% if product %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>Görsel</th>
+            <th>Kod</th>
+            <th>Açıklama</th>
+            <th>Marka</th>
+            <th>Kategori</th>
+            <th>Fiyat</th>
+            <th>Döviz</th>
+            <th>Stok</th>
+            <th>Miktar</th>
+            <th>Ekle</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in product %}
+        <tr>
+            <td><img src="{{ item.photoPath }}" alt="" width="100"></td>
+            <td>{{ item.codeUyum }}</td>
+            <td>{{ item.description }}</td>
+            <td>{{ item.brand }}</td>
+            <td>{{ item.mainCategory }}</td>
+            <td>
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="number" name="new_price" value="{{ item.priceSelling }}" step="0.01" min="0.01" required>
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+            </td>
+            <td>{{ item.currency }}</td>
+            <td>{{ item.stockAmount }}</td>
+            <td>
+                <input type="number" name="quantity" value="1" min="1" max="{{ item.stockAmount }}">
+                <input type="hidden" name="item_id" value="{{ item.id }}">
+            </td>
+            <td><button type="submit" name="product_add">Ekle</button></td>
+            </form>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
 
 
  {% endif %}

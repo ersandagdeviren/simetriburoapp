@@ -57,10 +57,6 @@ def customer_list(request):
         request.session["customer"]=[]
         
     customer_list = []
-    
-    if 'customers' not in request.session:
-        request.session['customers']=[]
-
     customer_selected=request.session['customers']
     product_form=ProductSearchForm(request.POST)
 
@@ -84,7 +80,24 @@ def customer_list(request):
             "customer_name":customer_name,
             "product_form":product_form
             })
+    
+    elif request.method == "POST" and "product_submit" in request.POST:
+        productresult=[]
+        customer_name=customer.objects.get(id=request.session['customers'][0]).companyName
+        if product_form.is_valid():
+            query=product_form.cleaned_data["product_name"]
+            if query:
+                productresult=product.objects.filter(description__icontains=query)
+                return render(request,'order/order_create.html',{
+                    "product_form":product_form,
+                    "product":productresult,
+                    "customer_name":customer_name,
+                    })
+            else:
+                return render(request, 'order/order_create.html',{"form":ProductSearchForm()})
+            
+
     return render(request, 'order/order_create.html', {
         "customer_list": customer_list,
-        "customer_selected":customer_selected
+        "customer_selected":customer_selected,
         })
