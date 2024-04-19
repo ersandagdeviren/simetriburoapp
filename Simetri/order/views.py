@@ -52,6 +52,10 @@ def comparison(request):
 
 
 def customer_list(request):
+
+    if "customner" not in request.session:
+        request.session["customer"]=[]
+        
     customer_list = []
     customer_selected=request.session['customers']
     product_form=ProductSearchForm(request.POST)
