@@ -12,13 +12,16 @@ from django.contrib import messages
 
 @login_required
 def search(request):
+
     if request.method=="POST":
         form=ProductSearchForm( request.POST)
         if form.is_valid():
             query=form.cleaned_data["product_name"]
             productresult=[]
+           
             if query:
                 productresult=product.objects.filter(description__icontains=query)
+                
                 return render(request,"order/product.html",{"form":form,"product":productresult})
             else:
                 return render(request, "order/product.html",{"form":ProductSearchForm()})
@@ -50,8 +53,10 @@ def comparison(request):
 @login_required
 def customer_list(request):
 
-    if "customner" not in request.session:
-        request.session["customer"]=[]
+    if "customers" not in request.session:
+        request.session["customers"]=[]
+    if "products" not in request.session:
+        request.session["products"]=[]
         
     customer_list = []
     customer_selected=request.session['customers']
@@ -90,9 +95,10 @@ def customer_list(request):
                     "product":productresult,
                     "customer_name":customer_name,
                     })
+            
             else:
                 return render(request, 'order/order_create.html',{"form":ProductSearchForm()})
-            
+        
 
     return render(request, 'order/order_create.html', {
         "customer_list": customer_list,
