@@ -12,16 +12,13 @@ from django.contrib import messages
 
 @login_required
 def search(request):
-
     if request.method=="POST":
         form=ProductSearchForm( request.POST)
         if form.is_valid():
             query=form.cleaned_data["product_name"]
             productresult=[]
-           
             if query:
                 productresult=product.objects.filter(description__icontains=query)
-                
                 return render(request,"order/product.html",{"form":form,"product":productresult})
             else:
                 return render(request, "order/product.html",{"form":ProductSearchForm()})
