@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import urllib.request
-
+from django.utils import timezone
 def currency():
     
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
@@ -76,54 +76,75 @@ class category (models.Model):
     category=models.CharField(max_length=20)
     def __str__(self):
         return self.category
-class product (models.Model):
-    codeUyum=models.CharField(max_length=50)
-    code= models.CharField(max_length=50,blank=True)
-    description=models.CharField(max_length=300)
-    unit=models.ForeignKey(unit, on_delete=models.CASCADE, related_name="unit_name")
-    status=models.BooleanField(default=True)
-    brand=models.ForeignKey(brand, on_delete=models.CASCADE, related_name="brand_name")
-    barcode=models.CharField(max_length=50,blank=True)
-    mainCategory=models.ForeignKey(mainCategory, on_delete=models.CASCADE, related_name="mainCategories_name")
-    category=models.ForeignKey(category, on_delete=models.CASCADE, related_name="categories_name")
-    priceBuying=models.DecimalField(max_digits=10,decimal_places=2,blank=True,default=0)
-    priceSelling=models.DecimalField(max_digits=10,decimal_places=2,blank=True,default=0)
-    priceSelling2=models.DecimalField(max_digits=10,decimal_places=2,blank=True,default=0)
-    priceSelling3=models.DecimalField(max_digits=10,decimal_places=2,blank=True,default=0)
-    tax=models.PositiveIntegerField(blank=True ,default=20)
-    currency=models.ForeignKey(currency, on_delete=models.CASCADE, related_name="currency_name")
-    stockAmount=models.PositiveIntegerField(default=0)
-    photoPath=models.CharField(max_length=1000,blank=True)
+
+class Customer(models.Model):
+    customerCode = models.CharField(max_length=50)
+    companyName = models.CharField(max_length=50)
+    taxOffice = models.CharField(max_length=50)
+    tax_number = models.CharField(max_length=50, blank=True)
+    name = models.CharField(max_length=50, blank=True)
+    middleName = models.CharField(max_length=50, blank=True)
+    surname = models.CharField(max_length=50, blank=True)
+    city = models.CharField(max_length=50)
+    district = models.CharField(max_length=50)
+    adress = models.CharField(max_length=250, blank=True)
+    country = models.CharField(max_length=50, blank=True, default="Türkiye")
+    email = models.EmailField(blank=True)
+    telephone = models.CharField(max_length=11, blank=True)
+    customerType = models.CharField(max_length=50, blank=True)
+    contactPerson = models.CharField(max_length=50, blank=True)
+   
+    def __str__(self):
+        return self.companyName
+
+class Product(models.Model):
+    codeUyum = models.CharField(max_length=50)
+    code = models.CharField(max_length=50, blank=True)
+    description = models.CharField(max_length=300)
+    unit = models.ForeignKey('Unit', on_delete=models.CASCADE, related_name="unit_name")
+    status = models.BooleanField(default=True)
+    brand = models.ForeignKey('Brand', on_delete=models.CASCADE, related_name="brand_name")
+    barcode = models.CharField(max_length=50, blank=True)
+    mainCategory = models.ForeignKey('MainCategory', on_delete=models.CASCADE, related_name="mainCategories_name")
+    category = models.ForeignKey('Category', on_delete=models.CASCADE, related_name="categories_name")
+    priceBuying = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    priceSelling = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    priceSelling2 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    priceSelling3 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    tax = models.PositiveIntegerField(blank=True, default=20)
+    currency = models.ForeignKey('Currency', on_delete=models.CASCADE, related_name="currency_name")
+    stockAmount = models.PositiveIntegerField(default=0)
+    photoPath = models.CharField(max_length=1000, blank=True)
 
     def __str__(self):
         return self.codeUyum
 
-class customer (models.Model):
-    customerCode=models.CharField(max_length=50)
-    companyName=models.CharField(max_length=50)
-    taxOffice=models.CharField(max_length=50)
-    tax_number=models.CharField(max_length=50,blank=True)
-    name=models.CharField(max_length=50,blank=True)
-    middleName=models.CharField(max_length=50,blank=True)
-    surname=models.CharField(max_length=50,blank=True)
-    city=models.CharField(max_length=50)
-    district=models.CharField(max_length=50)
-    adress=models.CharField(max_length=250,blank=True)
-    country=models.CharField(max_length=50,blank=True, default="Türkiye")
-    email=models.EmailField(blank=True)
-    telephone=models.CharField(max_length=11,blank=True)
-    customerType=models.CharField(max_length=50,blank=True)
-    contactPerson=models.CharField(max_length=50,blank=True)
-   
+class Order(models.Model):
+    order_number = models.CharField(max_length=20, unique=True, blank=True)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="customer_orders")
+    date = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
-        return self.tax_number
-class order (models.Model):
-    invoiceNumber=models.CharField(max_length=20)
-    customer=models.ForeignKey(customer,on_delete=models.CASCADE, related_name="customer_order")
-    date=models.DateField()
-    product=models.ForeignKey(product,on_delete=models.CASCADE, related_name="product_order")
-    quantity=models.PositiveIntegerField()
-    price=models.DecimalField(max_digits=10,decimal_places=2,blank=True,default=0)
-    
+        return self.order_number
+
+    def save(self, *args, **kwargs):
+        if not self.order_number:
+            current_date = timezone.now()
+            date_prefix = current_date.strftime('%Y%m')
+            last_order = Order.objects.filter(order_number__startswith=date_prefix).order_by('order_number').last()
+            if last_order:
+                last_order_number = int(last_order.order_number[-5:])
+                new_order_number = last_order_number + 1
+            else:
+                new_order_number = 1
+            self.order_number = f"{date_prefix}{new_order_number:05d}"
+        super().save(*args, **kwargs)
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="order_items")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="product_orders")
+    quantity = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+
     def __str__(self):
-        return self.invoiceNumber
+        return f"{self.order.order_number} - {self.product.description}"

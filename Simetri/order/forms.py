@@ -1,15 +1,15 @@
 from django import forms
-from .models import customer, product , order
+from .models import Customer, Product , Order
 
 
 class CustomerForm(forms.ModelForm):
     class Meta:
-        model = customer
+        model = Customer
         fields = ['companyName']
 
 class ProductForm(forms.Form):
     class Meta:
-        model= product
+        model= Product
         fields = ['description']
 
 
@@ -21,7 +21,7 @@ class ProductSearchForm(forms.Form):
     )
 class ProductaddForm(forms.Form):
     class Meta:
-        model = order
+        model = Order
         fields=["invoiceNumber","customer","date","product","quantity","price"]
         
 class ProductSessionAddForm(forms.Form):
