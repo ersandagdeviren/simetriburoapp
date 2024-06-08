@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect,get_object_or_404
 from django import forms
 from django.utils import timezone
 import requests
@@ -210,3 +210,12 @@ def create_order(request):
             "customer_name": customer_name,
             "products": request.session.get('products', [])
         })
+
+
+def order_list(request):
+    orders = Order.objects.all()
+    return render(request, 'order/order_list.html', {'orders': orders})
+
+def order_detail(request, order_number):
+    order = get_object_or_404(Order, order_number=order_number)
+    return render(request, 'order/order_detail.html', {'order': order})

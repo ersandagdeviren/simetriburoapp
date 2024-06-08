@@ -18,7 +18,7 @@
             {% if user.is_authenticated %}
             <li> <a href="#">Müşteri</a></li>
             <li> <a href="{% url 'order:customer_list' %}">Sipariş</a></li>
-            <li> <a href="#">Üretime Sipariş</a></li>
+            <li> <a href="{% url 'order:order_list' %}">Siparişler</a></li>
             <li> <a href="{% url 'order:search' %}">Ürün</a></li>
             <li> <a href="#">Etiket</a></li>
             <li> <a href="#">Fatura</a></li>
