@@ -20,7 +20,7 @@ def search(request):
             productresult = []
 
             if query:
-                productresult = Product.objects.filter(description__icontains(query))
+                productresult = Product.objects.filter(description__icontains=query)
                 return render(request, "order/product.html", {"form": form, "product": productresult})
             else:
                 return render(request, "order/product.html", {"form": ProductSearchForm()})
@@ -213,9 +213,44 @@ def create_order(request):
 
 
 def order_list(request):
+    if request.method == 'POST':
+        order_id = request.POST.get('order_id')
+        order = get_object_or_404(Order, id=order_id)
+        order.delete()
+        messages.success(request, 'Order has been successfully deleted.')
+        return redirect('order:order_list')
+    
     orders = Order.objects.all()
-    return render(request, 'order/order_list.html', {'orders': orders})
+    orders_with_totals = []
+    for order in orders:
+        total_amount = sum(item.price * item.quantity for item in order.order_items.all())
+        orders_with_totals.append({
+            'order': order,
+            'total_amount': total_amount
+        })
+    
+    return render(request, 'order/order_list.html', {'orders_with_totals': orders_with_totals})
 
 def order_detail(request, order_number):
     order = get_object_or_404(Order, order_number=order_number)
-    return render(request, 'order/order_detail.html', {'order': order})
+
+    if request.method == 'POST':
+        if 'delete_item' in request.POST:
+            item_id = request.POST.get('delete_item')
+            item = get_object_or_404(OrderItem, id=item_id, order=order)
+            item.delete()
+            messages.success(request, 'Order item has been successfully deleted.')
+            return redirect('order:order_detail', order_number=order.order_number)
+        
+        for item in order.order_items.all():
+            quantity = request.POST.get(f'quantity_{item.id}')
+            price = request.POST.get(f'price_{item.id}')
+            if quantity is not None and price is not None:
+                item.quantity = int(quantity)
+                item.price = float(price)
+                item.save()
+        messages.success(request, 'Order items have been successfully updated.')
+        return redirect('order:order_detail', order_number=order.order_number)
+    
+    total_amount = sum(item.price * item.quantity for item in order.order_items.all())
+    return render(request, 'order/order_detail.html', {'order': order, 'total_amount': total_amount})
