@@ -7,6 +7,20 @@ from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib import messages
 from .models import Product, Customer, Order, OrderItem
 from .forms import ProductSearchForm
+from decimal import Decimal, ROUND_HALF_UP
+
+def currency():
+    webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
+    webpage = webpage_response.content
+    soup = BeautifulSoup(webpage, "html.parser")
+    target_data_usd = soup.select_one("html > body > div:nth-of-type(3) > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > table > tbody > tr:nth-of-type(1) > td:nth-of-type(3) > div > span").get_text()
+    target_data_usd = Decimal(str(target_data_usd).replace(" ", "").replace("\n", "")).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    target_data_eur = soup.select_one("html > body > div:nth-of-type(3) > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > table > tbody > tr:nth-of-type(2) > td:nth-of-type(3) > div > span").get_text()
+    target_data_eur = Decimal(str(target_data_eur).replace(" ", "").replace("\n", "")).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+    return target_data_usd, target_data_eur
+
+defaultUSD, defaultEUR = currency()
 
 def is_admin(user):
     return user.is_authenticated and user.is_staff
@@ -219,18 +233,47 @@ def order_list(request):
         order.delete()
         messages.success(request, 'Order has been successfully deleted.')
         return redirect('order:order_list')
-    
+
+    defaultUSD, defaultEUR = currency()
+
     orders = Order.objects.all()
     orders_with_totals = []
+
     for order in orders:
-        total_amount = sum(item.price * item.quantity for item in order.order_items.all())
+        total_amount_usd = 0
+        total_amount_eur = 0
+        total_amount_tl = 0
+        total_tax=0
+        for item in order.order_items.all():
+            product = item.product
+            if str(product.currency) == 'USD':
+                price_in_tl = item.price * item.quantity * defaultUSD
+                total_amount_usd += item.price * item.quantity
+                product_tax=price_in_tl*product.tax/100
+            else:  # Assuming it's EUR if not USD
+                price_in_tl = item.price * item.quantity * defaultEUR
+                total_amount_eur += item.price * item.quantity
+                product_tax=price_in_tl*product.tax/100
+            total_amount_tl += price_in_tl
+            total_tax+=product_tax
+
+        
+        total_amount_tl = round(total_amount_tl, 2)
+        total_amount_eur = round(total_amount_eur, 2)
+        total_tax=round(total_tax, 2)
+        grand_total=total_amount_tl + total_tax
+        
         orders_with_totals.append({
             'order': order,
-            'total_amount': total_amount
-        })
-    
-    return render(request, 'order/order_list.html', {'orders_with_totals': orders_with_totals})
+            'total_amount_usd': round(total_amount_usd, 2),
+            'total_amount_eur': total_amount_eur,
+            'total_amount_tl': total_amount_tl,
+            'total_tax':total_tax,
+            'grand_total':grand_total
 
+        })
+
+    return render(request, 'order/order_list.html', {'orders_with_totals': orders_with_totals})
 def order_detail(request, order_number):
     order = get_object_or_404(Order, order_number=order_number)
 
@@ -252,5 +295,26 @@ def order_detail(request, order_number):
         messages.success(request, 'Order items have been successfully updated.')
         return redirect('order:order_detail', order_number=order.order_number)
     
-    total_amount = sum(item.price * item.quantity for item in order.order_items.all())
-    return render(request, 'order/order_detail.html', {'order': order, 'total_amount': total_amount})
+    order_items_with_tl = []
+    total_amount = 0
+
+    for item in order.order_items.all():
+        if str(item.product.currency) == 'USD':
+            tl_value = round(item.price * defaultUSD,2)
+        elif str(item.product.currency) == 'EUR':
+            tl_value = round(item.price * defaultEUR,2)
+        else:
+            tl_value = item.price  # Assuming TL
+
+        total_amount += tl_value * item.quantity
+
+        order_items_with_tl.append({
+            'item': item,
+            'tl_value': tl_value,
+        })
+
+    return render(request, 'order/order_detail.html', {
+        'order': order,
+        'total_amount': total_amount,
+        'order_items_with_tl': order_items_with_tl
+    })

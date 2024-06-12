@@ -5,21 +5,6 @@ from bs4 import BeautifulSoup
 import re
 import urllib.request
 from django.utils import timezone
-def currency():
-    
-    webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
-    webpage = webpage_response.content
-    soup = BeautifulSoup(webpage, "html.parser")
-    target_data_usd = soup.select_one("html > body > div:nth-of-type(3) > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > table > tbody > tr:nth-of-type(1) > td:nth-of-type(3) > div > span").get_text()
-    target_data_usd=round(float(str(target_data_usd).replace(" ","").replace("\n","")),2)
-    target_data_eur=soup.select_one("html > body > div:nth-of-type(3) > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > table > tbody > tr:nth-of-type(2) > td:nth-of-type(3) > div > span").get_text()
-    target_data_eur=round(float(str(target_data_eur).replace(" ","").replace("\n","")),2)
-
-    return(target_data_usd,target_data_eur)
-
-defaultcurrency=currency()
-defaultUSD=defaultcurrency[0]
-defaultEUR=defaultcurrency[1]
 
 
 
@@ -49,9 +34,9 @@ class currency (models.Model):
 
 class currencyRate (models.Model):
     currencyUSD=models.CharField( default="USD",max_length=3)
-    rateUSD=models.DecimalField(max_digits=10,decimal_places=2,blank=True,default=defaultUSD)
+    rateUSD=models.DecimalField(max_digits=10,decimal_places=2,blank=True)
     currencyEUR=models.CharField( default="EUR",max_length=3)
-    rateEUR=models.DecimalField(max_digits=10,decimal_places=2,blank=True,default=defaultEUR)
+    rateEUR=models.DecimalField(max_digits=10,decimal_places=2,blank=True)
     date = models.DateTimeField(default=datetime.now, blank=True)
     def formatted_date(self):
         return self.date.strftime('%d-%m-%Y')
