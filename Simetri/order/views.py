@@ -301,8 +301,10 @@ def order_detail(request, order_number):
     for item in order.order_items.all():
         if str(item.product.currency) == 'USD':
             tl_value = round(item.price * defaultUSD,2)
+            currency_rate=defaultUSD
         elif str(item.product.currency) == 'EUR':
             tl_value = round(item.price * defaultEUR,2)
+            currency_rate=defaultEUR
         else:
             tl_value = item.price  # Assuming TL
 
@@ -311,6 +313,7 @@ def order_detail(request, order_number):
         order_items_with_tl.append({
             'item': item,
             'tl_value': tl_value,
+            'currency_rate':currency_rate
         })
 
     return render(request, 'order/order_detail.html', {
