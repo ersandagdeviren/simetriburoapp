@@ -122,12 +122,21 @@ def customer_list(request):
         new_price = request.POST.get('new_price')
         quantity = request.POST.get('quantity')
         description = Product.objects.get(id=product_id).description
+        currency=Product.objects.get(id=product_id).currency
+
+        if str(currency)== 'USD':
+            currency_rate=float(defaultUSD)
+        if str(currency)== 'EUR':
+            currency_rate=float(defaultEUR)
+
+        
 
         product_entry = {
             'id': product_id,
             'price': new_price,
             'quantity': quantity,
-            'description': description
+            'description': description,
+            'currency_rate':currency_rate
         }
 
         products = request.session.get('products', [])
@@ -171,11 +180,12 @@ def customer_list(request):
         product_ids = [item['id'] for item in request.session.get('products', [])]
         quantities = [item['quantity'] for item in request.session.get('products', [])]
         prices = [item['price'] for item in request.session.get('products', [])]
+        currencies=[item['currency_rate'] for item in request.session.get('products', [])]
 
         order = Order.objects.create(customer_id=customer_id)
 
-        for product_id, quantity, price in zip(product_ids, quantities, prices):
-            OrderItem.objects.create(order=order, product_id=product_id, quantity=quantity, price=price)
+        for product_id, quantity, price, currency_rate in zip(product_ids, quantities, prices,currencies):
+            OrderItem.objects.create(order=order, product_id=product_id, quantity=quantity, price=price,currency_rate=currency_rate)
 
         request.session['products'] = []
         request.session['customers'] = []
@@ -234,8 +244,6 @@ def order_list(request):
         messages.success(request, 'Order has been successfully deleted.')
         return redirect('order:order_list')
 
-    defaultUSD, defaultEUR = currency()
-
     orders = Order.objects.all()
     orders_with_totals = []
 
@@ -243,34 +251,33 @@ def order_list(request):
         total_amount_usd = 0
         total_amount_eur = 0
         total_amount_tl = 0
-        total_tax=0
+        total_tax = 0
+
         for item in order.order_items.all():
             product = item.product
-            if str(product.currency) == 'USD':
-                price_in_tl = item.price * item.quantity * defaultUSD
-                total_amount_usd += item.price * item.quantity
-                product_tax=price_in_tl*product.tax/100
-            else:  # Assuming it's EUR if not USD
-                price_in_tl = item.price * item.quantity * defaultEUR
-                total_amount_eur += item.price * item.quantity
-                product_tax=price_in_tl*product.tax/100
-            total_amount_tl += price_in_tl
-            total_tax+=product_tax
+            price_in_tl = item.price * item.quantity * item.currency_rate
+            product_tax = price_in_tl * product.tax / 100
 
-        
+            if str(product.currency) == 'USD':
+                total_amount_usd += item.price * item.quantity
+            else:  # Assuming it's EUR if not USD
+                total_amount_eur += item.price * item.quantity
+
+            total_amount_tl += price_in_tl
+            total_tax += product_tax
+
         total_amount_tl = round(total_amount_tl, 2)
         total_amount_eur = round(total_amount_eur, 2)
-        total_tax=round(total_tax, 2)
-        grand_total=total_amount_tl + total_tax
-        
+        total_tax = round(total_tax, 2)
+        grand_total = total_amount_tl + total_tax
+
         orders_with_totals.append({
             'order': order,
             'total_amount_usd': round(total_amount_usd, 2),
             'total_amount_eur': total_amount_eur,
             'total_amount_tl': total_amount_tl,
-            'total_tax':total_tax,
-            'grand_total':grand_total
-
+            'total_tax': total_tax,
+            'grand_total': grand_total,
         })
 
     return render(request, 'order/order_list.html', {'orders_with_totals': orders_with_totals})
@@ -284,40 +291,45 @@ def order_detail(request, order_number):
             item.delete()
             messages.success(request, 'Order item has been successfully deleted.')
             return redirect('order:order_detail', order_number=order.order_number)
-        
+
         for item in order.order_items.all():
             quantity = request.POST.get(f'quantity_{item.id}')
             price = request.POST.get(f'price_{item.id}')
-            if quantity is not None and price is not None:
+            currency_rate = request.POST.get(f'currency_rate_{item.id}')
+            if quantity is not None and price is not None and currency_rate is not None:
                 item.quantity = int(quantity)
                 item.price = float(price)
+                item.currency_rate = float(currency_rate)
                 item.save()
         messages.success(request, 'Order items have been successfully updated.')
         return redirect('order:order_detail', order_number=order.order_number)
-    
+
     order_items_with_tl = []
     total_amount = 0
+    total_tax = 0
 
     for item in order.order_items.all():
-        if str(item.product.currency) == 'USD':
-            tl_value = round(item.price * defaultUSD,2)
-            currency_rate=defaultUSD
-        elif str(item.product.currency) == 'EUR':
-            tl_value = round(item.price * defaultEUR,2)
-            currency_rate=defaultEUR
-        else:
-            tl_value = item.price  # Assuming TL
-
+        currency_rate = item.currency_rate
+        tl_value = round(item.price * currency_rate, 2)
+        item_tax = round(tl_value * item.product.tax / 100,2)
         total_amount += tl_value * item.quantity
+        total_tax += item_tax * item.quantity
 
         order_items_with_tl.append({
             'item': item,
             'tl_value': tl_value,
-            'currency_rate':currency_rate
+            'currency_rate': currency_rate,
+            'tax': item_tax,
         })
+
+    total_amount = round(total_amount, 2)
+    total_tax = round(total_tax, 2)
+    grand_total = total_amount + total_tax
 
     return render(request, 'order/order_detail.html', {
         'order': order,
         'total_amount': total_amount,
-        'order_items_with_tl': order_items_with_tl
+        'total_tax': total_tax,
+        'grand_total': grand_total,
+        'order_items_with_tl': order_items_with_tl,
     })
