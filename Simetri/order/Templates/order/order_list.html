@@ -7,6 +7,7 @@
     <table class="table">
         <thead>
             <tr>
+                <th>Tarih</th>
                 <th>Sipariş Numarası</th>
                 <th>Cari</th>
                 <th>Toplam (USD)</th>
@@ -20,6 +21,7 @@
         <tbody>
             {% for order_with_total in orders_with_totals %}
             <tr>
+                <td>{{ order_with_total.order_date }}</td> <!-- Displaying the order date -->
                 <td><a href="{% url 'order:order_detail' order_with_total.order.order_number %}">{{ order_with_total.order.order_number }}</a></td>
                 <td><a href="{% url 'order:order_detail' order_with_total.order.order_number %}">{{ order_with_total.order.customer }}</a></td>
                 <td>${{ order_with_total.total_amount_usd }}</td>

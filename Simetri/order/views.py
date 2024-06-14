@@ -278,58 +278,100 @@ def order_list(request):
             'total_amount_tl': total_amount_tl,
             'total_tax': total_tax,
             'grand_total': grand_total,
+            'order_date': order.date.strftime('%d-%m-%Y'),  # Adding the order date
         })
 
     return render(request, 'order/order_list.html', {'orders_with_totals': orders_with_totals})
+
+
 def order_detail(request, order_number):
     order = get_object_or_404(Order, order_number=order_number)
+    product_form = ProductSearchForm(request.POST or None)
+    productresult = None  # Initialize productresult
 
     if request.method == 'POST':
-        if 'delete_item' in request.POST:
+        if 'product_submit' in request.POST:
+            if product_form.is_valid():
+                query = product_form.cleaned_data["product_name"]
+                if query:
+                    productresult = Product.objects.filter(description__icontains=query)
+                else:
+                    productresult = []
+        elif 'delete_item' in request.POST:
             item_id = request.POST.get('delete_item')
             item = get_object_or_404(OrderItem, id=item_id, order=order)
             item.delete()
             messages.success(request, 'Order item has been successfully deleted.')
             return redirect('order:order_detail', order_number=order.order_number)
+        
+        elif 'product_add' in request.POST:
+            product_id = request.POST.get('item_id')
+            new_price = request.POST.get('new_price')
+            quantity = request.POST.get('quantity')
+            product = get_object_or_404(Product, id=product_id)
+            description = product.description
+            currency = product.currency
 
-        for item in order.order_items.all():
-            quantity = request.POST.get(f'quantity_{item.id}')
-            price = request.POST.get(f'price_{item.id}')
-            currency_rate = request.POST.get(f'currency_rate_{item.id}')
-            if quantity is not None and price is not None and currency_rate is not None:
-                item.quantity = int(quantity)
-                item.price = float(price)
-                item.currency_rate = float(currency_rate)
-                item.save()
-        messages.success(request, 'Order items have been successfully updated.')
-        return redirect('order:order_detail', order_number=order.order_number)
+            if currency == 'USD':
+                currency_rate = float(defaultUSD)
+            elif currency == 'EUR':
+                currency_rate = float(defaultEUR)
+            else:
+                currency_rate = 1  # Default currency rate for non-USD and non-EUR currencies
+
+            order_item = OrderItem(
+                order=order,
+                product=product,
+                quantity=int(quantity),
+                price=float(new_price),
+                currency_rate=currency_rate
+            )
+            order_item.save()
+            messages.success(request, 'Product has been successfully added to the order.')
+            return redirect('order:order_detail', order_number=order.order_number)
+
+        else:
+            for item in order.order_items.all():
+                quantity = request.POST.get(f'quantity_{item.id}')
+                price = request.POST.get(f'price_{item.id}')
+                currency_rate = request.POST.get(f'currency_rate_{item.id}')
+                if quantity is not None and price is not None and currency_rate is not None:
+                    item.quantity = int(quantity)
+                    item.price = float(price)
+                    item.currency_rate = float(currency_rate)
+                    item.save()
+            messages.success(request, 'Order items have been successfully updated.')
+            return redirect('order:order_detail', order_number=order.order_number)
 
     order_items_with_tl = []
     total_amount = 0
     total_tax = 0
+    grand_total = 0
 
     for item in order.order_items.all():
         currency_rate = item.currency_rate
-        tl_value = round(item.price * currency_rate, 2)
-        item_tax = round(tl_value * item.product.tax / 100,2)
-        total_amount += tl_value * item.quantity
-        total_tax += item_tax * item.quantity
+        tl_value = round(item.price * currency_rate * item.quantity, 2)
+        item_tax = round(tl_value * item.product.tax / 100, 2)
+        item_total = tl_value + item_tax
+
+        total_amount += tl_value
+        total_tax += item_tax
+        grand_total = total_amount + total_tax
 
         order_items_with_tl.append({
             'item': item,
             'tl_value': tl_value,
             'currency_rate': currency_rate,
             'tax': item_tax,
+            'total': item_total,
         })
-
-    total_amount = round(total_amount, 2)
-    total_tax = round(total_tax, 2)
-    grand_total = total_amount + total_tax
 
     return render(request, 'order/order_detail.html', {
         'order': order,
         'total_amount': total_amount,
         'total_tax': total_tax,
-        'grand_total': grand_total,
         'order_items_with_tl': order_items_with_tl,
+        'grand_total': grand_total,
+        'product_form': product_form,
+        'productresult': productresult,
     })
