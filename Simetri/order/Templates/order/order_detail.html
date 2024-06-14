@@ -1,0 +1,61 @@
+{% extends "order/navbar.html" %}
+
+{% block content %}
+<body>
+    <h1>{{ order.customer }}</h1>
+    <p>Sipariş Numarası: {{ order.order_number }}</p>
+
+    <h2>Sipariş Detayları</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Ürün Görseli</th>
+                    <th>Ürün Açıklaması</th>
+                    <th>Miktar</th>
+                    <th>Fiyat</th>
+                    <th>Döviz</th>
+                    <th>Kur</th>
+                    <th>TL</th>
+                    <th>KDV</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item_with_tl in order_items_with_tl %}
+                <tr>
+                    <td><img src="{{ item_with_tl.item.product.photoPath }}" alt="" width="50"></td>
+                    <td>{{ item_with_tl.item.product.description }}</td>
+                    <td>
+                        <input type="number" name="quantity_{{ item_with_tl.item.id }}" value="{{ item_with_tl.item.quantity }}" min="1" required>
+                    </td>
+                    <td>
+                        <input type="number" name="price_{{ item_with_tl.item.id }}" value="{{ item_with_tl.item.price }}" step="0.01" min="0" required>
+                    </td>
+                    <td>{{ item_with_tl.item.product.currency }}</td>
+                    <td>
+                        <input type="number" name="currency_rate_{{ item_with_tl.item.id }}" value="{{ item_with_tl.currency_rate }}" step="0.01" min="0" required>
+                    </td>
+                    <td>{{ item_with_tl.tl_value }}</td>
+                    <td>{{ item_with_tl.tax }}</td>
+                    <td>
+                        <button type="submit" class="btn btn-primary">Güncelle</button>
+                    </td>
+                    <td>
+                        <button type="submit" name="delete_item" value="{{ item_with_tl.item.id }}" class="btn btn-danger">Sil</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </form>
+
+    <h3 style="text-align: left;">Toplam Tutar: {{ total_amount }} TL</h3>
+    <h3 style="text-align: left;">Toplam KDV: {{ total_tax }} TL</h3>
+    <h3 style="text-align: left;">Genel Toplam: {{ grand_total }} TL</h3>
+
+    <a href="{% url 'order:order_list' %}">Siparişlere Dön</a>
+</body>
+{% endblock %}
