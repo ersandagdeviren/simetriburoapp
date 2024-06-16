@@ -18,6 +18,7 @@
                     <th>Fiyat</th>
                     <th>Döviz</th>
                     <th>Kur</th>
+                    <th>İskonto%</th>
                     <th>TL</th>
                     <th>KDV</th>
                     <th>Toplam</th>
@@ -39,6 +40,9 @@
                     <td>{{ item_with_tl.item.product.currency }}</td>
                     <td>
                         <input type="number" name="currency_rate_{{ item_with_tl.item.id }}" value="{{ item_with_tl.currency_rate }}" step="0.01" min="0" style="width: 70px" required>
+                    </td>
+                    <td>
+                        <input type="number" name="discount_rate_{{ item_with_tl.item.id }}" value="{{ item_with_tl.discount_rate }}" step="0.01" min="0" style="width: 70px" required>
                     </td>
                     <td>{{ item_with_tl.tl_value }}</td>
                     <td>{{ item_with_tl.tax }}</td>
@@ -114,6 +118,7 @@
     {% endif %}
 
     <h5>Toplam Tutar: {{ total_amount }} TL</h5>
+    <h5>Toplam İskonto: {{ total_discount }} TL</h5>
     <h5>Toplam KDV: {{ total_tax }} TL</h5>
     <h5>Genel Toplam: {{ grand_total }} TL</h5>
 

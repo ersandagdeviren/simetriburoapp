@@ -182,10 +182,10 @@ def customer_list(request):
         prices = [item['price'] for item in request.session.get('products', [])]
         currencies=[item['currency_rate'] for item in request.session.get('products', [])]
 
-        order = Order.objects.create(customer_id=customer_id)
+        order = Order.objects.create(customer_id=customer_id,user=request.user)
 
         for product_id, quantity, price, currency_rate in zip(product_ids, quantities, prices,currencies):
-            OrderItem.objects.create(order=order, product_id=product_id, quantity=quantity, price=price,currency_rate=currency_rate)
+            OrderItem.objects.create(order=order, product_id=product_id, quantity=quantity, price=price,currency_rate=currency_rate,discount_rate=0)
 
         request.session['products'] = []
         request.session['customers'] = []
@@ -209,7 +209,7 @@ def create_order(request):
             messages.error(request, 'Customer and products must be selected to create an order.')
             return redirect('order:create_order')
 
-        order = Order(customer_id=customer_id)
+        order = Order(customer_id=customer_id, user=request.user)  # Add user here
         order.save()
 
         for product_id in product_ids:
@@ -234,8 +234,6 @@ def create_order(request):
             "customer_name": customer_name,
             "products": request.session.get('products', [])
         })
-
-
 def order_list(request):
     if request.method == 'POST':
         order_id = request.POST.get('order_id')
@@ -252,12 +250,18 @@ def order_list(request):
         total_amount_eur = 0
         total_amount_tl = 0
         total_tax = 0
+        total_discount=0
 
         for item in order.order_items.all():
             product = item.product
-            price_in_tl = item.price * item.quantity * item.currency_rate
+            if item.discount_rate == 0:
+                price_in_tl = item.price * item.quantity * item.currency_rate
+                discount=0
+            else:
+                price_in_tl = item.price *(100-item.discount_rate)/100 * item.quantity * item.currency_rate
+                discount=(item.price * item.quantity * item.currency_rate)-(item.price *(100-item.discount_rate)/100 * item.quantity * item.currency_rate)
             product_tax = price_in_tl * product.tax / 100
-
+        
             if str(product.currency) == 'USD':
                 total_amount_usd += item.price * item.quantity
             else:  # Assuming it's EUR if not USD
@@ -265,9 +269,14 @@ def order_list(request):
 
             total_amount_tl += price_in_tl
             total_tax += product_tax
+            total_discount+=discount
+
+
 
         total_amount_tl = round(total_amount_tl, 2)
         total_amount_eur = round(total_amount_eur, 2)
+        total_amount_usd=round(total_amount_usd, 2)
+        total_discount=round(total_discount, 2)
         total_tax = round(total_tax, 2)
         grand_total = total_amount_tl + total_tax
 
@@ -276,6 +285,7 @@ def order_list(request):
             'total_amount_usd': round(total_amount_usd, 2),
             'total_amount_eur': total_amount_eur,
             'total_amount_tl': total_amount_tl,
+            'total_discount':total_discount,
             'total_tax': total_tax,
             'grand_total': grand_total,
             'order_date': order.date.strftime('%d-%m-%Y'),  # Adding the order date
@@ -287,14 +297,14 @@ def order_list(request):
 def order_detail(request, order_number):
     order = get_object_or_404(Order, order_number=order_number)
     product_form = ProductSearchForm(request.POST or None)
-    productresult = None  # Initialize productresult
+    productresult = None 
 
     if request.method == 'POST':
         if 'product_submit' in request.POST:
             if product_form.is_valid():
                 query = product_form.cleaned_data["product_name"]
                 if query:
-                    productresult = Product.objects.filter(description__icontains=query)
+                    productresult = Product.objects.filter(description__icontains(query))
                 else:
                     productresult = []
         elif 'delete_item' in request.POST:
@@ -309,12 +319,11 @@ def order_detail(request, order_number):
             new_price = request.POST.get('new_price')
             quantity = request.POST.get('quantity')
             product = get_object_or_404(Product, id=product_id)
-            description = product.description
             currency = product.currency
 
-            if currency == 'USD':
+            if str(currency) == 'USD':
                 currency_rate = float(defaultUSD)
-            elif currency == 'EUR':
+            elif str(currency) == 'EUR':
                 currency_rate = float(defaultEUR)
             else:
                 currency_rate = 1  # Default currency rate for non-USD and non-EUR currencies
@@ -324,7 +333,7 @@ def order_detail(request, order_number):
                 product=product,
                 quantity=int(quantity),
                 price=float(new_price),
-                currency_rate=currency_rate
+                currency_rate=currency_rate,
             )
             order_item.save()
             messages.success(request, 'Product has been successfully added to the order.')
@@ -335,41 +344,49 @@ def order_detail(request, order_number):
                 quantity = request.POST.get(f'quantity_{item.id}')
                 price = request.POST.get(f'price_{item.id}')
                 currency_rate = request.POST.get(f'currency_rate_{item.id}')
-                if quantity is not None and price is not None and currency_rate is not None:
+                discount_rate = request.POST.get(f'discount_rate_{item.id}')
+
+                if quantity is not None and price is not None and currency_rate is not None and discount_rate is not None:
                     item.quantity = int(quantity)
                     item.price = float(price)
                     item.currency_rate = float(currency_rate)
+                    item.discount_rate = float(discount_rate)
                     item.save()
             messages.success(request, 'Order items have been successfully updated.')
             return redirect('order:order_detail', order_number=order.order_number)
 
     order_items_with_tl = []
     total_amount = 0
+    total_discount = 0
     total_tax = 0
     grand_total = 0
 
     for item in order.order_items.all():
         currency_rate = item.currency_rate
-        tl_value = round(item.price * currency_rate * item.quantity, 2)
+        discount_amount = item.price * item.discount_rate / 100
+        tl_value = round((item.price - discount_amount) * currency_rate * item.quantity, 2)
         item_tax = round(tl_value * item.product.tax / 100, 2)
         item_total = tl_value + item_tax
 
         total_amount += tl_value
         total_tax += item_tax
+        total_discount += round(discount_amount * item.quantity * currency_rate, 2)
         grand_total = total_amount + total_tax
 
         order_items_with_tl.append({
             'item': item,
             'tl_value': tl_value,
             'currency_rate': currency_rate,
-            'tax': item_tax,
+            'tax': item_tax,    
             'total': item_total,
+            'discount_rate': item.discount_rate
         })
 
     return render(request, 'order/order_detail.html', {
         'order': order,
         'total_amount': total_amount,
         'total_tax': total_tax,
+        'total_discount': total_discount,
         'order_items_with_tl': order_items_with_tl,
         'grand_total': grand_total,
         'product_form': product_form,

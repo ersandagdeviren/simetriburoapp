@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import re
 import urllib.request
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 
 
@@ -108,6 +109,7 @@ class Order(models.Model):
     order_number = models.CharField(max_length=20, unique=True, blank=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="customer_orders")
     date = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_orders")  # Add this line
 
     def __str__(self):
         return self.order_number
@@ -124,14 +126,15 @@ class Order(models.Model):
                 new_order_number = 1
             self.order_number = f"{date_prefix}{new_order_number:05d}"
         super().save(*args, **kwargs)
-
+        
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="order_items")
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="product_orders")
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     currency_rate=models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
-
-
+    discount_rate=models.PositiveIntegerField(blank=True, default=0)
     def __str__(self):
         return f"{self.order.order_number} - {self.product.description}"
+    
+
