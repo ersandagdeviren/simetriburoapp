@@ -302,9 +302,9 @@ def order_detail(request, order_number):
     if request.method == 'POST':
         if 'product_submit' in request.POST:
             if product_form.is_valid():
-                query = product_form.cleaned_data["product_name"]
+                query = product_form.cleaned_data.get("product_name", "")
                 if query:
-                    productresult = Product.objects.filter(description__icontains(query))
+                    productresult = Product.objects.filter(description__icontains=query)
                 else:
                     productresult = []
         elif 'delete_item' in request.POST:

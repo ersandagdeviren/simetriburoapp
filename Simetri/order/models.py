@@ -5,9 +5,8 @@ from bs4 import BeautifulSoup
 import re
 import urllib.request
 from django.utils import timezone
-from django.contrib.auth.models import User
-
-
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 # Create your models here.
 class location (models.Model):
@@ -74,6 +73,7 @@ class Customer(models.Model):
     city = models.CharField(max_length=50)
     district = models.CharField(max_length=50)
     adress = models.CharField(max_length=250, blank=True)
+    shipping_adress=models.CharField(max_length=250, blank=True)
     country = models.CharField(max_length=50, blank=True, default="Türkiye")
     email = models.EmailField(blank=True)
     telephone = models.CharField(max_length=11, blank=True)
@@ -109,7 +109,8 @@ class Order(models.Model):
     order_number = models.CharField(max_length=20, unique=True, blank=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="customer_orders")
     date = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_orders")  # Add this line
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_orders")
+
 
     def __str__(self):
         return self.order_number
@@ -118,7 +119,7 @@ class Order(models.Model):
         if not self.order_number:
             current_date = timezone.now()
             date_prefix = current_date.strftime('%Y%m')
-            last_order = Order.objects.filter(order_number__startswith=date_prefix).order_by('order_number').last()
+            last_order = Order.objects.filter(order_number__startswith(date_prefix).order_by('order_number').last())
             if last_order:
                 last_order_number = int(last_order.order_number[-5:])
                 new_order_number = last_order_number + 1
