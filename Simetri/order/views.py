@@ -392,3 +392,8 @@ def order_detail(request, order_number):
         'product_form': product_form,
         'productresult': productresult,
     })
+
+@login_required
+def create_invoice(request, order_number):
+    order = get_object_or_404(Order, order_number=order_number)
+    pass

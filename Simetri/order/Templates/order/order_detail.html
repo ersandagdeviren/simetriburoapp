@@ -59,6 +59,11 @@
         </table>
     </form>
 
+    <form method="POST" action="{% url 'order:create_invoice' order_number=order.order_number %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">Faturaya Çevir</button>
+    </form>
+
     <h2>Ürün Ekle</h2>
     <form method="POST">
         {% csrf_token %}
