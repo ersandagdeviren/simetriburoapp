@@ -111,7 +111,7 @@ class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="customer_orders")
     date = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_orders")
-    is_billed = models.BooleanField(default=False)  # New field to track billing status
+    is_billed = models.BooleanField(default=False)
 
     def __str__(self):
         return self.order_number
@@ -146,8 +146,11 @@ class Invoice(models.Model):
     invoice_date = models.DateTimeField(auto_now_add=True)
     billing_address = models.CharField(max_length=250, blank=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    total_discount=models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     grand_total = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    grand_total_USD = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    grand_total_EUR = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     status = models.CharField(max_length=50, default='Pending')
 
     def __str__(self):
@@ -156,7 +159,7 @@ class Invoice(models.Model):
     def save(self, *args, **kwargs):
         if not self.invoice_number:
             current_date = timezone.now()
-            date_prefix = current_date.strftime('%Y%m')
+            date_prefix = current_date.strftime('SMT%Y%m')
             last_invoice = Invoice.objects.filter(invoice_number__startswith=date_prefix).order_by('invoice_number').last()
             if last_invoice:
                 last_invoice_number = int(last_invoice.invoice_number[-5:])

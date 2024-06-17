@@ -16,12 +16,12 @@
           </div>
     <ul class="nav navbar-nav navbar-right">
             {% if user.is_authenticated %}
-            <li> <a href="#">Müşteri</a></li>
-            <li> <a href="{% url 'order:customer_list' %}">Sipariş</a></li>
+            <li> <a href="#">Müşteriler</a></li>
+            <li> <a href="{% url 'order:customer_list' %}">Yeni Sipariş</a></li>
             <li> <a href="{% url 'order:order_list' %}">Siparişler</a></li>
-            <li> <a href="{% url 'order:search' %}">Ürün</a></li>
-            <li> <a href="#">Etiket</a></li>
-            <li> <a href="#">Fatura</a></li>
+            <li> <a href="{% url 'order:search' %}">Ürünler</a></li>
+            <li> <a href="#">Etiket Oluştur</a></li>
+            <li> <a href="{% url 'order:invoice_list' %}">Faturalar</a></li>
             <li> <a href="{% url 'order:comparison' %}">Tablo</a></li>
             <li> <a href="{% url 'users:logout' %}">Çıkış</a></li>
             {% else %}
