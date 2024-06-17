@@ -1,0 +1,54 @@
+{% extends "order/navbar.html" %}
+
+{% block content %}
+<body>
+    {% if order_items_with_tl %}
+    <h1>{{ order.customer }}</h1>
+    <p>Fatura Numarası: {{ invoice.invoice_number }}</p>
+    <p>Sipariş Numarası: {{ order.order_number }}</p>
+
+    <h2>Fatura Detayları</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Ürün Görseli</th>
+                <th>Ürün Açıklaması</th>
+                <th>Miktar</th>
+                <th>Fiyat</th>
+                <th>Döviz</th>
+                <th>Kur</th>
+                <th>İskonto%</th>
+                <th>TL</th>
+                <th>KDV</th>
+                <th>Toplam</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item_with_tl in order_items_with_tl %}
+            <tr>
+                <td><img src="{{ item_with_tl.item.product.photoPath }}" alt="" width="50"></td>
+                <td>{{ item_with_tl.item.product.description }}</td>
+                <td>{{ item_with_tl.item.quantity }}</td>
+                <td>{{ item_with_tl.item.price }}</td>
+                <td>{{ item_with_tl.item.product.currency }}</td>
+                <td>{{ item_with_tl.currency_rate }}</td>
+                <td>{{ item_with_tl.discount_rate }}</td>
+                <td>{{ item_with_tl.tl_value }}</td>
+                <td>{{ item_with_tl.tax }}</td>
+                <td>{{ item_with_tl.total }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h5>Toplam Tutar: {{ total_amount }} TL</h5>
+    <h5>Toplam İskonto: {{ total_discount }} TL</h5>
+    <h5>Toplam KDV: {{ total_tax }} TL</h5>
+    <h5>Genel Toplam: {{ grand_total }} TL</h5>
+
+    <a href="{% url 'order:order_list' %}" class="btn btn-primary">Siparişlere Dön</a>
+    {% else %}
+    <h1>Fatura Detayları silinmiştir</h1>
+    {% endif %}
+</body>
+{% endblock %}

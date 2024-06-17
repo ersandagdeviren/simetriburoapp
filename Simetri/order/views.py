@@ -9,7 +9,7 @@ from .models import Product, Customer, Order, OrderItem, Invoice
 from .forms import ProductSearchForm
 from decimal import Decimal, ROUND_HALF_UP
 
-def currency():
+def get_currency_rates():
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
     webpage = webpage_response.content
     soup = BeautifulSoup(webpage, "html.parser")
@@ -20,7 +20,8 @@ def currency():
 
     return target_data_usd, target_data_eur
 
-defaultUSD, defaultEUR = currency()
+
+
 
 def is_admin(user):
     return user.is_authenticated and user.is_staff
@@ -125,9 +126,9 @@ def customer_list(request):
         currency=Product.objects.get(id=product_id).currency
 
         if str(currency)== 'USD':
-            currency_rate=float(defaultUSD)
+            currency_rate=float(get_currency_rates()[0])
         if str(currency)== 'EUR':
-            currency_rate=float(defaultEUR)
+            currency_rate=float(get_currency_rates()[1])
 
         
 
@@ -295,6 +296,8 @@ def order_list(request):
 
 
 def order_detail(request, order_number):
+    defaultUSD, defaultEUR = get_currency_rates()
+
     order = get_object_or_404(Order, order_number=order_number)
     product_form = ProductSearchForm(request.POST or None)
     productresult = None 
@@ -396,46 +399,62 @@ def order_detail(request, order_number):
 @login_required
 def create_invoice(request, order_number):
     order = get_object_or_404(Order, order_number=order_number)
-    
     # Check if an invoice already exists for the order
     if hasattr(order, 'invoice'):
         messages.error(request, 'Invoice already exists for this order.')
         return redirect('order:order_detail', order_number=order_number)
-    
+
     total_amount = 0
     total_discount = 0
     total_tax = 0
     grand_total = 0
-    total_amount_USD_tax=0
-    total_amount_EUR_tax=0
-    grand_total_EUR=0
-    grand_total_USD=0
-
+    usd_total_amount = 0
+    usd_total_discount = 0
+    usd_total_tax = 0
+    grand_total_USD = 0
+    eur_total_amount = 0
+    eur_total_discount = 0
+    eur_total_tax = 0
+    grand_total_EUR = 0
 
     for item in order.order_items.all():
-        currency_rate = item.currency_rate
-        discount_amount = item.price * item.discount_rate / 100
-        tl_value = round((item.price - discount_amount) * currency_rate * item.quantity, 2)
-        currency_value_tax = round((item.price - discount_amount) * item.quantity * (Decimal('1.00') + item.product.tax / Decimal('100.00')), 2)
-        if str(item.product.tax) == 'USD':
-            total_amount_USD_tax +=currency_value_tax
-        if str(item.product.tax) == 'EUR':
-            total_amount_EUR_tax+=currency_value_tax
-        
-        item_tax = round(tl_value * item.product.tax / 100, 2)
-        item_total = tl_value + item_tax
+        if str(item.product.currency) == 'USD':
+            usd_value = round((item.price - (item.price * item.discount_rate / 100)) * item.quantity, 2)
+            usd_discount_value = (item.price * item.discount_rate / 100)
+            usd_tax_value = round(usd_value * item.product.tax / 100, 2)
+        else:
+            usd_value = 0
+            usd_discount_value = 0
+            usd_tax_value = 0
 
+        if str(item.product.currency) == 'EUR':
+            eur_value = round((item.price - (item.price * item.discount_rate / 100)) * item.quantity, 2)
+            eur_discount_value = (item.price * item.discount_rate / 100)
+            eur_tax_value = round(eur_value * item.product.tax / 100, 2)
+        else:
+            eur_value = 0
+            eur_discount_value = 0
+            eur_tax_value = 0
 
-
+        tl_value = round((item.price - (item.price * item.discount_rate / 100)) * item.currency_rate * item.quantity, 2)
+        discount_value_tl = (item.price * item.discount_rate / 100) * item.currency_rate
+        tax_value_tl = round(tl_value * item.product.tax / 100, 2)
 
         total_amount += tl_value
-        total_tax += item_tax
-        total_discount += round(discount_amount * item.quantity * currency_rate, 2)
-        grand_total = total_amount + total_tax
-        grand_total_EUR=round(grand_total/ Decimal(float(defaultEUR)),2)
-        grand_total_USD=round(grand_total/ Decimal(float(defaultUSD)),2)
+        total_tax += tax_value_tl
+        total_discount += discount_value_tl
         
+        usd_total_amount += usd_value
+        usd_total_discount += usd_discount_value
+        usd_total_tax += usd_tax_value
+        
+        eur_total_amount += eur_value
+        eur_total_discount += eur_discount_value
+        eur_total_tax += eur_tax_value
 
+    grand_total = total_amount + total_tax
+    grand_total_USD = usd_total_amount + usd_total_tax
+    grand_total_EUR = eur_total_amount + eur_total_tax
 
     # Create the invoice
     invoice = Invoice(
@@ -447,13 +466,11 @@ def create_invoice(request, order_number):
         grand_total=grand_total,
         grand_total_USD=grand_total_USD,
         grand_total_EUR=grand_total_EUR
-
     )
     invoice.save()
 
     messages.success(request, 'Invoice has been successfully created.')
     return redirect('order:invoice_detail', invoice_number=invoice.invoice_number)
-
 def invoice_list(request):
     if request.method == 'POST' and 'delete_invoice' in request.POST:
         invoice_id = request.POST.get('invoice_id')
@@ -465,69 +482,10 @@ def invoice_list(request):
         messages.success(request, 'Invoice has been successfully deleted.')
         return redirect('order:invoice_list')
 
-    invoices = Invoice.objects.all()
-    invoices_with_details = []
+    invoices = Invoice.objects.all().order_by('-invoice_date')
 
-    for invoice in invoices:
-        order = invoice.order
-        total_amount_usd = Decimal('0.00')
-        total_amount_USD_tax = Decimal('0.00')
-        total_amount_eur = Decimal('0.00')
-        total_amount_EUR_tax = Decimal('0.00')
-        total_amount_tl = Decimal('0.00')
-        total_tax = Decimal('0.00')
-        total_discount = Decimal('0.00')
+    return render(request, 'order/invoice_list.html', {'invoices': invoices})
 
-        for item in order.order_items.all():
-            product = item.product
-            currency_rate = Decimal(item.currency_rate)
-            if item.discount_rate == 0:
-                price_in_tl = item.price * item.quantity * currency_rate
-                discount = Decimal('0.00')
-            else:
-                price_in_tl = item.price * (Decimal('100.00') - item.discount_rate) / Decimal('100.00') * item.quantity * currency_rate
-                discount = (item.price * item.quantity * currency_rate) - (item.price * (Decimal('100.00') - item.discount_rate) / Decimal('100.00') * item.quantity * currency_rate)
-            product_tax = price_in_tl * product.tax / Decimal('100.00')
-            
-            if str(product.currency) == 'USD':
-                total_amount_usd += item.price * item.quantity
-                total_amount_USD_tax += item.price * item.quantity * (Decimal('1.00') + item.product.tax / Decimal('100.00'))
-            elif str(product.currency) == 'EUR':
-                total_amount_eur += item.price * item.quantity
-                total_amount_EUR_tax += item.price * item.quantity * (Decimal('1.00') + item.product.tax / Decimal('100.00'))
-            else:
-                total_amount_tl += item.price * item.quantity * currency_rate
-            
-            total_amount_tl += price_in_tl
-            total_tax += product_tax
-            total_discount += discount
-
-        total_amount_tl = round(total_amount_tl, 2)
-        total_amount_eur = round(total_amount_eur, 2)
-        total_amount_EUR_tax = round(total_amount_EUR_tax, 2)
-        total_amount_usd = round(total_amount_usd, 2)
-        total_amount_USD_tax = round(total_amount_USD_tax, 2)
-        total_discount = round(total_discount, 2)
-        total_tax = round(total_tax, 2)
-        grand_total = total_amount_tl + total_tax
-        grand_total_EUR = round(grand_total / Decimal(float(defaultEUR)), 2)
-        grand_total_USD = round(grand_total / Decimal(float(defaultUSD)), 2)
-
-        invoices_with_details.append({
-            'invoice': invoice,
-            'order': order,
-            'total_amount_usd': total_amount_usd,
-            'total_amount_eur': total_amount_eur,
-            'total_amount_EUR_tax': grand_total_EUR,
-            'total_amount_USD_tax': grand_total_USD,
-            'total_amount_tl': total_amount_tl,
-            'total_discount': total_discount,
-            'total_tax': total_tax,
-            'grand_total': grand_total,
-            'invoice_date': invoice.invoice_date.strftime('%d-%m-%Y'),  # Adding the invoice date
-        })
-
-    return render(request, 'order/invoice_list.html', {'invoices_with_details': invoices_with_details})
 def invoice_detail(request, invoice_number):
     invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
     order = invoice.order
