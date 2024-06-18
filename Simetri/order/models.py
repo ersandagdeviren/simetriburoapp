@@ -159,14 +159,32 @@ class Invoice(models.Model):
     def save(self, *args, **kwargs):
         if not self.invoice_number:
             current_date = timezone.now()
-            date_prefix = current_date.strftime('SMT%Y%m')
-            last_invoice = Invoice.objects.filter(invoice_number__startswith=date_prefix).order_by('invoice_number').last()
-            if last_invoice:
-                last_invoice_number = int(last_invoice.invoice_number[-5:])
-                new_invoice_number = last_invoice_number + 1
+            customer = self.order.customer
+            date_prefix = current_date.strftime('%Y%m')
+
+            if not customer.E_invoice:
+                prefix = "SMR"
             else:
-                new_invoice_number = 1
-            self.invoice_number = f"{date_prefix}{new_invoice_number:05d}"
+                prefix = "SMT"
+
+            if not customer.tax_number:
+                filter_prefix = date_prefix
+                last_invoice = Invoice.objects.filter(invoice_number__startswith=filter_prefix).order_by('invoice_number').last()
+                if last_invoice:
+                    last_invoice_number = int(last_invoice.invoice_number[-5:])
+                    new_invoice_number = last_invoice_number + 1
+                else:
+                    new_invoice_number = 1
+                self.invoice_number = f"{filter_prefix}{new_invoice_number:05d}"
+            else:
+                filter_prefix = f"{prefix}{date_prefix}"
+                last_invoice = Invoice.objects.filter(invoice_number__startswith=filter_prefix).order_by('invoice_number').last()
+                if last_invoice:
+                    last_invoice_number = int(last_invoice.invoice_number[-5:])
+                    new_invoice_number = last_invoice_number + 1
+                else:
+                    new_invoice_number = 1
+                self.invoice_number = f"{filter_prefix}{new_invoice_number:05d}"
         super().save(*args, **kwargs)
         # Mark the associated order as billed
         self.order.is_billed = True
