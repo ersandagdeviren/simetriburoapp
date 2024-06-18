@@ -1,6 +1,6 @@
 from django.contrib import admin
-from .models import unit, Product ,brand, currency,mainCategory,category,location,Customer,currencyRate, taxoffice, Order,OrderItem,Invoice
-# Register your models here.
+from .models import unit, Product ,brand, currency,mainCategory,category,location,Customer,currencyRate, taxoffice, Order,OrderItem,Invoice,CashRegister, ExpenseItem, PaymentReceipt, Credit, Debit
+
 admin.site.register(unit)
 admin.site.register(Product)
 admin.site.register(currency)
@@ -14,4 +14,8 @@ admin.site.register(taxoffice)
 admin.site.register(Order)
 admin.site.register(OrderItem)
 admin.site.register(Invoice)
-
+admin.site.register(CashRegister)
+admin.site.register(ExpenseItem)
+admin.site.register(PaymentReceipt)
+admin.site.register(Credit)
+admin.site.register(Debit)
