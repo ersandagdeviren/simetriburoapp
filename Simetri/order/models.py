@@ -197,6 +197,7 @@ class Invoice(models.Model):
         super().delete(*args, **kwargs)
 
 class CashRegister(models.Model):
+    cash_code=models.CharField(max_length=255)
     name = models.CharField(max_length=255)
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
@@ -204,17 +205,18 @@ class CashRegister(models.Model):
         return self.name
 
 class ExpenseItem(models.Model):
+    expense_code=models.CharField(max_length=255)
     name = models.CharField(max_length=255)
 
     def __str__(self):
         return self.name
 
 class PaymentReceipt(models.Model):
-    RECEIPT = 'receipt'
-    PAYMENT = 'payment'
+    RECEIPT = 'Tahsilat'
+    PAYMENT = 'Tediye'
     TRANSACTION_TYPES = [
-        (RECEIPT, 'Receipt'),
-        (PAYMENT, 'Payment'),
+        (RECEIPT, 'Tahsilat'),
+        (PAYMENT, 'Tediye'),
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE)

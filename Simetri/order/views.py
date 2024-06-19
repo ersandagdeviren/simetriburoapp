@@ -5,9 +5,10 @@ import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib import messages
-from .models import Product, Customer, Order, OrderItem, Invoice
-from .forms import ProductSearchForm
+from .models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt,Credit,Debit
+from .forms import ProductSearchForm ,PaymentReceiptForm
 from decimal import Decimal, ROUND_HALF_UP
+from django.http import JsonResponse
 
 def get_currency_rates():
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
@@ -155,7 +156,7 @@ def customer_list(request):
             "customer_name": customer_name,
             "products": request.session['products'],
             "product": productresult
-        })
+        })  
 
     elif request.method == "POST" and "delete_product" in request.POST:
         product_id = request.POST.get('product_id')
@@ -526,3 +527,43 @@ def invoice_detail(request, invoice_number):
         'order_items_with_tl': order_items_with_tl,
         'grand_total': grand_total,
     })
+def payment_receipt_list(request):
+    payment_receipts = PaymentReceipt.objects.all()
+    return render(request, 'order/payment_receipt_list.html', {'payment_receipts': payment_receipts})
+
+def payment_receipt_detail(request, pk):
+    payment_receipt = get_object_or_404(PaymentReceipt, pk=pk)
+    return render(request, 'order/payment_receipt_detail.html', {'payment_receipt': payment_receipt})
+
+def payment_receipt_create(request):
+    if request.method == 'POST':
+        form = PaymentReceiptForm(request.POST)
+        if form.is_valid():
+            payment_receipt = form.save(commit=False)
+            payment_receipt.user = request.user
+            payment_receipt.save()
+            return redirect('order:payment_receipt_detail', pk=payment_receipt.pk)
+    else:
+        form = PaymentReceiptForm()
+    return render(request, 'order/payment_receipt_form.html', {'form': form})
+
+
+@login_required
+def customer_search(request):
+    query = request.GET.get('q')
+    if query:
+        customers = Customer.objects.filter(companyName__icontains=query)  # or any field you want to search by
+    else:
+        customers = Customer.objects.none()
+    results = [{'id': customer.id, 'name': customer.companyName} for customer in customers]
+    return JsonResponse(results, safe=False)
+
+def product_order_history(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    order_items = OrderItem.objects.filter(product=product, order__is_billed=True).select_related('order__customer').order_by('-order__date')
+    
+    context = {
+        'product': product,
+        'order_items': order_items,
+    }
+    return render(request, 'order/product_order_history.html', context)
