@@ -1,0 +1,15 @@
+{% extends "order/navbar.html" %}
+
+
+{% block content %}
+  <h2>Payment Receipt Details</h2>
+  <p>User: {{ payment_receipt.user }}</p>
+  <p>Cash Register: {{ payment_receipt.cash_register }}</p>
+  <p>Customer: {{ payment_receipt.customer }}</p>
+  <p>Expense Item: {{ payment_receipt.expense_item }}</p>
+  <p>Transaction Type: {{ payment_receipt.get_transaction_type_display }}</p>
+  <p>Amount: {{ payment_receipt.amount }}</p>
+  <p>Date: {{ payment_receipt.date }}</p>
+  <a href="{% url 'order:payment_receipt_list' %}">Back to list</a>
+
+{% endblock %}

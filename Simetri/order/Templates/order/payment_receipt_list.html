@@ -1,0 +1,17 @@
+{% extends "order/navbar.html" %}
+
+
+{% block content %}
+  <h2>Payment Receipts</h2>
+  <a href="{% url 'order:payment_receipt_create' %}">Create new Payment Receipt</a>
+  <ul>
+    {% for payment_receipt in payment_receipts %}
+      <li>
+        <a href="{% url 'order:payment_receipt_detail' payment_receipt.pk %}">
+          {{ payment_receipt }}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+  
+{% endblock %}
