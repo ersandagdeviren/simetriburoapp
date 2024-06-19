@@ -28,7 +28,7 @@
             <tr>
                 <td><img src="{{ item.photoPath }}" alt="" width="100"></td>
                 <td>{{ item.codeUyum }}</td>
-                <td>{{ item.description }}</td>
+                <td><a href="{% url 'order:product_order_history' item.id %}">{{ item.description }}</a></td>
                 <td>{{ item.unit }}</td>
                 <td>{{ item.brand }}</td>
                 <td>{{ item.mainCategory }}</td>
@@ -44,3 +44,4 @@
     
 
 {% endblock %}
+

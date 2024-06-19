@@ -217,7 +217,7 @@ class PaymentReceipt(models.Model):
     TRANSACTION_TYPES = [
         (RECEIPT, 'Tahsilat'),
         (PAYMENT, 'Tediye'),
-    ]
+    ]   
     
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     cash_register = models.ForeignKey(CashRegister, on_delete=models.CASCADE)
