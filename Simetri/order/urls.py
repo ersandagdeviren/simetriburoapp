@@ -15,6 +15,7 @@ urlpatterns = [
     path('payment_receipts/', views.payment_receipt_list, name='payment_receipt_list'),
     path('payment_receipts/<int:pk>/', views.payment_receipt_detail, name='payment_receipt_detail'),
     path('payment_receipts/new/', views.payment_receipt_create, name='payment_receipt_create'),
+    path('payment_receipt/<int:pk>/delete/', views.payment_receipt_delete, name='payment_receipt_delete'),
     path('customer_search/', views.customer_search, name='customer_search'),
     path('product/<int:product_id>/order-history/', views.product_order_history, name='product_order_history'),
 ]

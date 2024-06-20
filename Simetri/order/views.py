@@ -5,7 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib import messages
-from .models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt,Credit,Debit
+from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt,Credit,Debit
 from .forms import ProductSearchForm ,PaymentReceiptForm
 from decimal import Decimal, ROUND_HALF_UP
 from django.http import JsonResponse
@@ -20,9 +20,6 @@ def get_currency_rates():
     target_data_eur = Decimal(str(target_data_eur).replace(" ", "").replace("\n", "")).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
     return target_data_usd, target_data_eur
-
-
-
 
 def is_admin(user):
     return user.is_authenticated and user.is_staff
@@ -567,3 +564,10 @@ def product_order_history(request, product_id):
         'order_items': order_items,
     }
     return render(request, 'order/product_order_history.html', context)
+
+def payment_receipt_delete(request, pk):
+    payment_receipt = get_object_or_404(PaymentReceipt, pk=pk)
+    if request.method == 'POST':
+        payment_receipt.delete()
+        return redirect('order:payment_receipt_list')
+    return render(request, 'order/payment_receipt_confirm_delete.html', {'payment_receipt': payment_receipt})

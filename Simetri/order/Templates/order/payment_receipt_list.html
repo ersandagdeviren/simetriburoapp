@@ -1,17 +1,44 @@
 {% extends "order/navbar.html" %}
 
-
 {% block content %}
-  <h2>Payment Receipts</h2>
-  <a href="{% url 'order:payment_receipt_create' %}">Create new Payment Receipt</a>
-  <ul>
-    {% for payment_receipt in payment_receipts %}
-      <li>
-        <a href="{% url 'order:payment_receipt_detail' payment_receipt.pk %}">
-          {{ payment_receipt }}
-        </a>
-      </li>
-    {% endfor %}
-  </ul>
-  
+    <h2>Payment Receipts</h2>
+    <a href="{% url 'order:payment_receipt_create' %}" class="btn btn-success mb-2">Create new Payment Receipt</a>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Cash Register</th>
+                <th>Customer</th>
+                <th>Expense Item</th>
+                <th>Transaction Type</th>
+                <th>Amount (Original)</th>
+                <th>Amount (USD)</th>
+                <th>Amount (EUR)</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment_receipt in payment_receipts %}
+                <tr>
+                    <td>{{ payment_receipt.user }}</td>
+                    <td>{{ payment_receipt.cash_register }}</td>
+                    <td>{{ payment_receipt.customer }}</td>
+                    <td>{{ payment_receipt.expense_item }}</td>
+                    <td>{{ payment_receipt.get_transaction_type_display }}</td>
+                    <td>{{ payment_receipt.amount }}</td>
+                    <td>{{ payment_receipt.usd_amount }}</td>
+                    <td>{{ payment_receipt.eur_amount }}</td>
+                    <td>{{ payment_receipt.date }}</td>
+                    <td>
+                        <a href="{% url 'order:payment_receipt_detail' payment_receipt.pk %}" class="btn btn-primary">Details</a>
+                        <form method="POST" action="{% url 'order:payment_receipt_delete' payment_receipt.pk %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}

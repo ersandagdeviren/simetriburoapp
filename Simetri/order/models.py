@@ -1,5 +1,6 @@
 from django.db import models
 from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -7,6 +8,17 @@ import urllib.request
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 User = get_user_model()
+
+def get_currency_rates():
+    webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
+    webpage = webpage_response.content
+    soup = BeautifulSoup(webpage, "html.parser")
+    target_data_usd = soup.select_one("html > body > div:nth-of-type(3) > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > table > tbody > tr:nth-of-type(1) > td:nth-of-type(3) > div > span").get_text()
+    target_data_usd = Decimal(str(target_data_usd).replace(" ", "").replace("\n", "")).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    target_data_eur = soup.select_one("html > body > div:nth-of-type(3) > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > table > tbody > tr:nth-of-type(2) > td:nth-of-type(3) > div > span").get_text()
+    target_data_eur = Decimal(str(target_data_eur).replace(" ", "").replace("\n", "")).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+    return target_data_usd, target_data_eur
 
 # Create your models here.
 class location (models.Model):
@@ -187,10 +199,23 @@ class Invoice(models.Model):
                 self.invoice_number = f"{filter_prefix}{new_invoice_number:05d}"
         super().save(*args, **kwargs)
         # Mark the associated order as billed
+
         self.order.is_billed = True
         self.order.save()
+        # Decrease the stock amounts
+        for item in self.order.order_items.all():
+            product = item.product
+            product.stockAmount -= item.quantity
+            product.save()
+
 
     def delete(self, *args, **kwargs):
+        # Increase the stock amounts before deleting the invoice
+        for item in self.order.order_items.all():
+            product = item.product
+            product.stockAmount += item.quantity
+            product.save()
+
         # Mark the associated order as unbilled before deleting the invoice
         self.order.is_billed = False
         self.order.save()
@@ -217,17 +242,26 @@ class PaymentReceipt(models.Model):
     TRANSACTION_TYPES = [
         (RECEIPT, 'Tahsilat'),
         (PAYMENT, 'Tediye'),
-    ]   
-    
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     cash_register = models.ForeignKey(CashRegister, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
     expense_item = models.ForeignKey(ExpenseItem, on_delete=models.CASCADE, null=True, blank=True)
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    usd_amount = models.DecimalField(max_digits=10, decimal_places=2, editable=False, null=True)
+    eur_amount = models.DecimalField(max_digits=10, decimal_places=2, editable=False, null=True)
     date = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
+        # Fetch currency rates
+        usd_rate, eur_rate = get_currency_rates()
+
+        # Calculate USD and EUR amounts
+        self.usd_amount = (self.amount / usd_rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        self.eur_amount = (self.amount / eur_rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
         if self.transaction_type == self.RECEIPT:
             self.cash_register.balance += self.amount
             if self.customer:
@@ -249,9 +283,30 @@ class PaymentReceipt(models.Model):
         self.cash_register.save()
         super().save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        if self.transaction_type == self.RECEIPT:
+            self.cash_register.balance -= self.amount
+            if self.customer:
+                # Remove the corresponding credit entry for the customer
+                Credit.objects.filter(
+                    customer=self.customer,
+                    amount=self.amount,
+                    date=self.date
+                ).delete()
+        elif self.transaction_type == self.PAYMENT:
+            self.cash_register.balance += self.amount
+            if self.expense_item:
+                # Remove the corresponding debit entry for the expense item
+                Debit.objects.filter(
+                    expense_item=self.expense_item,
+                    amount=self.amount,
+                    date=self.date
+                ).delete()
+        self.cash_register.save()
+        super().delete(*args, **kwargs)
+
     def __str__(self):
         return f"{self.user} - {self.transaction_type} - {self.amount}"
-
 class Credit(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -267,3 +322,57 @@ class Debit(models.Model):
 
     def __str__(self):
         return f"{self.expense_item} - {self.amount}"
+
+class BuyingInvoice(models.Model):
+    invoice_number = models.CharField(max_length=20, unique=True, blank=True)
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="buying_invoice")
+    invoice_date = models.DateTimeField(auto_now_add=True)
+    billing_address = models.CharField(max_length=250, blank=True)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    total_discount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    tax_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    grand_total = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    grand_total_USD = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    grand_total_EUR = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    status = models.CharField(max_length=50, default='Pending')
+
+    def __str__(self):
+        return self.invoice_number
+
+    def save(self, *args, **kwargs):
+        if not self.invoice_number:
+            current_date = timezone.now()
+            date_prefix = current_date.strftime('%Y%m')
+            prefix = "BYI"
+            filter_prefix = f"{prefix}{date_prefix}"
+            last_invoice = BuyingInvoice.objects.filter(invoice_number__startswith=filter_prefix).order_by('invoice_number').last()
+            if last_invoice:
+                last_invoice_number = int(last_invoice.invoice_number[-5:])
+                new_invoice_number = last_invoice_number + 1
+            else:
+                new_invoice_number = 1
+            self.invoice_number = f"{filter_prefix}{new_invoice_number:05d}"
+
+        super().save(*args, **kwargs)
+        
+        # Mark the associated order as billed
+        self.order.is_billed = True
+        self.order.save()
+
+        # Increase the stock amounts for buying invoice
+        for item in self.order.order_items.all():
+            product = item.product
+            product.stockAmount += item.quantity
+            product.save()
+
+    def delete(self, *args, **kwargs):
+        # Decrease the stock amounts before deleting the buying invoice
+        for item in self.order.order_items.all():
+            product = item.product
+            product.stockAmount -= item.quantity
+            product.save()
+
+        # Mark the associated order as unbilled before deleting the invoice
+        self.order.is_billed = False
+        self.order.save()
+        super().delete(*args, **kwargs)
