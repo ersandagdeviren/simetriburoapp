@@ -16,33 +16,32 @@
         <a href="{% url 'order:customer_list' %}"> <img src="{% static 'new_product.png' %}" width="150px" alt=""></a>
       </div>
       <div class="col-md-8">
-        <body>
-            <h2>Günlük Siparişler</h2>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Tarih</th>
-                        <th>Sipariş</th>
-                        <th>Cari</th>
-                        <th>Kullanıcı</th>
-                        <th>Toplam</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order_with_total in orders_with_totals %}
-                    {%if order_with_total.order.is_billed == False %}
-                    <tr>
-                        <td>{{ order_with_total.order_date }}</td> <!-- Displaying the order date -->
-                        <td><a href="{% url 'order:order_detail' order_with_total.order.order_number %}">{{ order_with_total.order.order_number }}</a></td>
-                        <td>{{ order_with_total.order.customer }}</td>
-                        <td>{{ order_with_total.order.user.username }}</td> <!-- Add this line -->
-                        <td><b>{{ order_with_total.grand_total }} TL</b></td>
-                    </tr>
-                    {% endif %}
-                    {% endfor %}
-                </tbody>
-            </table>
-            <h2>Günlük Faturalar</h2>
+        <h2>Siparişler</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tarih</th>
+                    <th>Sipariş</th>
+                    <th>Cari</th>
+                    <th>Kullanıcı</th>
+                    <th>Toplam</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order_with_total in orders_with_totals %}
+                {%if order_with_total.order.is_billed == False %}
+                <tr>
+                    <td>{{ order_with_total.order_date }}</td> <!-- Displaying the order date -->
+                    <td><a href="{% url 'order:order_detail' order_with_total.order.order_number %}">{{ order_with_total.order.order_number }}</a></td>
+                    <td>{{ order_with_total.order.customer }}</td>
+                    <td>{{ order_with_total.order.user.username }}</td> <!-- Add this line -->
+                    <td><b>{{ order_with_total.grand_total }} TL</b></td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+        <h2>Faturalar</h2>
     <table class="table">
         <thead>
             <tr>
@@ -65,7 +64,44 @@
             {% endfor %}
         </tbody>
     </table>
-        </body>
+
+
+    <h2> Kasa Hareketi</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tarih</th>
+                <th>İşlem</th>
+                <th>Kullanıcı</th>
+                <th>Kasa</th>
+                <th>Ödeme Türü</th>
+                <th>Toplam</th> 
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment_receipt in payment_receipts %}
+                <tr>
+                    <td>{{ payment_receipt.date|date:"d-m-Y" }}</td>
+                    <td><a href="{% url 'order:payment_receipt_detail' payment_receipt.pk %}">{{ payment_receipt.transaction_number }}</td>
+                    <td>{{ payment_receipt.user }}</td>
+                    <td>{{ payment_receipt.cash_register }}</td>
+                    <td>{{ payment_receipt.get_transaction_type_display }}</td>
+                    <td><b>{{ payment_receipt.amount }}TL</b></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
       </div>
       <div class="col-md-2">
         <br>

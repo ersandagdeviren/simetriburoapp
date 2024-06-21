@@ -6,6 +6,7 @@
     <table class="table">
         <thead>
             <tr>
+                <th>Transaction Number</th>
                 <th>User</th>
                 <th>Cash Register</th>
                 <th>Customer</th>
@@ -21,6 +22,7 @@
         <tbody>
             {% for payment_receipt in payment_receipts %}
                 <tr>
+                    <td>{{ payment_receipt.transaction_number }}</td>
                     <td>{{ payment_receipt.user }}</td>
                     <td>{{ payment_receipt.cash_register }}</td>
                     <td>{{ payment_receipt.customer }}</td>

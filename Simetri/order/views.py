@@ -109,6 +109,7 @@ def main(request):
         })
     invoices = Invoice.objects.all().order_by('-invoice_date')
     invoices=invoices.filter(invoice_date__gt=today)
+    payment_receipts = PaymentReceipt.objects.all()
 
     
 
@@ -119,7 +120,8 @@ def main(request):
         "target_data_usd2": target_data_usd2, 
         "target_data_eur2": target_data_eur2,
         "orders_with_totals":orders_with_totals,
-        'invoices':invoices
+        'invoices':invoices,
+        'payment_receipts':payment_receipts
     })
 
 @login_required
@@ -298,7 +300,7 @@ def order_list(request):
         messages.success(request, 'Order has been successfully deleted.')
         return redirect('order:order_list')
 
-    orders = Order.objects.all()
+    orders = Order.objects.all().order_by('-date')
     orders_with_totals = []
 
     for order in orders:

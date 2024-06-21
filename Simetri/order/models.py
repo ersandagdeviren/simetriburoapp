@@ -253,14 +253,35 @@ class PaymentReceipt(models.Model):
     usd_amount = models.DecimalField(max_digits=10, decimal_places=2, editable=False, null=True)
     eur_amount = models.DecimalField(max_digits=10, decimal_places=2, editable=False, null=True)
     date = models.DateTimeField(auto_now_add=True)
-
+    transaction_number = models.CharField(max_length=20, unique=True, blank=True)
     def save(self, *args, **kwargs):
-        # Fetch currency rates
+    # Fetch currency rates
         usd_rate, eur_rate = get_currency_rates()
 
         # Calculate USD and EUR amounts
         self.usd_amount = (self.amount / usd_rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         self.eur_amount = (self.amount / eur_rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+        if not self.transaction_number:
+            current_date = timezone.now()
+            date_prefix = current_date.strftime('%Y%m%d')
+
+            if self.transaction_type == self.RECEIPT and self.customer and self.customer.tax_number:
+                prefix = "THS"
+            elif self.transaction_type == self.PAYMENT:
+                prefix = "ODM"
+            else:
+                prefix = ""
+
+            if prefix:  # Ensures that prefix is set
+                filter_prefix = f"{prefix}{date_prefix}"
+                last_transaction = PaymentReceipt.objects.filter(transaction_number__startswith=filter_prefix).order_by('transaction_number').last()
+                if last_transaction:
+                    last_transaction_number = int(last_transaction.transaction_number[-5:])
+                    new_transaction_number = last_transaction_number + 1
+                else:
+                    new_transaction_number = 1
+                self.transaction_number = f"{filter_prefix}{new_transaction_number:05d}"
 
         if self.transaction_type == self.RECEIPT:
             self.cash_register.balance += self.amount
@@ -282,6 +303,8 @@ class PaymentReceipt(models.Model):
                 )
         self.cash_register.save()
         super().save(*args, **kwargs)
+
+    
 
     def delete(self, *args, **kwargs):
         if self.transaction_type == self.RECEIPT:
@@ -307,6 +330,7 @@ class PaymentReceipt(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.transaction_type} - {self.amount}"
+
 class Credit(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
