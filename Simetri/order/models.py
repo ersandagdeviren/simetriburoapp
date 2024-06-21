@@ -138,7 +138,7 @@ class Order(models.Model):
                 new_order_number = last_order_number + 1
             else:
                 new_order_number = 1
-            self.order_number = f"{date_prefix}{new_order_number:05d}"
+            self.order_number = f"{date_prefix}{new_order_number:08d}"
         super().save(*args, **kwargs)
 
         

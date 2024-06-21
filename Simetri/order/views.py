@@ -9,6 +9,7 @@ from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegist
 from .forms import ProductSearchForm ,PaymentReceiptForm
 from decimal import Decimal, ROUND_HALF_UP
 from django.http import JsonResponse
+import datetime
 
 def get_currency_rates():
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
@@ -57,12 +58,68 @@ def main(request):
     soup2 = BeautifulSoup(webpage2, "html.parser")
     target_data_usd2 = round(float(soup2.find(id="tdUSDSell").get_text().replace(",", ".")), 2)
     target_data_eur2 = round(float(soup2.find(id="tdEURSell").get_text().replace(",", ".")), 2)
+    today=datetime.date.today()
+    orders = Order.objects.filter(date__gt=today)
+    orders_with_totals = []
+
+    for order in orders:
+        total_amount_usd = 0
+        total_amount_eur = 0
+        total_amount_tl = 0
+        total_tax = 0
+        total_discount=0
+
+        for item in order.order_items.all():
+            product = item.product
+            if item.discount_rate == 0:
+                price_in_tl = item.price * item.quantity * item.currency_rate
+                discount=0
+            else:
+                price_in_tl = item.price *(100-item.discount_rate)/100 * item.quantity * item.currency_rate
+                discount=(item.price * item.quantity * item.currency_rate)-(item.price *(100-item.discount_rate)/100 * item.quantity * item.currency_rate)
+            product_tax = price_in_tl * product.tax / 100
+        
+            if str(product.currency) == 'USD':
+                total_amount_usd += item.price * item.quantity
+            else:  # Assuming it's EUR if not USD
+                total_amount_eur += item.price * item.quantity
+
+            total_amount_tl += price_in_tl
+            total_tax += product_tax
+            total_discount+=discount
+
+
+
+        total_amount_tl = round(total_amount_tl, 2)
+        total_amount_eur = round(total_amount_eur, 2)
+        total_amount_usd=round(total_amount_usd, 2)
+        total_discount=round(total_discount, 2)
+        total_tax = round(total_tax, 2)
+        grand_total = total_amount_tl + total_tax
+
+        orders_with_totals.append({
+            'order': order,
+            'total_amount_usd': round(total_amount_usd, 2),
+            'total_amount_eur': total_amount_eur,
+            'total_amount_tl': total_amount_tl,
+            'total_discount':total_discount,
+            'total_tax': total_tax,
+            'grand_total': grand_total,
+            'order_date': order.date.strftime('%d-%m-%Y'),  # Adding the order date
+        })
+    invoices = Invoice.objects.all().order_by('-invoice_date')
+    invoices=invoices.filter(invoice_date__gt=today)
+
+    
+
 
     return render(request, "order/base.html", {
         "target_data_usd": target_data_usd, 
         "target_data_eur": target_data_eur,
         "target_data_usd2": target_data_usd2, 
-        "target_data_eur2": target_data_eur2
+        "target_data_eur2": target_data_eur2,
+        "orders_with_totals":orders_with_totals,
+        'invoices':invoices
     })
 
 @login_required
