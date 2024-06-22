@@ -1,28 +1,28 @@
 {% extends "order/navbar.html" %}
 
 {% block content %}
-    <h2>Payment Receipts</h2>
-    <a href="{% url 'order:payment_receipt_create' %}" class="btn btn-success mb-2">Create new Payment Receipt</a>
+    <h2>Kasa İşlemleri</h2>
+    <a href="{% url 'order:payment_receipt_create' %}" class="btn btn-success mb-2">Yeni Kasa İşlemi</a>
     <table class="table">
         <thead>
             <tr>
-                <th>Transaction Number</th>
-                <th>User</th>
-                <th>Cash Register</th>
-                <th>Customer</th>
-                <th>Expense Item</th>
-                <th>Transaction Type</th>
-                <th>Amount (Original)</th>
-                <th>Amount (USD)</th>
-                <th>Amount (EUR)</th>
-                <th>Date</th>
-                <th>Actions</th>
+                <th>İşlem No</th>
+                <th>Kullanıcı</th>
+                <th>Kasa Hesabı</th>
+                <th>Cari</th>
+                <th>Harcama Kalemi</th>
+                <th>İşlem Türü</th>
+                <th>Miktar TL</th>
+                <th>Miktar USD</th>
+                <th>Miktar EUR</th>
+                <th>Tarih</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
             {% for payment_receipt in payment_receipts %}
                 <tr>
-                    <td>{{ payment_receipt.transaction_number }}</td>
+                    <td><a href="{% url 'order:payment_receipt_detail' payment_receipt.pk %}">{{ payment_receipt.transaction_number }}</a></td>
                     <td>{{ payment_receipt.user }}</td>
                     <td>{{ payment_receipt.cash_register }}</td>
                     <td>{{ payment_receipt.customer }}</td>
@@ -33,10 +33,9 @@
                     <td>{{ payment_receipt.eur_amount }}</td>
                     <td>{{ payment_receipt.date }}</td>
                     <td>
-                        <a href="{% url 'order:payment_receipt_detail' payment_receipt.pk %}" class="btn btn-primary">Details</a>
                         <form method="POST" action="{% url 'order:payment_receipt_delete' payment_receipt.pk %}" style="display:inline;">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-danger">Delete</button>
+                            <button type="submit" class="btn btn-danger">Sil</button>
                         </form>
                     </td>
                 </tr>

@@ -44,3 +44,28 @@ class PaymentReceiptForm(forms.ModelForm):
         self.fields['expense_item'].label = 'Harcama'
         self.fields['transaction_type'].label = 'İşlem Hareketi'
         self.fields['amount'].label = 'Miktar'
+class CustomerForm(forms.ModelForm):
+    class Meta:
+        model = Customer
+        fields = [
+            'customerCode',
+            'companyName',
+            'taxOffice',
+            'tax_number',
+            'name',
+            'middleName',
+            'surname',
+            'city',
+            'district',
+            'adress',
+            'shipping_adress',
+            'country',
+            'email',
+            'telephone',
+            'customerType',
+            'contactPerson',
+            'E_invoice',
+        ]
+        widgets = {
+            'E_invoice': forms.CheckboxInput(),
+        }

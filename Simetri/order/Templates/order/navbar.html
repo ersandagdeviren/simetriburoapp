@@ -16,7 +16,7 @@
           </div>
     <ul class="nav navbar-nav navbar-right">
             {% if user.is_authenticated %}
-            <li> <a href="#">Müşteriler</a></li>
+            <li> <a href="{% url 'order:customer_listed' %}">Müşteriler</a></li>
             <li> <a href="{% url 'order:order_list' %}">Siparişler</a></li>
             <li> <a href="{% url 'order:search' %}">Ürünler</a></li>
             <li> <a href="{% url 'order:payment_receipt_list' %}">Kasa İşlemleri</a></li>

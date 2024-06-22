@@ -14,8 +14,12 @@ urlpatterns = [
     path('order/<str:order_number>/create_invoice/', views.create_invoice, name='create_invoice'),
     path('payment_receipts/', views.payment_receipt_list, name='payment_receipt_list'),
     path('payment_receipts/<int:pk>/', views.payment_receipt_detail, name='payment_receipt_detail'),
+    path('payment_receipt/<int:pk>/edit/', views.payment_receipt_edit, name='payment_receipt_edit'),
     path('payment_receipts/new/', views.payment_receipt_create, name='payment_receipt_create'),
     path('payment_receipt/<int:pk>/delete/', views.payment_receipt_delete, name='payment_receipt_delete'),
     path('customer_search/', views.customer_search, name='customer_search'),
+    path('customers/', views.customer_listed, name='customer_listed'),
     path('product/<int:product_id>/order-history/', views.product_order_history, name='product_order_history'),
+    path('customer_new/', views.customer_new, name="customer_new"),
+    path('customer/<int:customer_id>/financials/', views.customer_financials, name='customer_financials'),
 ]

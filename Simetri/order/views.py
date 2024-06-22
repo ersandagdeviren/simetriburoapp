@@ -1,12 +1,13 @@
 from django.shortcuts import render, redirect,get_object_or_404
+from django.urls import reverse
 from django import forms
 from django.utils import timezone
 import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib import messages
-from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt,Credit,Debit
-from .forms import ProductSearchForm ,PaymentReceiptForm
+from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt
+from .forms import ProductSearchForm ,PaymentReceiptForm,CustomerForm
 from decimal import Decimal, ROUND_HALF_UP
 from django.http import JsonResponse
 import datetime
@@ -109,7 +110,7 @@ def main(request):
         })
     invoices = Invoice.objects.all().order_by('-invoice_date')
     invoices=invoices.filter(invoice_date__gt=today)
-    payment_receipts = PaymentReceipt.objects.all()
+    payment_receipts = PaymentReceipt.objects.all().filter(date__gt=today)
 
     
 
@@ -590,7 +591,18 @@ def payment_receipt_list(request):
 def payment_receipt_detail(request, pk):
     payment_receipt = get_object_or_404(PaymentReceipt, pk=pk)
     return render(request, 'order/payment_receipt_detail.html', {'payment_receipt': payment_receipt})
-
+def payment_receipt_edit(request, pk):
+    payment_receipt = get_object_or_404(PaymentReceipt, pk=pk)
+    
+    if request.method == "POST":
+        form = PaymentReceiptForm(request.POST, instance=payment_receipt)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('order:payment_receipt_detail', args=[payment_receipt.pk]))
+    else:
+        form = PaymentReceiptForm(instance=payment_receipt)
+    
+    return render(request, 'order/payment_receipt_edit.html', {'form': form})
 def payment_receipt_create(request):
     if request.method == 'POST':
         form = PaymentReceiptForm(request.POST)
@@ -630,3 +642,49 @@ def payment_receipt_delete(request, pk):
         payment_receipt.delete()
         return redirect('order:payment_receipt_list')
     return render(request, 'order/payment_receipt_confirm_delete.html', {'payment_receipt': payment_receipt})
+
+def customer_financials(request, customer_id):
+    customer = Customer.objects.get(id=customer_id)
+    invoices = Invoice.objects.filter(order__customer=customer)
+    payments = PaymentReceipt.objects.filter(customer=customer)
+
+    # Calculate the total balance
+    total_invoiced = sum(invoice.grand_total for invoice in invoices)
+    total_payments = sum(payment.amount for payment in payments)
+    total_balance = total_invoiced - total_payments
+
+    context = {
+        'customer': customer,
+        'invoices': invoices,
+        'payments': payments,
+        'total_balance': total_balance
+    }
+    
+    return render(request, 'order/customer_financials.html', context)
+
+def customer_listed(request):
+    customers = Customer.objects.all()
+
+    # Handle search functionality
+    search_query = request.GET.get('search')
+    if search_query:
+        customers = customers.filter(companyName__icontains=search_query)
+
+    context = {
+        'customers': customers
+    }
+    return render(request, 'order/customer_list.html', context)
+
+def customer_new(request):
+    if request.method == 'POST':
+        form = CustomerForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('customer_list')  # Redirect to customer list page after successful submission
+    else:
+        form = CustomerForm()
+
+    context = {
+        'form': form
+    }
+    return render(request, 'order/customer_new.html', context)

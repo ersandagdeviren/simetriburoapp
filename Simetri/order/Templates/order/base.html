@@ -4,16 +4,12 @@
 {% load static %}
     <div class="row">
       <div class="col-md-2 bg-secondary">
-        <br>
         <a href="{% url 'order:customer_list' %}"> <img src="{% static 'new_order.png' %}" width="150px" alt=""></a>
-        <br>
         <a href="{% url 'order:payment_receipt_create' %}"> <img src="{% static 'new_cash.png' %}" width="150px" alt=""></a>
-        <br>
-        <a href="{% url 'order:customer_list' %}"> <img src="{% static 'new_customer.png' %}" width="150px" alt=""></a>
-        <br>
         <a href="{% url 'order:customer_list' %}"> <img src="{% static 'new_buy.png' %}" width="150px" alt=""></a>
-        <br>
+        <a href="{% url 'order:customer_new' %}"> <img src="{% static 'new_customer.png' %}" width="150px" alt=""></a>
         <a href="{% url 'order:customer_list' %}"> <img src="{% static 'new_product.png' %}" width="150px" alt=""></a>
+        
       </div>
       <div class="col-md-8">
         <h2>Siparişler</h2>
@@ -72,7 +68,7 @@
             <tr>
                 <th>Tarih</th>
                 <th>İşlem</th>
-                <th>Kullanıcı</th>
+                <th>Cari</th>
                 <th>Kasa</th>
                 <th>Ödeme Türü</th>
                 <th>Toplam</th> 
@@ -83,7 +79,7 @@
                 <tr>
                     <td>{{ payment_receipt.date|date:"d-m-Y" }}</td>
                     <td><a href="{% url 'order:payment_receipt_detail' payment_receipt.pk %}">{{ payment_receipt.transaction_number }}</td>
-                    <td>{{ payment_receipt.user }}</td>
+                    <td>{{ payment_receipt.customer }}</td>
                     <td>{{ payment_receipt.cash_register }}</td>
                     <td>{{ payment_receipt.get_transaction_type_display }}</td>
                     <td><b>{{ payment_receipt.amount }}TL</b></td>
@@ -91,15 +87,6 @@
             {% endfor %}
         </tbody>
     </table>
-
-
-
-
-
-
-
-
-
 
 
       </div>

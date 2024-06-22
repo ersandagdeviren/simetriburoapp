@@ -1,52 +1,53 @@
 {% extends "order/navbar.html" %}
 
 {% block content %}
-    <h2>Payment Receipt Details</h2>
+    <h2>Makbuz Detayları</h2>
     <table class="table">
         <tr>
-            <th>User:</th>
+            <th>Kullanıcı:</th>
             <td>{{ payment_receipt.user }}</td>
         </tr>
         <tr>
-            <th>Transaction Number:</th>
+            <th>İşlem No:</th>
             <td>{{ payment_receipt.transaction_number }}</td>
         </tr>
         <tr>
-            <th>Cash Register:</th>
+            <th>Kasa Hesabı:</th>
             <td>{{ payment_receipt.cash_register }}</td>
         </tr>
         <tr>
-            <th>Customer:</th>
+            <th>Cari:</th>
             <td>{{ payment_receipt.customer }}</td>
         </tr>
         <tr>
-            <th>Expense Item:</th>
+            <th>Harcama Kalemi:</th>
             <td>{{ payment_receipt.expense_item }}</td>
         </tr>
         <tr>
-            <th>Transaction Type:</th>
+            <th>İşlem Türü:</th>
             <td>{{ payment_receipt.get_transaction_type_display }}</td>
         </tr>
         <tr>
-            <th>Amount (Original):</th>
-            <td>{{ payment_receipt.amount }}</td>
+            <th>Miktar TL:</th>
+            <td>{{ payment_receipt.amount }} TL</td>
+        </tr>   
+        <tr>
+            <th>Miktar USD:</th>
+            <td>${{ payment_receipt.usd_amount }}</td>
         </tr>
         <tr>
-            <th>Amount (USD):</th>
-            <td>{{ payment_receipt.usd_amount }}</td>
+            <th>Miktar EUR:</th>
+            <td>€{{ payment_receipt.eur_amount }}</td>
         </tr>
         <tr>
-            <th>Amount (EUR):</th>
-            <td>{{ payment_receipt.eur_amount }}</td>
-        </tr>
-        <tr>
-            <th>Date:</th>
-            <td>{{ payment_receipt.date }}</td>
+            <th>Tarih:</th>
+            <td>{{ payment_receipt.date|date:"d-m-Y" }}</td>
         </tr>
     </table>
-    <a href="{% url 'order:payment_receipt_list' %}" class="btn btn-secondary">Back to list</a>
+    <a href="{% url 'order:payment_receipt_list' %}" class="btn btn-secondary">Listeye Geri Dön</a>
+    <a href="{% url 'order:payment_receipt_edit' payment_receipt.pk %}" class="btn btn-primary">Düzenle</a>
     <form method="POST" action="{% url 'order:payment_receipt_delete' payment_receipt.pk %}" style="display:inline;">
         {% csrf_token %}
-        <button type="submit" class="btn btn-danger">Delete</button>
+        <button type="submit" class="btn btn-danger">Sil</button>
     </form>
 {% endblock %}

@@ -1,0 +1,43 @@
+{% extends "order/navbar.html" %}
+
+{% block content %}
+
+<h1>Customer List</h1>
+
+    <div class="search-container">
+        <form action="{% url 'order:customer_list' %}" method="get">
+            <input type="text" placeholder="Search by Company Name" name="search">
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Company Name</th>
+                <th>Tax Office</th>
+                <th>City</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for customer in customers %}
+            <tr>
+                <td><a href="{% url 'order:customer_financials' customer_id=customer.id %}">{{ customer.companyName }}</a></td>
+                <td>{{ customer.taxOffice }}</td>
+                <td>{{ customer.city }}</td>
+                <td>{{ customer.email }}</td>
+                <td>
+                    <!-- Add additional actions as needed -->
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
+
+
+
+{% endblock %}

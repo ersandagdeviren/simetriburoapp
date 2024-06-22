@@ -6,8 +6,8 @@
     <table class="table">
         <thead>
             <tr>
-                <th>Tarih</th>
                 <th>Sipariş Numarası</th>
+                <th>Tarih</th>
                 <th>Cari</th>
                 <th>Kullanıcı</th> <!-- Add this line -->
                 <th>Toplam (USD)</th>
@@ -23,9 +23,9 @@
             {% for order_with_total in orders_with_totals %}
             {%if order_with_total.order.is_billed == False %}
             <tr>
-                <td>{{ order_with_total.order_date }}</td> <!-- Displaying the order date -->
                 <td><a href="{% url 'order:order_detail' order_with_total.order.order_number %}">{{ order_with_total.order.order_number }}</a></td>
-                <td><a href="{% url 'order:order_detail' order_with_total.order.order_number %}">{{ order_with_total.order.customer }}</a></td>
+                <td>{{ order_with_total.order_date }}</td>
+                <td>{{ order_with_total.order.customer }}</td>
                 <td>{{ order_with_total.order.user.username }}</td> <!-- Add this line -->
                 <td>${{ order_with_total.total_amount_usd }}</td>
                 <td>€{{ order_with_total.total_amount_eur }}</td>

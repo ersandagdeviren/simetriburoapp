@@ -1,0 +1,68 @@
+{% extends "order/navbar.html" %}
+
+{% block content %}
+
+<body>
+    <h1>Financials for {{ customer.companyName }}</h1>
+
+    <h2>Invoices</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Invoice Number</th>
+                <th>Invoice Date</th>
+                <th>Total Amount</th>
+                <th>Total Discount</th>
+                <th>Tax Amount</th>
+                <th>Grand Total</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for invoice in invoices %}
+            <tr>
+                <td>{{ invoice.invoice_number }}</td>
+                <td>{{ invoice.invoice_date }}</td>
+                <td>{{ invoice.total_amount }}</td>
+                <td>{{ invoice.total_discount }}</td>
+                <td>{{ invoice.tax_amount }}</td>
+                <td>{{ invoice.grand_total }}</td>
+                <td>{{ invoice.status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Payments</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Transaction Number</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>USD Amount</th>
+                <th>EUR Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+            <tr>
+                <td>{{ payment.transaction_number }}</td>
+                <td>{{ payment.date }}</td>
+                <td>{{ payment.transaction_type }}</td>
+                <td>{{ payment.amount }}</td>
+                <td>{{ payment.usd_amount }}</td>
+                <td>{{ payment.eur_amount }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-balance">
+        <p>Total Balance: {{ total_balance }}</p>
+    </div>
+</body>
+</html>
+
+{% endblock %}

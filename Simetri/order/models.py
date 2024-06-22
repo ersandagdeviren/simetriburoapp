@@ -248,17 +248,16 @@ class PaymentReceipt(models.Model):
     cash_register = models.ForeignKey(CashRegister, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
     expense_item = models.ForeignKey(ExpenseItem, on_delete=models.CASCADE, null=True, blank=True)
-    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES, default=RECEIPT)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     usd_amount = models.DecimalField(max_digits=10, decimal_places=2, editable=False, null=True)
     eur_amount = models.DecimalField(max_digits=10, decimal_places=2, editable=False, null=True)
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(default=timezone.now)
     transaction_number = models.CharField(max_length=20, unique=True, blank=True)
+
     def save(self, *args, **kwargs):
-    # Fetch currency rates
         usd_rate, eur_rate = get_currency_rates()
 
-        # Calculate USD and EUR amounts
         self.usd_amount = (self.amount / usd_rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         self.eur_amount = (self.amount / eur_rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
@@ -273,7 +272,7 @@ class PaymentReceipt(models.Model):
             else:
                 prefix = ""
 
-            if prefix:  # Ensures that prefix is set
+            if prefix:
                 filter_prefix = f"{prefix}{date_prefix}"
                 last_transaction = PaymentReceipt.objects.filter(transaction_number__startswith=filter_prefix).order_by('transaction_number').last()
                 if last_transaction:
@@ -285,67 +284,23 @@ class PaymentReceipt(models.Model):
 
         if self.transaction_type == self.RECEIPT:
             self.cash_register.balance += self.amount
-            if self.customer:
-                # Credit entry for the customer
-                Credit.objects.create(
-                    customer=self.customer,
-                    amount=self.amount,
-                    date=self.date
-                )
         elif self.transaction_type == self.PAYMENT:
             self.cash_register.balance -= self.amount
-            if self.expense_item:
-                # Debit entry for the expense item
-                Debit.objects.create(
-                    expense_item=self.expense_item,
-                    amount=self.amount,
-                    date=self.date
-                )
+
         self.cash_register.save()
         super().save(*args, **kwargs)
-
-    
 
     def delete(self, *args, **kwargs):
         if self.transaction_type == self.RECEIPT:
             self.cash_register.balance -= self.amount
-            if self.customer:
-                # Remove the corresponding credit entry for the customer
-                Credit.objects.filter(
-                    customer=self.customer,
-                    amount=self.amount,
-                    date=self.date
-                ).delete()
         elif self.transaction_type == self.PAYMENT:
             self.cash_register.balance += self.amount
-            if self.expense_item:
-                # Remove the corresponding debit entry for the expense item
-                Debit.objects.filter(
-                    expense_item=self.expense_item,
-                    amount=self.amount,
-                    date=self.date
-                ).delete()
+
         self.cash_register.save()
         super().delete(*args, **kwargs)
 
     def __str__(self):
         return f"{self.user} - {self.transaction_type} - {self.amount}"
-
-class Credit(models.Model):
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    date = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.customer} - {self.amount}"
-
-class Debit(models.Model):
-    expense_item = models.ForeignKey(ExpenseItem, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    date = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.expense_item} - {self.amount}"
 
 class BuyingInvoice(models.Model):
     invoice_number = models.CharField(max_length=20, unique=True, blank=True)
