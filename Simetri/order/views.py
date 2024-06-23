@@ -115,7 +115,7 @@ def main(request):
     
 
 
-    return render(request, "order/base.html", {
+    return render(request, "order/index.html", {
         "target_data_usd": target_data_usd, 
         "target_data_eur": target_data_eur,
         "target_data_usd2": target_data_usd2, 
