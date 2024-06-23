@@ -249,7 +249,6 @@ def customer_list(request):
         request.session['products'] = []
         request.session['customers'] = []
 
-        messages.success(request, 'Order completed successfully.')
 
         return render(request, 'order/order_create.html', {
             "product_form": product_form,
@@ -277,7 +276,6 @@ def create_order(request):
             order_item = OrderItem(order=order, product=product, quantity=quantity, price=product.priceSelling)
             order_item.save()
 
-        messages.success(request, 'Order created successfully.')
         request.session['customers'] = []
         request.session['products'] = []
         return redirect('order:order_list')
@@ -298,7 +296,6 @@ def order_list(request):
         order_id = request.POST.get('order_id')
         order = get_object_or_404(Order, id=order_id)
         order.delete()
-        messages.success(request, 'Order has been successfully deleted.')
         return redirect('order:order_list')
 
     orders = Order.objects.all().order_by('-date')
@@ -372,7 +369,6 @@ def order_detail(request, order_number):
             item_id = request.POST.get('delete_item')
             item = get_object_or_404(OrderItem, id=item_id, order=order)
             item.delete()
-            messages.success(request, 'Order item has been successfully deleted.')
             return redirect('order:order_detail', order_number=order.order_number)
         
         elif 'product_add' in request.POST:
@@ -397,7 +393,6 @@ def order_detail(request, order_number):
                 currency_rate=currency_rate,
             )
             order_item.save()
-            messages.success(request, 'Product has been successfully added to the order.')
             return redirect('order:order_detail', order_number=order.order_number)
 
         else:
@@ -413,7 +408,6 @@ def order_detail(request, order_number):
                     item.currency_rate = float(currency_rate)
                     item.discount_rate = float(discount_rate)
                     item.save()
-            messages.success(request, 'Order items have been successfully updated.')
             return redirect('order:order_detail', order_number=order.order_number)
 
     order_items_with_tl = []
@@ -527,7 +521,6 @@ def create_invoice(request, order_number):
     )
     invoice.save()
 
-    messages.success(request, 'Invoice has been successfully created.')
     return redirect('order:invoice_detail', invoice_number=invoice.invoice_number)
 def invoice_list(request):
     if request.method == 'POST' and 'delete_invoice' in request.POST:
@@ -537,7 +530,6 @@ def invoice_list(request):
         invoice.delete()
         order.is_billed = False
         order.save()
-        messages.success(request, 'Invoice has been successfully deleted.')
         return redirect('order:invoice_list')
 
     invoices = Invoice.objects.all().order_by('-invoice_date')

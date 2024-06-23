@@ -31,7 +31,7 @@
                     <td>{{ payment_receipt.amount }}</td>
                     <td>{{ payment_receipt.usd_amount }}</td>
                     <td>{{ payment_receipt.eur_amount }}</td>
-                    <td>{{ payment_receipt.date }}</td>
+                    <td>{{ payment_receipt.date|date:"d-m-Y" }}</td>
                     <td>
                         <form method="POST" action="{% url 'order:payment_receipt_delete' payment_receipt.pk %}" style="display:inline;">
                             {% csrf_token %}
