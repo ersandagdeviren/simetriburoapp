@@ -1,0 +1,112 @@
+{% extends "order/navbar.html" %}
+
+{%block content %}
+{% load static %}
+    <div class="row">
+      <div class="col-md-2 bg-secondary">
+        <br>
+        <a href="{% url 'order:customer_list' %}"> <img src="{% static 'new_order.png' %}" width="150px" alt=""></a>
+        <a href="{% url 'order:payment_receipt_create' %}"> <img src="{% static 'new_cash.png' %}" width="150px" alt=""></a>
+        <a href="{% url 'order:customer_list' %}"> <img src="{% static 'new_buy.png' %}" width="150px" alt=""></a>
+        <a href="{% url 'order:customer_new' %}"> <img src="{% static 'new_customer.png' %}" width="150px" alt=""></a>
+        <a href="{% url 'order:customer_list' %}"> <img src="{% static 'new_product.png' %}" width="150px" alt=""></a>
+        
+      </div>
+      <div class="col-md-8">
+        <h2>Siparişler</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tarih</th>
+                    <th>Sipariş</th>
+                    <th>Cari</th>
+                    <th>Kullanıcı</th>
+                    <th>Toplam</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order_with_total in orders_with_totals %}
+                {%if order_with_total.order.is_billed == False %}
+                <tr>
+                    <td>{{ order_with_total.order_date }}</td> <!-- Displaying the order date -->
+                    <td><a href="{% url 'order:order_detail' order_with_total.order.order_number %}">{{ order_with_total.order.order_number }}</a></td>
+                    <td>{{ order_with_total.order.customer }}</td>
+                    <td>{{ order_with_total.order.user.username }}</td> <!-- Add this line -->
+                    <td><b>{{ order_with_total.grand_total }} TL</b></td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+        <h2>Faturalar</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tarih</th>
+                <th>Fatura</th>
+                <th>Cari</th>
+                <th>Kullanıcı</th>
+                <th>Toplam</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for invoice in invoices %}
+                <tr>
+                    <td>{{ invoice.invoice_date|date:"d-m-Y" }}</td>
+                    <td><a href="{% url 'order:invoice_detail' invoice.invoice_number %}">{{ invoice.invoice_number }}</td>
+                    <td>{{ invoice.order.customer }}</td>
+                    <td>{{ invoice.order.user.username  }}</td>
+                    <td><b>{{ invoice.grand_total }}TL</b></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+    <h2> Kasa Hareketi</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tarih</th>
+                <th>İşlem</th>
+                <th>Cari</th>
+                <th>Kasa</th>
+                <th>Ödeme Türü</th>
+                <th>Toplam</th> 
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment_receipt in payment_receipts %}
+                <tr>
+                    <td>{{ payment_receipt.date|date:"d-m-Y" }}</td>
+                    <td><a href="{% url 'order:payment_receipt_detail' payment_receipt.pk %}">{{ payment_receipt.transaction_number }}</td>
+                    <td>{{ payment_receipt.customer }}</td>
+                    <td>{{ payment_receipt.cash_register }}</td>
+                    <td>{{ payment_receipt.get_transaction_type_display }}</td>
+                    <td><b>{{ payment_receipt.amount }}TL</b></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+      </div>
+      <div class="col-md-2">
+        <br>
+        <h4>Döviz Kurları</h4>
+        <p>Garanti BBVA </p>
+        <p>USD : {{ target_data_usd }}</p>
+        <p>EUR : {{ target_data_eur }}</p>
+        <br>
+        <p>Altınkaynak</p>
+        <p>USD: {{ target_data_usd2}}</p> 
+        <p>EUR: {{ target_data_eur2}} </p>
+      </div>
+    </div>
+  
+
+
+
+
+
+{% endblock %}
