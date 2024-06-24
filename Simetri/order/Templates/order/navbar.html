@@ -12,8 +12,8 @@
 
         <div class="container ">
           <div class="navbar-header">
-            <a class="navbar-brand brand-font" href="{% url 'order:main' %}"> <img src="{% static "simetrilogo.png" %}" width="150px" alt=""></a>
-          </div>
+              <a class="navbar-brand brand-font" href="{% url 'order:main' %}"> <img src="{% static "simetrilogo.png" %}" width="150px" alt=""></a>
+            </div>
     <ul class="nav navbar-nav navbar-right">
             {% if user.is_authenticated %}
             <li> <a href="{% url 'order:customer_listed' %}">Müşteriler</a></li>
