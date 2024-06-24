@@ -67,7 +67,7 @@
         <tbody>
             {% for product in products %}
             <tr>
-                <td>{{ product.description }}</td>
+                <td>{{ product.description|slice:":100" }}</td>
                 <td>{{ product.price }}</td>
                 <td>{{ product.quantity }}</td>
                 <td>
@@ -104,7 +104,7 @@
             <tr>
                 <td><img src="{{ item.photoPath }}" alt="" width="100"></td>
                 <td>{{ item.codeUyum }}</td>
-                <td><a href="{% url 'order:product_order_history' item.id %}">{{ item.description }}</a></td>
+                <td><a href="{% url 'order:product_order_history' item.id %}">{{ item.description|slice:":100" }}</a></td>
                 <td>{{ item.brand }}</td>
                 <td>{{ item.mainCategory }}</td>
                 <td>
