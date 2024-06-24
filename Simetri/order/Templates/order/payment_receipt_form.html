@@ -2,16 +2,14 @@
 
 {% block content %}
   <h2>Kasa İşlemi</h2>
+  <div>
+    <label for="customer_search">Müşteri Ara</label>
+    <input type="text" id="customer_search" name="customer_search">
+    <ul id="customer_results"></ul>
+</div>
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    
-    <div>
-        <label for="customer_search">Müşteri Ara</label>
-        <input type="text" id="customer_search" name="customer_search">
-        <ul id="customer_results"></ul>
-    </div>
-    
     <button type="submit">Kaydet</button>
   </form>
   <a href="{% url 'order:payment_receipt_list' %}">Back to list</a>

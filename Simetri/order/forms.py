@@ -32,7 +32,7 @@ class ProductSessionAddForm(forms.Form):
 class PaymentReceiptForm(forms.ModelForm):
     class Meta:
         model = PaymentReceipt
-        fields = ['transaction_type','cash_register',  'expense_item',  'amount','customer']
+        fields = ['customer','transaction_type','cash_register',  'expense_item',  'amount']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -248,7 +248,7 @@ class PaymentReceipt(models.Model):
     cash_register = models.ForeignKey(CashRegister, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
     expense_item = models.ForeignKey(ExpenseItem, on_delete=models.CASCADE, null=True, blank=True)
-    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES, default=RECEIPT)
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     usd_amount = models.DecimalField(max_digits=10, decimal_places=2, editable=False, null=True)
     eur_amount = models.DecimalField(max_digits=10, decimal_places=2, editable=False, null=True)
