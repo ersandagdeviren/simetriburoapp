@@ -18,7 +18,7 @@
         <tbody>
             {% for invoice in invoices %}
             <tr>
-                <td>{{ invoice.invoice_number }}</td>
+                <td><a href="{% url 'order:invoice_detail' invoice.invoice_number %}">{{ invoice.invoice_number }}</td>
                 <td>{{ invoice.invoice_date|date:"d-m-Y" }}</td>
                 <td>{{ invoice.grand_total }}</td>
 

@@ -12,6 +12,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.http import JsonResponse
 import datetime
 from django.db.models import Q
+from django.http import HttpResponseForbidden
 
 def get_currency_rates():
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
@@ -269,9 +270,9 @@ def create_order(request):
             messages.error(request, 'Customer and products must be selected to create an order.')
             return redirect('order:create_order')
 
-        order = Order(customer_id=customer_id, user=request.user)  # Add user here
+        order = Order(customer_id=customer_id, user=request.user)
         order.save()
-
+        
         for product_id in product_ids:
             product = Product.objects.get(id=product_id)
             quantity = int(request.POST.get(f'quantity_{product_id}', 1))
@@ -287,12 +288,17 @@ def create_order(request):
         customer_name = None
         if customer_selected:
             customer_name = Customer.objects.get(id=customer_selected[0]).companyName
+        
 
         return render(request, 'order/order_create.html', {
             "product_form": product_form,
             "customer_name": customer_name,
             "products": request.session.get('products', [])
         })
+@login_required
+@user_passes_test(is_admin)
+
+
 def order_list(request):
     if request.method == 'POST':
         order_id = request.POST.get('order_id')
@@ -351,11 +357,16 @@ def order_list(request):
 
     return render(request, 'order/order_list.html', {'orders_with_totals': orders_with_totals})
 
-
+@login_required
 def order_detail(request, order_number):
     defaultUSD, defaultEUR = get_currency_rates()
 
     order = get_object_or_404(Order, order_number=order_number)
+
+    if order.customer.user != request.user:
+        return HttpResponseForbidden("You don't have permission to access this info.")
+    
+    
     product_form = ProductSearchForm(request.POST or None)
     productresult = None 
 
@@ -451,6 +462,7 @@ def order_detail(request, order_number):
     })
 
 @login_required
+@user_passes_test(is_admin)
 def create_invoice(request, order_number):
     order = get_object_or_404(Order, order_number=order_number)
     # Check if an invoice already exists for the order
@@ -524,6 +536,8 @@ def create_invoice(request, order_number):
     invoice.save()
 
     return redirect('order:invoice_detail', invoice_number=invoice.invoice_number)
+@login_required
+@user_passes_test(is_admin)
 def invoice_list(request):
     if request.method == 'POST' and 'delete_invoice' in request.POST:
         invoice_id = request.POST.get('invoice_id')
@@ -540,6 +554,9 @@ def invoice_list(request):
 
 def invoice_detail(request, invoice_number):
     invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
+    print(invoice.order.user)
+    if invoice.order.customer.user != request.user:
+        return HttpResponseForbidden("You don't have permission to access this info.")
     order = invoice.order
     order_items_with_tl = []
 
@@ -547,6 +564,7 @@ def invoice_detail(request, invoice_number):
     total_discount = 0
     total_tax = 0
     grand_total = 0
+    
 
     for item in order.order_items.all():
         currency_rate = item.currency_rate
@@ -578,13 +596,21 @@ def invoice_detail(request, invoice_number):
         'order_items_with_tl': order_items_with_tl,
         'grand_total': grand_total,
     })
+@login_required
+@user_passes_test(is_admin)
 def payment_receipt_list(request):
     payment_receipts = PaymentReceipt.objects.all()
     return render(request, 'order/payment_receipt_list.html', {'payment_receipts': payment_receipts})
 
+@login_required
 def payment_receipt_detail(request, pk):
     payment_receipt = get_object_or_404(PaymentReceipt, pk=pk)
+    if payment_receipt.customer.user != request.user:
+        return HttpResponseForbidden("You don't have permission to access this info.")
     return render(request, 'order/payment_receipt_detail.html', {'payment_receipt': payment_receipt})
+
+@login_required
+@user_passes_test(is_admin)
 def payment_receipt_edit(request, pk):
     payment_receipt = get_object_or_404(PaymentReceipt, pk=pk)
     
@@ -597,6 +623,8 @@ def payment_receipt_edit(request, pk):
         form = PaymentReceiptForm(instance=payment_receipt)
     
     return render(request, 'order/payment_receipt_edit.html', {'form': form})
+@login_required
+@user_passes_test(is_admin)
 def payment_receipt_create(request):
     if request.method == 'POST':
         form = PaymentReceiptForm(request.POST)
@@ -611,6 +639,7 @@ def payment_receipt_create(request):
 
 
 @login_required
+@user_passes_test(is_admin)
 def customer_search(request):
     query = request.GET.get('q')
     if query:
@@ -620,6 +649,8 @@ def customer_search(request):
     results = [{'id': customer.id, 'name': customer.companyName} for customer in customers]
     return JsonResponse(results, safe=False)
 
+@login_required
+@user_passes_test(is_admin)
 def product_order_history(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     order_items = OrderItem.objects.filter(product=product, order__is_billed=True).select_related('order__customer').order_by('-order__date')
@@ -629,7 +660,8 @@ def product_order_history(request, product_id):
         'order_items': order_items,
     }
     return render(request, 'order/product_order_history.html', context)
-
+@login_required
+@user_passes_test(is_admin)
 def payment_receipt_delete(request, pk):
     payment_receipt = get_object_or_404(PaymentReceipt, pk=pk)
     if request.method == 'POST':
@@ -637,6 +669,8 @@ def payment_receipt_delete(request, pk):
         return redirect('order:payment_receipt_list')
     return render(request, 'order/payment_receipt_confirm_delete.html', {'payment_receipt': payment_receipt})
 
+@login_required
+@user_passes_test(is_admin)
 def customer_financials(request, customer_id):
     customer = Customer.objects.get(id=customer_id)
     invoices = Invoice.objects.filter(order__customer=customer)
@@ -656,6 +690,8 @@ def customer_financials(request, customer_id):
     
     return render(request, 'order/customer_financials.html', context)
 
+@login_required
+@user_passes_test(is_admin)
 def customer_listed(request):
     customers = Customer.objects.all()
 
@@ -668,7 +704,8 @@ def customer_listed(request):
         'customers': customers
     }
     return render(request, 'order/customer_list.html', context)
-
+@login_required
+@user_passes_test(is_admin)
 def customer_new(request):
     if request.method == 'POST':
         form = CustomerForm(request.POST)
@@ -703,3 +740,4 @@ def user_financial(request):
     }
     
     return render(request, 'order/user_financial.html', context)
+
