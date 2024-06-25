@@ -11,6 +11,7 @@ from .forms import ProductSearchForm ,PaymentReceiptForm,CustomerForm
 from decimal import Decimal, ROUND_HALF_UP
 from django.http import JsonResponse
 import datetime
+from django.db.models import Q
 
 def get_currency_rates():
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
@@ -35,7 +36,7 @@ def search(request):
             productresult = []
 
             if query:
-                productresult = Product.objects.filter(description__icontains=query)
+                productresult = Product.objects.filter(Q(description__icontains=query) | Q(codeUyum__icontains=query)).order_by('-stockAmount')
                 return render(request, "order/product.html", {"form": form, "product": productresult})
             else:
                 return render(request, "order/product.html", {"form": ProductSearchForm()})
@@ -112,6 +113,7 @@ def main(request):
     invoices=invoices.filter(invoice_date__gt=today)
     payment_receipts = PaymentReceipt.objects.all().filter(date__gt=today)
 
+
     
 
 
@@ -168,7 +170,7 @@ def customer_list(request):
         if product_form.is_valid():
             query = product_form.cleaned_data["product_name"]
             if query:
-                productresult = Product.objects.filter(description__icontains=query)
+                productresult = Product.objects.filter(Q(description__icontains=query) | Q(codeUyum__icontains=query)).order_by('-stockAmount')
                 return render(request, 'order/order_create.html', {
                     "product_form": product_form,
                     "product": productresult,
@@ -206,7 +208,7 @@ def customer_list(request):
 
         if product_form.is_valid():
             query = product_form.cleaned_data["product_name"]
-            productresult = Product.objects.filter(description__icontains=query)
+            productresult = Product.objects.filter(Q(description__icontains=query) | Q(codeUyum__icontains=query)).order_by('-stockAmount')
 
         return render(request, 'order/order_create.html', {
             "product_form": product_form,
@@ -225,7 +227,7 @@ def customer_list(request):
 
         if product_form.is_valid():
             query = product_form.cleaned_data["product_name"]
-            productresult = Product.objects.filter(description__icontains=query)
+            productresult = Product.objects.filter(Q(description__icontains=query) | Q(codeUyum__icontains=query)).order_by('-stockAmount')
 
         return render(request, 'order/order_create.html', {
             "product_form": product_form,
@@ -362,7 +364,7 @@ def order_detail(request, order_number):
             if product_form.is_valid():
                 query = product_form.cleaned_data.get("product_name", "")
                 if query:
-                    productresult = Product.objects.filter(description__icontains=query)
+                    productresult = Product.objects.filter(Q(description__icontains=query) | Q(codeUyum__icontains=query)).order_by('-stockAmount')
                 else:
                     productresult = []
         elif 'delete_item' in request.POST:
@@ -680,3 +682,24 @@ def customer_new(request):
         'form': form
     }
     return render(request, 'order/customer_new.html', context)
+
+
+@login_required
+def user_financial(request):
+    customer = get_object_or_404(Customer, user=request.user)
+    invoices = Invoice.objects.filter(order__customer=customer)
+    payments = PaymentReceipt.objects.filter(customer=customer)
+
+    # Calculate the total balance
+    total_invoiced = sum(invoice.grand_total for invoice in invoices)
+    total_payments = sum(payment.amount for payment in payments)
+    total_balance = total_invoiced - total_payments
+
+    context = {
+        'customer': customer,
+        'invoices': invoices,
+        'payments': payments,
+        'total_balance': total_balance
+    }
+    
+    return render(request, 'order/user_financial.html', context)

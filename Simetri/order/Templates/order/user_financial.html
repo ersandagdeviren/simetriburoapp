@@ -1,0 +1,59 @@
+{% extends "order/navbar.html" %}
+
+{% block content %}
+
+<body>
+    <h1>Cari Ekstre: {{ customer.companyName }}</h1>
+
+    <h2>Faturalar</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Fatura No</th>
+                <th>Tarih</th>
+                <th>Toplam Tutar</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            {% for invoice in invoices %}
+            <tr>
+                <td>{{ invoice.invoice_number }}</td>
+                <td>{{ invoice.invoice_date|date:"d-m-Y" }}</td>
+                <td>{{ invoice.grand_total }}</td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Ödemeler</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Makbuz No</th>
+                <th>Tarih</th>
+                <th>Transaction Type</th>
+                <th>Toplam Tutar</th>
+                
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+            <tr>
+                <td>{{ payment.transaction_number }}</td>
+                <td>{{ payment.date }}</td>
+                <td>{{ payment.transaction_type }}</td>
+                <td>{{ payment.amount }}</td>
+               
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Total Balance</h2>
+    <h2>{{ total_balance }}TL</h2>
+</body>
+</html>
+
+{% endblock %}

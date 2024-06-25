@@ -22,6 +22,7 @@
             <li> <a href="{% url 'order:payment_receipt_list' %}">Kasa İşlemleri</a></li>
             <li> <a href="{% url 'order:invoice_list' %}">Faturalar</a></li>
             <li> <a href="{% url 'order:comparison' %}">Tablo</a></li>
+            <li><a href="{% url 'order:user_financial' %}">Hesabım</a></li>
             <li> <a href="{% url 'users:logout' %}">Çıkış</a></li>
             {% else %}
             <li> <a href="{% url 'users:login' %}">Giriş</a> </li>

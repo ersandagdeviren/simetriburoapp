@@ -75,6 +75,7 @@ class category (models.Model):
         return self.category
 
 class Customer(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_customers",blank=True,null=True)
     customerCode = models.CharField(max_length=50)
     companyName = models.CharField(max_length=50)
     taxOffice = models.CharField(max_length=50)
@@ -120,7 +121,7 @@ class Product(models.Model):
 
 class Order(models.Model):
     order_number = models.CharField(max_length=20, unique=True, blank=True)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="customer_orders")
+    customer = models.ForeignKey(Customer, on_delete=models.PROTECT, related_name="customer_orders")
     date = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_orders")
     is_billed = models.BooleanField(default=False)
@@ -246,7 +247,7 @@ class PaymentReceipt(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     cash_register = models.ForeignKey(CashRegister, on_delete=models.CASCADE)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
+    customer = models.ForeignKey(Customer, on_delete=models.PROTECT, null=True, blank=True)
     expense_item = models.ForeignKey(ExpenseItem, on_delete=models.CASCADE, null=True, blank=True)
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
