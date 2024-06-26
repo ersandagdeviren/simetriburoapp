@@ -363,7 +363,8 @@ def order_detail(request, order_number):
 
     order = get_object_or_404(Order, order_number=order_number)
 
-    if order.customer.user != request.user:
+
+    if order.customer.user != request.user and not request.user.is_superuser:
         return HttpResponseForbidden("You don't have permission to access this info.")
     
     
@@ -555,7 +556,7 @@ def invoice_list(request):
 def invoice_detail(request, invoice_number):
     invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
     print(invoice.order.user)
-    if invoice.order.customer.user != request.user:
+    if invoice.order.customer.user != request.user and not request.user.is_superuser:
         return HttpResponseForbidden("You don't have permission to access this info.")
     order = invoice.order
     order_items_with_tl = []
@@ -605,7 +606,7 @@ def payment_receipt_list(request):
 @login_required
 def payment_receipt_detail(request, pk):
     payment_receipt = get_object_or_404(PaymentReceipt, pk=pk)
-    if payment_receipt.customer.user != request.user:
+    if payment_receipt.customer.user != request.user and not request.user.is_superuser:
         return HttpResponseForbidden("You don't have permission to access this info.")
     return render(request, 'order/payment_receipt_detail.html', {'payment_receipt': payment_receipt})
 
