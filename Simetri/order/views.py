@@ -624,6 +624,7 @@ def payment_receipt_edit(request, pk):
         form = PaymentReceiptForm(instance=payment_receipt)
     
     return render(request, 'order/payment_receipt_edit.html', {'form': form})
+
 @login_required
 @user_passes_test(is_admin)
 def payment_receipt_create(request):
@@ -637,7 +638,6 @@ def payment_receipt_create(request):
     else:
         form = PaymentReceiptForm()
     return render(request, 'order/payment_receipt_form.html', {'form': form})
-
 
 @login_required
 @user_passes_test(is_admin)
@@ -661,6 +661,7 @@ def product_order_history(request, product_id):
         'order_items': order_items,
     }
     return render(request, 'order/product_order_history.html', context)
+
 @login_required
 @user_passes_test(is_admin)
 def payment_receipt_delete(request, pk):
@@ -741,4 +742,102 @@ def user_financial(request):
     }
     
     return render(request, 'order/user_financial.html', context)
+@login_required
+def user_order (request):
+    if "products" not in request.session:
+        request.session["products"] = []
 
+    product_form = ProductSearchForm(request.POST)
+    productresult = []  # Initialize productresult
+
+
+
+    if request.method == "POST" and "product_submit" in request.POST:
+        if product_form.is_valid():
+            query = product_form.cleaned_data["product_name"]
+            if query:
+                productresult = Product.objects.filter(Q(description__icontains=query) | Q(codeUyum__icontains=query)).order_by('-stockAmount')
+                return render(request, 'order/user_order.html', {
+                    "product_form": product_form,
+                    "product": productresult,
+                    "products": request.session['products']
+                })
+
+    elif request.method == "POST" and "product_add" in request.POST:
+        product_id = request.POST.get('item_id')
+        new_price = float(Product.objects.get(id=product_id).priceSelling)
+        quantity = request.POST.get('quantity')
+        description = Product.objects.get(id=product_id).description
+        currency=Product.objects.get(id=product_id).currency
+       
+        if str(currency)== 'USD':
+            currency_rate=float(get_currency_rates()[0])
+        if str(currency)== 'EUR':
+            currency_rate=float(get_currency_rates()[1])
+
+        
+
+        product_entry = {
+            'id': product_id,
+            'price': new_price,
+            'quantity': quantity,
+            'description': description,
+            'currency_rate':currency_rate
+        }
+
+        products = request.session.get('products', [])
+        products.append(product_entry)
+        request.session['products'] = products
+
+
+        if product_form.is_valid():
+            query = product_form.cleaned_data["product_name"]
+            productresult = Product.objects.filter(Q(description__icontains=query) | Q(codeUyum__icontains=query)).order_by('-stockAmount')
+
+        return render(request, 'order/user_order.html', {
+            "product_form": product_form,
+            "products": request.session['products'],
+            "product": productresult
+        })  
+
+    elif request.method == "POST" and "delete_product" in request.POST:
+        product_id = request.POST.get('product_id')
+        products = request.session.get('products', [])
+        products = [product for product in products if product['id'] != product_id]
+        request.session['products'] = products
+
+        if product_form.is_valid():
+            query = product_form.cleaned_data["product_name"]
+            productresult = Product.objects.filter(Q(description__icontains=query) | Q(codeUyum__icontains=query)).order_by('-stockAmount')
+
+        return render(request, 'order/user_order.html', {
+            "product_form": product_form,
+            "products": request.session['products'],
+            "product": productresult
+        })
+
+    elif request.method == "POST" and "complete_order" in request.POST:
+        customer_id = get_object_or_404(Customer,user=request.user).pk
+        product_ids = [item['id'] for item in request.session.get('products', [])]
+        quantities = [item['quantity'] for item in request.session.get('products', [])]
+        prices = [item['price'] for item in request.session.get('products', [])]
+        currencies=[item['currency_rate'] for item in request.session.get('products', [])]
+
+        order = Order.objects.create(customer_id=customer_id,user=request.user)
+
+        for product_id, quantity, price, currency_rate in zip(product_ids, quantities, prices,currencies):
+            OrderItem.objects.create(order=order, product_id=product_id, quantity=quantity, price=price,currency_rate=currency_rate,discount_rate=0)
+
+        request.session['products'] = []
+        request.session['customers'] = []
+
+
+        return render(request, 'order/user_order.html', {
+            "product_form": product_form,
+        })
+    else:
+        return render(request, 'order/user_order.html', {
+            "product_form": product_form,
+        })
+
+    

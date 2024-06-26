@@ -25,6 +25,7 @@
                       <li><a href="{% url 'order:comparison' %}">Tablo</a></li>
                   {% else %}
                       <li><a href="{% url 'order:user_financial' %}">Hesabım</a></li>
+                      <li><a href="{% url 'order:user_order' %}">Yeni Sipariş</a></li>
                   {% endif %}
                   <li><a href="{% url 'users:logout' %}">Çıkış</a></li>
               {% else %}
