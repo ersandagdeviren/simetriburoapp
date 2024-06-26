@@ -1,0 +1,98 @@
+{% extends "order/navbar.html" %}
+
+{% block content %}
+<form method="POST">
+    {% csrf_token %}
+    <div class="form-group">
+        {{ product_form.product_name }}
+        <input type="submit" class="btn btn-primary" name="product_submit" value="Ara"
+               style="padding: 4px 8px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+    </div>
+</form>
+
+{% if products %}
+    <h3>Sepete Eklenen Ürünler</h3>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Ürün Açıklaması</th>
+            <th>Fiyat</th>
+            <th>Miktar</th>
+            <th>Sil</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for product in products %}
+            <tr>
+                <td>{{ product.description|slice:":100" }}</td>
+                <td>{{ product.price }}</td>
+                <td>{{ product.quantity }}</td>
+                <td>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        <button type="submit" name="delete_product" class="btn btn-danger">Sil</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+{% if product %}
+    <h3>Ürünler</h3>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Görsel</th>
+            <th>Kod</th>
+            <th>Açıklama</th>
+            <th>Marka</th>
+            <th>Kategori</th>
+            <th>Fiyat</th>
+            <th>Döviz</th>
+            <th>Stok</th>
+            <th>Miktar</th>
+         
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in product %}
+            <tr>
+                <td><img src="{{ item.photoPath }}" alt="" width="100"></td>
+                <td>{{ item.codeUyum }}</td>
+                <td>{{ item.description|slice:":100" }}</td>
+                <td>{{ item.brand }}</td>
+                <td>{{ item.mainCategory }}</td>
+                <td>{{ item.priceSelling }}</td>
+                <td>{{ item.currency }}</td>
+                <td>{{ item.stockAmount }}</td>
+                <td>
+                    {% if item.stockAmount > 0 %}
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            <input type="number" name="quantity" value="1" min="1" max="{{ item.stockAmount }}">
+                            <button type="submit" name="product_add" class="btn btn-success">Ekle</button>
+                        </form>
+                    {% else %}
+                        <span class="text-danger">Stokta Yok</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+<form method="POST">
+    {% csrf_token %}
+    {% if products %}
+        <input type="submit" name="complete_order" value="Siparişi Tamamla" class="btn btn-success">
+    {% else %}
+        <input type="submit" name="complete_order" value="Siparişi Tamamla" class="btn btn-success" disabled style="opacity: 0.5; cursor: not-allowed;">
+    {% endif %}
+</form>
+
+{% endblock %}
