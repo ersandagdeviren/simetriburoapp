@@ -44,10 +44,15 @@
             <td><b>{{ payment_receipt.amount }} TL</b></td>
         </tr>   
     </table>
+
+    {%if order.customer.user == request.user %}
+
+
     <a href="{% url 'order:payment_receipt_list' %}" class="btn btn-secondary">Listeye Geri Dön</a>
     <a href="{% url 'order:payment_receipt_edit' payment_receipt.pk %}" class="btn btn-primary">Düzenle</a>
     <form method="POST" action="{% url 'order:payment_receipt_delete' payment_receipt.pk %}" style="display:inline;">
         {% csrf_token %}
         <button type="submit" class="btn btn-danger">Sil</button>
     </form>
+    {%endif%}
 {% endblock %}

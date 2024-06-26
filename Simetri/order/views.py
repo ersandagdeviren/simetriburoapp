@@ -14,7 +14,7 @@ import datetime
 from django.db.models import Q
 from django.http import HttpResponseForbidden
 
-def get_currency_rates():
+"""
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
     webpage = webpage_response.content
     soup = BeautifulSoup(webpage, "html.parser")
@@ -22,7 +22,16 @@ def get_currency_rates():
     target_data_usd = Decimal(str(target_data_usd).replace(" ", "").replace("\n", "")).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
     target_data_eur = soup.select_one("html > body > div:nth-of-type(3) > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > table > tbody > tr:nth-of-type(2) > td:nth-of-type(3) > div > span").get_text()
     target_data_eur = Decimal(str(target_data_eur).replace(" ", "").replace("\n", "")).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+"""
 
+
+def get_currency_rates():
+
+    webpage_response2 = requests.get('https://www.altinkaynak.com/Doviz/Kur/Guncel')
+    webpage2 = webpage_response2.content
+    soup2 = BeautifulSoup(webpage2, "html.parser")
+    target_data_usd = round(float(soup2.find(id="tdUSDSell").get_text().replace(",", ".")), 2)
+    target_data_eur= round(float(soup2.find(id="tdEURSell").get_text().replace(",", ".")), 2)
     return target_data_usd, target_data_eur
 
 def is_admin(user):
@@ -295,10 +304,9 @@ def create_order(request):
             "customer_name": customer_name,
             "products": request.session.get('products', [])
         })
+    
 @login_required
 @user_passes_test(is_admin)
-
-
 def order_list(request):
     if request.method == 'POST':
         order_id = request.POST.get('order_id')
@@ -555,7 +563,6 @@ def invoice_list(request):
 
 def invoice_detail(request, invoice_number):
     invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
-    print(invoice.order.user)
     if invoice.order.customer.user != request.user and not request.user.is_superuser:
         return HttpResponseForbidden("You don't have permission to access this info.")
     order = invoice.order
@@ -839,5 +846,61 @@ def user_order (request):
         return render(request, 'order/user_order.html', {
             "product_form": product_form,
         })
+@login_required
+def user_order_list(request):
+    if request.method == 'POST':
+        order_id = request.POST.get('order_id')
+        order = get_object_or_404(Order, id=order_id)
+        order.delete()
+        return redirect('order:order_list')
 
-    
+    orders = Order.objects.all().order_by('-date')
+    orders_with_totals = []
+
+    for order in orders:
+        total_amount_usd = 0
+        total_amount_eur = 0
+        total_amount_tl = 0
+        total_tax = 0
+        total_discount=0
+
+        for item in order.order_items.all():
+            product = item.product
+            if item.discount_rate == 0:
+                price_in_tl = item.price * item.quantity * item.currency_rate
+                discount=0
+            else:
+                price_in_tl = item.price *(100-item.discount_rate)/100 * item.quantity * item.currency_rate
+                discount=(item.price * item.quantity * item.currency_rate)-(item.price *(100-item.discount_rate)/100 * item.quantity * item.currency_rate)
+            product_tax = price_in_tl * product.tax / 100
+        
+            if str(product.currency) == 'USD':
+                total_amount_usd += item.price * item.quantity
+            else:  # Assuming it's EUR if not USD
+                total_amount_eur += item.price * item.quantity
+
+            total_amount_tl += price_in_tl
+            total_tax += product_tax
+            total_discount+=discount
+
+
+
+        total_amount_tl = round(total_amount_tl, 2)
+        total_amount_eur = round(total_amount_eur, 2)
+        total_amount_usd=round(total_amount_usd, 2)
+        total_discount=round(total_discount, 2)
+        total_tax = round(total_tax, 2)
+        grand_total = total_amount_tl + total_tax
+
+        orders_with_totals.append({
+            'order': order,
+            'total_amount_usd': round(total_amount_usd, 2),
+            'total_amount_eur': total_amount_eur,
+            'total_amount_tl': total_amount_tl,
+            'total_discount':total_discount,
+            'total_tax': total_tax,
+            'grand_total': grand_total,
+            'order_date': order.date.strftime('%d-%m-%Y'),  # Adding the order date
+        })
+
+    return render(request, 'order/user_order_list.html', {'orders_with_totals': orders_with_totals})
