@@ -42,8 +42,7 @@
             {% for payment in payments %}
             <tr>
                 <td><a href="{% url 'order:payment_receipt_detail' payment.pk %}">{{ payment.transaction_number }}</td>
-                <td>{{ payment.transaction_number }}</td>
-                <td>{{ payment.date }}</td>
+                <td>{{ payment.date|date:"d-m-Y" }}</td>
                 <td>{{ payment.transaction_type }}</td>
                 <td>{{ payment.amount }}</td>
                

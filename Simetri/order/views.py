@@ -904,3 +904,13 @@ def user_order_list(request):
         })
 
     return render(request, 'order/user_order_list.html', {'orders_with_totals': orders_with_totals})
+
+@login_required
+def user_invoice_list(request):
+
+    invoices = Invoice.objects.all().order_by('-invoice_date')
+    for i in invoices:
+        print(i.order.customer.user)
+        print(request.user)
+
+    return render(request, 'order/user_invoice_list.html', {'invoices': invoices})
