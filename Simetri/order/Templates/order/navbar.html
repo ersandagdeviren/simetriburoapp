@@ -24,10 +24,9 @@
                       <li><a href="{% url 'order:invoice_list' %}">Faturalar</a></li>
                       <li><a href="{% url 'order:comparison' %}">Tablo</a></li>
                   {% else %}
-                      <li><a href="{% url 'order:user_order' %}">Yeni Sipariş</a></li>
                       <li><a href="{% url 'order:user_order_list' %}">Siparişlerim</a></li>
                       <li><a href="{% url 'order:user_invoice_list' %}">Faturalarım</a></li>
-                      <li><a href="{% url 'order:user_financial' %}">Hesabım</a></li>
+                      <li><a href="{% url 'order:user_financial' %}">Cari Ekstre</a></li>
                       
                   {% endif %}
                   <li><a href="{% url 'users:logout' %}">Çıkış</a></li>
@@ -41,7 +40,7 @@
   
       </nav>
       <body>
-        <div class="container ">
+        <div class="container">
         {%block content %}
       
       

@@ -17,7 +17,6 @@
                 <th>Toplam İskonto</th>
                 <th>Toplam KDV</th>
                 <th>Genel Toplam</th>
-                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -38,13 +37,6 @@
                 <td>{{ order_with_total.total_discount }} TL</td>
                 <td>{{ order_with_total.total_tax }} TL</td>
                 <td><b>{{ order_with_total.grand_total }} TL</b></td>
-                <td>
-                    <form method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="order_id" value="{{ order_with_total.order.id }}">
-                        <button type="submit" name="delete_order">Sil</button>
-                    </form>
-                </td>
             </tr>
             {% endif %}
             {% endif %}

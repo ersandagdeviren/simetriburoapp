@@ -1,7 +1,7 @@
 {% extends "order/navbar.html" %}
-
 {%block content %}
 {% load static %}
+{%if request.user.is_superuser%}
     <div class="row">
       <div class="col-md-2 bg-secondary">
         <br>
@@ -103,10 +103,19 @@
         <p>EUR: {{ target_data_eur2}} </p>
       </div>
     </div>
-  
+{% endif %}
 
+{%if not request.user.is_superuser%}
 
+<div class="row">
+    <div class="col-md-2 bg-secondary" >
+      <br>
+      <a href="{% url 'order:user_order' %}"> <img src="{% static 'new_order.png' %}" width="150px" alt=""></a>
+      <a href="{% url 'order:payment_receipt_create' %}"> <img src="{% static 'new_cash.png' %}" width="150px" alt=""></a>
+    </div>
 
+<div class="col-md-8">
+    <img src="{% static "simetriflyer.jpeg" %}" width="950px" alt="">
 
-
+{% endif %}
 {% endblock %}

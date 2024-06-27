@@ -13,6 +13,7 @@ from django.http import JsonResponse
 import datetime
 from django.db.models import Q
 from django.http import HttpResponseForbidden
+from django.contrib.auth import get_user_model
 
 """
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
@@ -55,6 +56,7 @@ def search(request):
 
 @login_required
 def main(request):
+    User = get_user_model()
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
     webpage = webpage_response.content
     soup = BeautifulSoup(webpage, "html.parser")
@@ -134,7 +136,8 @@ def main(request):
         "target_data_eur2": target_data_eur2,
         "orders_with_totals":orders_with_totals,
         'invoices':invoices,
-        'payment_receipts':payment_receipts
+        'payment_receipts':payment_receipts,
+        'user':User
     })
 
 @login_required
@@ -270,6 +273,9 @@ def customer_list(request):
             "product_form": product_form,
             "customer_selected": customer_selected,
         })
+    
+
+
 @login_required
 def create_order(request):
     if request.method == "POST" and "create_order" in request.POST:
@@ -907,10 +913,5 @@ def user_order_list(request):
 
 @login_required
 def user_invoice_list(request):
-
     invoices = Invoice.objects.all().order_by('-invoice_date')
-    for i in invoices:
-        print(i.order.customer.user)
-        print(request.user)
-
     return render(request, 'order/user_invoice_list.html', {'invoices': invoices})
