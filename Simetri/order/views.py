@@ -14,6 +14,15 @@ import datetime
 from django.db.models import Q
 from django.http import HttpResponseForbidden
 from django.contrib.auth import get_user_model
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+import time
 
 """
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
@@ -915,3 +924,89 @@ def user_order_list(request):
 def user_invoice_list(request):
     invoices = Invoice.objects.all().order_by('-invoice_date')
     return render(request, 'order/user_invoice_list.html', {'invoices': invoices})
+
+
+def post_invoice(request,invoice_number):
+    invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
+    order = invoice.order
+    order_items_with_tl = []
+
+    total_amount = 0
+    total_discount = 0
+    total_tax = 0
+    grand_total = 0
+    
+
+    for item in order.order_items.all():
+        currency_rate = item.currency_rate
+        discount_amount = item.price * item.discount_rate / 100
+        tl_value = round((item.price - discount_amount) * currency_rate * item.quantity, 2)
+        item_tax = round(tl_value * item.product.tax / 100, 2)
+        item_total = tl_value + item_tax
+
+        total_amount += tl_value
+        total_tax += item_tax
+        total_discount += round(discount_amount * item.quantity * currency_rate, 2)
+        grand_total = total_amount + total_tax
+        item_quantity=item.quantity
+        customer_tax_number=str(item.order.customer.tax_number)
+
+
+    # Configure webdriver options for headless mode
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+
+    # Set up the webdriver using webdriver_manager
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), ) #options=chrome_options
+
+    try:
+    # Open the login page
+        driver.get('https://portal.smartdonusum.com/accounting/login')
+
+        # Locate the username and password fields
+        username_field = driver.find_element(By.CSS_SELECTOR, '#username')
+        password_field = driver.find_element(By.CSS_SELECTOR, '#password')
+
+        # Enter the username and password
+        username_field.send_keys('admin_005256')
+        password_field.send_keys('x&2U*bnD')
+        # Submit the form
+        password_field.send_keys(Keys.RETURN)
+
+        # Wait for the login process to complete
+        time.sleep(5)
+
+        # Click on the specified elements
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#style-7 > ul > li:nth-child(5) > a'))).click()
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#pagesTransformation > ul > li:nth-child(1) > a'))).click()
+
+        # Wait for the input field to be visible and send the number
+        input_field = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, '#react-select-4--value > div.Select-input > input')))
+        input_field.send_keys(customer_tax_number)
+        time.sleep(3)
+        input_field.send_keys(Keys.TAB)
+
+
+        #for loop for product add will be added
+
+
+    finally:
+        pass
+
+
+'''
+
+    return render(request, 'order/invoice_detail.html', {
+        'invoice': invoice,
+        'order': order,
+        'total_amount': total_amount,
+        'total_tax': total_tax,
+        'total_discount': total_discount,
+        'order_items_with_tl': order_items_with_tl,
+        'grand_total': grand_total,
+    })
+
+
+'''
