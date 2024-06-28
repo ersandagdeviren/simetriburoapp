@@ -23,6 +23,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import time
+from selenium.common.exceptions import NoSuchElementException
 
 """
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
@@ -146,7 +147,6 @@ def main(request):
         "orders_with_totals":orders_with_totals,
         'invoices':invoices,
         'payment_receipts':payment_receipts,
-        'user':User
     })
 
 @login_required
@@ -927,6 +927,7 @@ def user_invoice_list(request):
 
 
 def post_invoice(request,invoice_number):
+    invoices = Invoice.objects.all().order_by('-invoice_date')
     invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
     order = invoice.order
     order_items_with_tl = []
@@ -936,6 +937,9 @@ def post_invoice(request,invoice_number):
     total_tax = 0
     grand_total = 0
     
+    products=[]
+    product_price=[]
+    product_quantity=[]
 
     for item in order.order_items.all():
         currency_rate = item.currency_rate
@@ -943,6 +947,11 @@ def post_invoice(request,invoice_number):
         tl_value = round((item.price - discount_amount) * currency_rate * item.quantity, 2)
         item_tax = round(tl_value * item.product.tax / 100, 2)
         item_total = tl_value + item_tax
+        products.append(item.product.description)
+        product_price.append((item.price - discount_amount) * currency_rate)
+        product_quantity.append(item.quantity)
+
+
 
         total_amount += tl_value
         total_tax += item_tax
@@ -964,6 +973,7 @@ def post_invoice(request,invoice_number):
     try:
     # Open the login page
         driver.get('https://portal.smartdonusum.com/accounting/login')
+        time.sleep(10)
 
         # Locate the username and password fields
         username_field = driver.find_element(By.CSS_SELECTOR, '#username')
@@ -987,26 +997,29 @@ def post_invoice(request,invoice_number):
         input_field.send_keys(customer_tax_number)
         time.sleep(3)
         input_field.send_keys(Keys.TAB)
-
-
-        #for loop for product add will be added
-
-
+        try:
+            pop_up_button = WebDriverWait(driver, 5).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "#react > div > div:nth-child(1) > div.wrapper > div.main-panel > div.content > div > div:nth-child(1) > div.sweet-alert > p > span:nth-child(2) > button"))
+            )
+            pop_up_button.click()
+        except NoSuchElementException:
+            pass
+        # Wait for the input field to be visible and send the number
+        for i in range(len(products)):
+            item_name_field = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, f'#itemName_{i}')))
+            item_name_field.send_keys(str(products[i]))
+            item_name_field.send_keys(Keys.TAB)
+            item_name_field = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, f'#quantity_{i}')))
+            item_name_field.clear()
+            item_name_field.send_keys(str(product_quantity[i]))
+            item_name_field.send_keys(Keys.TAB)
+            item_name_field = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, f'#unitPrice_{i}')))
+            item_name_field.clear()
+            item_name_field.send_keys(str(product_price[i]).replace('.',','))
+            item_name_field.send_keys(Keys.TAB)
+            if i == len(products)-1:
+                break
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#react > div > div:nth-child(1) > div.wrapper > div.main-panel > div.content > div > div.col-sm-12.satirBasi > div.col-sm-12.baseDashboard > div > div.card-header > div > div.col-sm-9 > div > div:nth-child(2) > button'))).click()
     finally:
         pass
-
-
-'''
-
-    return render(request, 'order/invoice_detail.html', {
-        'invoice': invoice,
-        'order': order,
-        'total_amount': total_amount,
-        'total_tax': total_tax,
-        'total_discount': total_discount,
-        'order_items_with_tl': order_items_with_tl,
-        'grand_total': grand_total,
-    })
-
-
-'''
+    return render(request, 'order/invoice_list.html', {'invoices': invoices})

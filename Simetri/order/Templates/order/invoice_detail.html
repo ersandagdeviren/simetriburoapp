@@ -46,7 +46,7 @@
     <h5>Toplam KDV: {{ total_tax }} TL</h5>
     <h5>Genel Toplam: {{ grand_total }} TL</h5>
 
-    <a href="{% url 'order:order_list' %}" class="btn btn-primary">Siparişlere Dön</a>
+    <a href="{% url 'order:post_invoice' invoice.invoice_number %}" class="btn btn-primary">Smart'a Taşı</a>
     {% else %}
     <h1>Fatura Detayları silinmiştir</h1>
     {% endif %}
