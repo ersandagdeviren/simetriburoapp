@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import unit, Product, brand, currency, mainCategory, category, location, Customer, currencyRate, taxoffice, Order, OrderItem, Invoice, CashRegister, ExpenseItem, PaymentReceipt, BuyingInvoice
+from .models import unit, Product, brand, currency, mainCategory, category, location, Customer, currencyRate, taxoffice, Order, OrderItem, Invoice, CashRegister, ExpenseItem, PaymentReceipt, BuyingInvoice,CustomerUpdateRequest
 
 admin.site.register(unit)
 admin.site.register(Product)
@@ -17,6 +17,8 @@ admin.site.register(Invoice)
 admin.site.register(CashRegister)
 admin.site.register(ExpenseItem)
 admin.site.register(BuyingInvoice)
+admin.site.register(CustomerUpdateRequest)
+
 
 class PaymentReceiptAdmin(admin.ModelAdmin):
     list_display = ('user', 'cash_register', 'customer', 'transaction_type', 'amount', 'usd_amount', 'eur_amount', 'date', 'transaction_number')

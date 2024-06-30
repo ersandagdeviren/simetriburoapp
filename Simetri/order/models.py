@@ -356,3 +356,12 @@ class BuyingInvoice(models.Model):
         self.order.is_billed = False
         self.order.save()
         super().delete(*args, **kwargs)
+
+class CustomerUpdateRequest(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='update_requests')
+    updated_data = models.JSONField()
+    approved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Update Request for {self.customer}'

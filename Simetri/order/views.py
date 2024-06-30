@@ -6,8 +6,8 @@ import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib import messages
-from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt
-from .forms import ProductSearchForm ,PaymentReceiptForm,CustomerForm
+from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt, CustomerUpdateRequest
+from .forms import ProductSearchForm ,PaymentReceiptForm,CustomerForm, CustomerUpdateRequestForm
 from decimal import Decimal, ROUND_HALF_UP
 from django.http import JsonResponse
 import datetime
@@ -24,6 +24,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 from selenium.common.exceptions import NoSuchElementException
+
 
 """
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
@@ -57,16 +58,23 @@ def search(request):
             productresult = []
 
             if query:
-                productresult = Product.objects.filter(Q(description__icontains=query) | Q(codeUyum__icontains=query)).order_by('-stockAmount')
+                # Split the query into individual words
+                query_words = query.split()
+                # Create a Q object to combine conditions
+                q_objects = Q()
+                for word in query_words:
+                    # Update the Q object with each word
+                    q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+                
+                # Filter products based on the Q object
+                productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
                 return render(request, "order/product.html", {"form": form, "product": productresult})
             else:
                 return render(request, "order/product.html", {"form": ProductSearchForm()})
     else:
         return render(request, "order/product.html", {"form": ProductSearchForm()})
-
 @login_required
 def main(request):
-    User = get_user_model()
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
     webpage = webpage_response.content
     soup = BeautifulSoup(webpage, "html.parser")
@@ -192,7 +200,16 @@ def customer_list(request):
         if product_form.is_valid():
             query = product_form.cleaned_data["product_name"]
             if query:
-                productresult = Product.objects.filter(Q(description__icontains=query) | Q(codeUyum__icontains=query)).order_by('-stockAmount')
+                # Split the query into individual words
+                query_words = query.split()
+                # Create a Q object to combine conditions
+                q_objects = Q()
+                for word in query_words:
+                    # Update the Q object with each word
+                    q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+                
+                # Filter products based on the Q object
+                productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
                 return render(request, 'order/order_create.html', {
                     "product_form": product_form,
                     "product": productresult,
@@ -230,14 +247,26 @@ def customer_list(request):
 
         if product_form.is_valid():
             query = product_form.cleaned_data["product_name"]
-            productresult = Product.objects.filter(Q(description__icontains=query) | Q(codeUyum__icontains=query)).order_by('-stockAmount')
+            productresult = []
+            
+            if query:
+                # Split the query into individual words
+                query_words = query.split()
+                # Create a Q object to combine conditions
+                q_objects = Q()
+                for word in query_words:
+                    # Update the Q object with each word
+                    q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+                
+                # Filter products based on the Q object
+                productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
 
-        return render(request, 'order/order_create.html', {
-            "product_form": product_form,
-            "customer_name": customer_name,
-            "products": request.session['products'],
-            "product": productresult
-        })  
+            return render(request, 'order/order_create.html', {
+                "product_form": product_form,
+                "customer_name": customer_name,
+                "products": request.session['products'],
+                "product": productresult
+            })
 
     elif request.method == "POST" and "delete_product" in request.POST:
         product_id = request.POST.get('product_id')
@@ -249,14 +278,26 @@ def customer_list(request):
 
         if product_form.is_valid():
             query = product_form.cleaned_data["product_name"]
-            productresult = Product.objects.filter(Q(description__icontains=query) | Q(codeUyum__icontains=query)).order_by('-stockAmount')
+            productresult = []
 
-        return render(request, 'order/order_create.html', {
-            "product_form": product_form,
-            "customer_name": customer_name,
-            "products": request.session['products'],
-            "product": productresult
-        })
+            if query:
+                # Split the query into individual words
+                query_words = query.split()
+                # Create a Q object to combine conditions
+                q_objects = Q()
+                for word in query_words:
+                    # Update the Q object with each word
+                    q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+                
+                # Filter products based on the Q object
+                productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
+
+            return render(request, 'order/order_create.html', {
+                "product_form": product_form,
+                "customer_name": customer_name,
+                "products": request.session['products'],
+                "product": productresult
+            })
 
     elif request.method == "POST" and "complete_order" in request.POST:
         customer_id = request.session.get('customers')[0]
@@ -399,7 +440,16 @@ def order_detail(request, order_number):
             if product_form.is_valid():
                 query = product_form.cleaned_data.get("product_name", "")
                 if query:
-                    productresult = Product.objects.filter(Q(description__icontains=query) | Q(codeUyum__icontains=query)).order_by('-stockAmount')
+                    # Split the query into individual words
+                    query_words = query.split()
+                    # Create a Q object to combine conditions
+                    q_objects = Q()
+                    for word in query_words:
+                        # Update the Q object with each word
+                        q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+                    
+                    # Filter products based on the Q object
+                    productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
                 else:
                     productresult = []
         elif 'delete_item' in request.POST:
@@ -578,6 +628,7 @@ def invoice_list(request):
 
 def invoice_detail(request, invoice_number):
     invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
+    
     if invoice.order.customer.user != request.user and not request.user.is_superuser:
         return HttpResponseForbidden("You don't have permission to access this info.")
     order = invoice.order
@@ -778,7 +829,16 @@ def user_order (request):
         if product_form.is_valid():
             query = product_form.cleaned_data["product_name"]
             if query:
-                productresult = Product.objects.filter(Q(description__icontains=query) | Q(codeUyum__icontains=query)).order_by('-stockAmount')
+                # Split the query into individual words
+                query_words = query.split()
+                # Create a Q object to combine conditions
+                q_objects = Q()
+                for word in query_words:
+                    # Update the Q object with each word
+                    q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+                
+                # Filter products based on the Q object
+                productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
                 return render(request, 'order/user_order.html', {
                     "product_form": product_form,
                     "product": productresult,
@@ -814,13 +874,25 @@ def user_order (request):
 
         if product_form.is_valid():
             query = product_form.cleaned_data["product_name"]
-            productresult = Product.objects.filter(Q(description__icontains=query) | Q(codeUyum__icontains=query)).order_by('-stockAmount')
+            productresult = []
 
-        return render(request, 'order/user_order.html', {
-            "product_form": product_form,
-            "products": request.session['products'],
-            "product": productresult
-        })  
+            if query:
+                # Split the query into individual words
+                query_words = query.split()
+                # Create a Q object to combine conditions
+                q_objects = Q()
+                for word in query_words:
+                    # Update the Q object with each word
+                    q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+                
+                # Filter products based on the Q object
+                productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
+
+            return render(request, 'order/user_order.html', {
+                "product_form": product_form,
+                "products": request.session['products'],
+                "product": productresult
+            })
 
     elif request.method == "POST" and "delete_product" in request.POST:
         product_id = request.POST.get('product_id')
@@ -830,14 +902,25 @@ def user_order (request):
 
         if product_form.is_valid():
             query = product_form.cleaned_data["product_name"]
-            productresult = Product.objects.filter(Q(description__icontains=query) | Q(codeUyum__icontains=query)).order_by('-stockAmount')
+            productresult = []
+
+            if query:
+                # Split the query into individual words
+                query_words = query.split()
+                # Create a Q object to combine conditions
+                q_objects = Q()
+                for word in query_words:
+                    # Update the Q object with each word
+                    q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+                
+                # Filter products based on the Q object
+                productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
 
         return render(request, 'order/user_order.html', {
             "product_form": product_form,
             "products": request.session['products'],
             "product": productresult
         })
-
     elif request.method == "POST" and "complete_order" in request.POST:
         customer_id = get_object_or_404(Customer,user=request.user).pk
         product_ids = [item['id'] for item in request.session.get('products', [])]
@@ -1005,6 +1088,11 @@ def post_invoice(request,invoice_number):
         except NoSuchElementException:
             pass
         # Wait for the input field to be visible and send the number
+        print(products)
+        print(product_price)
+        print(product_quantity)
+        print(len(products))
+
         for i in range(len(products)):
             item_name_field = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, f'#itemName_{i}')))
             item_name_field.send_keys(str(products[i]))
@@ -1020,6 +1108,46 @@ def post_invoice(request,invoice_number):
             if i == len(products)-1:
                 break
             WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#react > div > div:nth-child(1) > div.wrapper > div.main-panel > div.content > div > div.col-sm-12.satirBasi > div.col-sm-12.baseDashboard > div > div.card-header > div > div.col-sm-9 > div > div:nth-child(2) > button'))).click()
+            time.sleep(1)
+        time.sleep(10)
     finally:
         pass
     return render(request, 'order/invoice_list.html', {'invoices': invoices})
+
+@login_required
+def customer_update_request_view(request, pk):
+    customer = get_object_or_404(Customer, user_id=pk)
+
+    if request.method == 'POST':
+        form = CustomerForm(request.POST, instance=customer)    
+        if form.is_valid():
+            updated_data = form.cleaned_data
+            update_request = CustomerUpdateRequest(
+                customer=customer,
+                updated_data=updated_data
+            )
+            update_request.save()
+            return redirect('order/index.html', pk=customer.pk)
+    else:
+        form = CustomerForm(instance=customer)
+    
+    return render(request, 'order/customer_update_request.html', {'form': form, 'customer': customer})
+
+@user_passes_test(lambda u: u.is_superuser)
+def approve_customer_update_view(request, pk):
+    update_request = get_object_or_404(CustomerUpdateRequest, pk=pk)
+    if request.method == 'POST':
+        if 'approve' in request.POST:
+            for field, value in update_request.updated_data.items():
+                setattr(update_request.customer, field, value)
+            update_request.customer.save()
+            update_request.approved = True
+            update_request.save()
+            return redirect('update_requests_list')
+    
+    return render(request, 'order/approve_customer_update.html', {'update_request': update_request})
+
+@user_passes_test(lambda u: u.is_superuser)
+def invoice_publish(request,invoice_number):
+    invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
+    return render(request, "order/invoice_publish.html",{'invoice':invoice})

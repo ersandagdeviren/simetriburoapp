@@ -28,11 +28,11 @@
             <tr>
                 <td><img src="{{ item.photoPath }}" alt="" width="100"></td>
                 <td>{{ item.codeUyum }}</td>
-                <td><a href="{% url 'order:product_order_history' item.id %}">{{ item.description|slice:":100" }}</a></td>
+                <td>{{ item.description|slice:":100" }}</td>
                 <td>{{ item.unit }}</td>
                 <td>{{ item.brand }}</td>
                 <td>{{ item.mainCategory }}</td>
-                <td>{{item.currency}} {{ item.priceSelling }}</td>
+                <td><a href="{% url 'order:product_order_history' item.id %}">{{item.currency}} {{ item.priceSelling }}</a></td>
                 <td>{{ item.stockAmount }}</td>
                 <td></td>
 

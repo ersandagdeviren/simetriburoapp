@@ -1,5 +1,6 @@
 from django import forms
 from .models import Customer, Product , Order, PaymentReceipt
+from .models import CustomerUpdateRequest
 
 
 class CustomerForm(forms.ModelForm):
@@ -69,3 +70,12 @@ class CustomerForm(forms.ModelForm):
         widgets = {
             'E_invoice': forms.CheckboxInput(),
         }
+
+class CustomerUpdateRequestForm(forms.ModelForm):
+    class Meta:
+        model = CustomerUpdateRequest
+        fields = ['updated_data']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['updated_data'].widget = forms.HiddenInput()
