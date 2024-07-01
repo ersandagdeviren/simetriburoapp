@@ -23,7 +23,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import time
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException ,TimeoutException
 
 
 """
@@ -261,12 +261,12 @@ def customer_list(request):
                 # Filter products based on the Q object
                 productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
 
-            return render(request, 'order/order_create.html', {
-                "product_form": product_form,
-                "customer_name": customer_name,
-                "products": request.session['products'],
-                "product": productresult
-            })
+        return render(request, 'order/order_create.html', {
+            "product_form": product_form,
+            "customer_name": customer_name,
+            "products": request.session['products'],
+            "product": productresult
+        })
 
     elif request.method == "POST" and "delete_product" in request.POST:
         product_id = request.POST.get('product_id')
@@ -888,11 +888,11 @@ def user_order (request):
                 # Filter products based on the Q object
                 productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
 
-            return render(request, 'order/user_order.html', {
-                "product_form": product_form,
-                "products": request.session['products'],
-                "product": productresult
-            })
+        return render(request, 'order/user_order.html', {
+            "product_form": product_form,
+            "products": request.session['products'],
+            "product": productresult
+        })
 
     elif request.method == "POST" and "delete_product" in request.POST:
         product_id = request.POST.get('product_id')
@@ -1008,7 +1008,7 @@ def user_invoice_list(request):
     invoices = Invoice.objects.all().order_by('-invoice_date')
     return render(request, 'order/user_invoice_list.html', {'invoices': invoices})
 
-
+@user_passes_test(lambda u: u.is_superuser)
 def post_invoice(request,invoice_number):
     invoices = Invoice.objects.all().order_by('-invoice_date')
     invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
@@ -1054,7 +1054,7 @@ def post_invoice(request,invoice_number):
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), ) #options=chrome_options
 
     try:
-    # Open the login page
+        # Open the login page
         driver.get('https://portal.smartdonusum.com/accounting/login')
         time.sleep(10)
 
@@ -1076,17 +1076,19 @@ def post_invoice(request,invoice_number):
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#pagesTransformation > ul > li:nth-child(1) > a'))).click()
 
         # Wait for the input field to be visible and send the number
-        input_field = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, '#react-select-4--value > div.Select-input > input')))
+        input_field = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.CSS_SELECTOR, '#react-select-4--value > div.Select-input > input')))
         input_field.send_keys(customer_tax_number)
         time.sleep(3)
         input_field.send_keys(Keys.TAB)
+
         try:
             pop_up_button = WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "#react > div > div:nth-child(1) > div.wrapper > div.main-panel > div.content > div > div:nth-child(1) > div.sweet-alert > p > span:nth-child(2) > button"))
             )
             pop_up_button.click()
-        except NoSuchElementException:
-            pass
+        except (TimeoutException, NoSuchElementException):
+            print("No popup appeared")
+
         # Wait for the input field to be visible and send the number
         print(products)
         print(product_price)
@@ -1094,25 +1096,26 @@ def post_invoice(request,invoice_number):
         print(len(products))
 
         for i in range(len(products)):
-            item_name_field = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, f'#itemName_{i}')))
+            item_name_field = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.CSS_SELECTOR, f'#itemName_{i}')))
             item_name_field.send_keys(str(products[i]))
             item_name_field.send_keys(Keys.TAB)
-            item_name_field = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, f'#quantity_{i}')))
+            item_name_field = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.CSS_SELECTOR, f'#quantity_{i}')))
             item_name_field.clear()
             item_name_field.send_keys(str(product_quantity[i]))
             item_name_field.send_keys(Keys.TAB)
-            item_name_field = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, f'#unitPrice_{i}')))
+            item_name_field = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.CSS_SELECTOR, f'#unitPrice_{i}')))
             item_name_field.clear()
-            item_name_field.send_keys(str(product_price[i]).replace('.',','))
+            item_name_field.send_keys(str(product_price[i]).replace('.', ','))
             item_name_field.send_keys(Keys.TAB)
-            if i == len(products)-1:
+            if i == len(products) - 1:
                 break
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#react > div > div:nth-child(1) > div.wrapper > div.main-panel > div.content > div > div.col-sm-12.satirBasi > div.col-sm-12.baseDashboard > div > div.card-header > div > div.col-sm-9 > div > div:nth-child(2) > button'))).click()
+            WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#react > div > div:nth-child(1) > div.wrapper > div.main-panel > div.content > div > div.col-sm-12.satirBasi > div.col-sm-12.baseDashboard > div > div.card-header > div > div.col-sm-9 > div > div:nth-child(2) > button'))).click()
             time.sleep(1)
         time.sleep(10)
     finally:
         pass
-    return render(request, 'order/invoice_list.html', {'invoices': invoices})
+
+    return render(request, 'order/invoice_publish_success.html', {'invoices': invoices})
 
 @login_required
 def customer_update_request_view(request, pk):
@@ -1151,3 +1154,4 @@ def approve_customer_update_view(request, pk):
 def invoice_publish(request,invoice_number):
     invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
     return render(request, "order/invoice_publish.html",{'invoice':invoice})
+
