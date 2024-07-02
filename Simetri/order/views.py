@@ -171,7 +171,7 @@ def customer_list(request):
 
     customer_list = []
     customer_selected = request.session['customers']
-    product_form = ProductSearchForm(request.POST)
+    product_form = ProductSearchForm(request.POST or None)
     productresult = []  # Initialize productresult
 
     if request.method == "POST" and "customer_searched" in request.POST:
@@ -222,21 +222,19 @@ def customer_list(request):
         new_price = request.POST.get('new_price')
         quantity = request.POST.get('quantity')
         description = Product.objects.get(id=product_id).description
-        currency=Product.objects.get(id=product_id).currency
+        currency = Product.objects.get(id=product_id).currency
 
-        if str(currency)== 'USD':
-            currency_rate=float(get_currency_rates()[0])
-        if str(currency)== 'EUR':
-            currency_rate=float(get_currency_rates()[1])
-
-        
+        if str(currency) == 'USD':
+            currency_rate = float(get_currency_rates()[0])
+        if str(currency) == 'EUR':
+            currency_rate = float(get_currency_rates()[1])
 
         product_entry = {
             'id': product_id,
             'price': new_price,
             'quantity': quantity,
             'description': description,
-            'currency_rate':currency_rate
+            'currency_rate': currency_rate
         }
 
         products = request.session.get('products', [])
@@ -292,28 +290,27 @@ def customer_list(request):
                 # Filter products based on the Q object
                 productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
 
-            return render(request, 'order/order_create.html', {
-                "product_form": product_form,
-                "customer_name": customer_name,
-                "products": request.session['products'],
-                "product": productresult
-            })
+        return render(request, 'order/order_create.html', {
+            "product_form": product_form,
+            "customer_name": customer_name,
+            "products": request.session['products'],
+            "product": productresult
+        })
 
     elif request.method == "POST" and "complete_order" in request.POST:
         customer_id = request.session.get('customers')[0]
         product_ids = [item['id'] for item in request.session.get('products', [])]
         quantities = [item['quantity'] for item in request.session.get('products', [])]
         prices = [item['price'] for item in request.session.get('products', [])]
-        currencies=[item['currency_rate'] for item in request.session.get('products', [])]
+        currencies = [item['currency_rate'] for item in request.session.get('products', [])]
 
-        order = Order.objects.create(customer_id=customer_id,user=request.user)
+        order = Order.objects.create(customer_id=customer_id, user=request.user)
 
-        for product_id, quantity, price, currency_rate in zip(product_ids, quantities, prices,currencies):
-            OrderItem.objects.create(order=order, product_id=product_id, quantity=quantity, price=price,currency_rate=currency_rate,discount_rate=0)
+        for product_id, quantity, price, currency_rate in zip(product_ids, quantities, prices, currencies):
+            OrderItem.objects.create(order=order, product_id=product_id, quantity=quantity, price=price, currency_rate=currency_rate, discount_rate=0)
 
         request.session['products'] = []
         request.session['customers'] = []
-
 
         return render(request, 'order/order_create.html', {
             "product_form": product_form,
@@ -323,7 +320,6 @@ def customer_list(request):
             "product_form": product_form,
             "customer_selected": customer_selected,
         })
-    
 
 
 @login_required
@@ -543,7 +539,7 @@ def create_invoice(request, order_number):
     if hasattr(order, 'invoice'):
         messages.error(request, 'Invoice already exists for this order.')
         return redirect('order:order_detail', order_number=order_number)
-
+    
     total_amount = 0
     total_discount = 0
     total_tax = 0
@@ -558,6 +554,7 @@ def create_invoice(request, order_number):
     grand_total_EUR = 0
 
     for item in order.order_items.all():
+        
         if str(item.product.currency) == 'USD':
             usd_value = round((item.price - (item.price * item.discount_rate / 100)) * item.quantity, 2)
             usd_discount_value = (item.price * item.discount_rate / 100)

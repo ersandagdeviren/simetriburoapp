@@ -165,6 +165,7 @@ class Invoice(models.Model):
     grand_total_USD = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     grand_total_EUR = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     status = models.CharField(max_length=50, default='Pending')
+    published=models.BooleanField(default=False)
 
     def __str__(self):
         return self.invoice_number
