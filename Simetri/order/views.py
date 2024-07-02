@@ -535,11 +535,18 @@ def order_detail(request, order_number):
 @user_passes_test(is_admin)
 def create_invoice(request, order_number):
     order = get_object_or_404(Order, order_number=order_number)
+
     # Check if an invoice already exists for the order
     if hasattr(order, 'invoice'):
         messages.error(request, 'Invoice already exists for this order.')
         return redirect('order:order_detail', order_number=order_number)
     
+    # Check stock for each item in the order
+    for item in order.order_items.all():
+        if item.product.stockAmount < item.quantity:
+            messages.error(request, f"Not enough stock for product {item.product.description}.")
+            return redirect('order:order_detail', order_number=order_number)
+
     total_amount = 0
     total_discount = 0
     total_tax = 0
@@ -554,7 +561,6 @@ def create_invoice(request, order_number):
     grand_total_EUR = 0
 
     for item in order.order_items.all():
-        
         if str(item.product.currency) == 'USD':
             usd_value = round((item.price - (item.price * item.discount_rate / 100)) * item.quantity, 2)
             usd_discount_value = (item.price * item.discount_rate / 100)
@@ -607,6 +613,7 @@ def create_invoice(request, order_number):
     invoice.save()
 
     return redirect('order:invoice_detail', invoice_number=invoice.invoice_number)
+
 @login_required
 @user_passes_test(is_admin)
 def invoice_list(request):
@@ -1049,7 +1056,7 @@ def post_invoice(request,invoice_number):
 
     # Set up the webdriver using webdriver_manager
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), ) #options=chrome_options
-
+    driver.maximize_window()
     try:
         # Open the login page
         driver.get('https://portal.smartdonusum.com/accounting/login')
@@ -1086,12 +1093,6 @@ def post_invoice(request,invoice_number):
         except (TimeoutException, NoSuchElementException):
             print("No popup appeared")
 
-        # Wait for the input field to be visible and send the number
-        print(products)
-        print(product_price)
-        print(product_quantity)
-        print(len(products))
-
         for i in range(len(products)):
             item_name_field = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.CSS_SELECTOR, f'#itemName_{i}')))
             item_name_field.send_keys(str(products[i]))
@@ -1109,6 +1110,8 @@ def post_invoice(request,invoice_number):
             WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#react > div > div:nth-child(1) > div.wrapper > div.main-panel > div.content > div > div.col-sm-12.satirBasi > div.col-sm-12.baseDashboard > div > div.card-header > div > div.col-sm-9 > div > div:nth-child(2) > button'))).click()
             time.sleep(1)
         time.sleep(10)
+        invoice.published = True
+        invoice.save()
     finally:
         pass
 

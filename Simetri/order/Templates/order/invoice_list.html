@@ -15,6 +15,7 @@
                 <th>Genel Toplam (EUR)</th>
                 <th>Genel Toplam TL</th>
                 <th>Status</th>
+                <th>Smart</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -31,6 +32,11 @@
                     <td>{{ invoice.grand_total_EUR }}</td>
                     <td><b>{{ invoice.grand_total }}</b></td>
                     <td>{{ invoice.status }}</td>
+                    {% if invoice.published == True %}
+                        <td style="color:green;">Evet</td>
+                    {%else%}
+                        <td>Hayır</td>
+                    {%endif%}
                     <td>
                         <form method="POST">
                             {% csrf_token %}

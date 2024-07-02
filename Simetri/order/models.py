@@ -199,17 +199,23 @@ class Invoice(models.Model):
                 else:
                     new_invoice_number = 1
                 self.invoice_number = f"{filter_prefix}{new_invoice_number:05d}"
+        
+        # Decrease the stock amounts if there is sufficient stock for all items
+        for item in self.order.order_items.all():
+            product = item.product
+            if product.stockAmount < item.quantity:
+                raise ValueError(f"Not enough stock for product {product.description}.")
+        
         super().save(*args, **kwargs)
-        # Mark the associated order as billed
 
-        self.order.is_billed = True
-        self.order.save()
-        # Decrease the stock amounts
         for item in self.order.order_items.all():
             product = item.product
             product.stockAmount -= item.quantity
             product.save()
 
+        # Mark the associated order as billed
+        self.order.is_billed = True
+        self.order.save()
 
     def delete(self, *args, **kwargs):
         # Increase the stock amounts before deleting the invoice
