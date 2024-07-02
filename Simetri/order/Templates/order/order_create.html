@@ -104,7 +104,9 @@
             <tr>
                 <td><img src="{{ item.photoPath }}" alt="" width="100"></td>
                 <td>{{ item.codeUyum }}</td>
-                <td><a href="{% url 'order:product_order_history' item.id %}">{{ item.description|slice:":100" }}</a></td>
+                <td>
+                    <a href="{% url 'order:product_order_history' item.id %}" class="popup-link">{{ item.description|slice:":100" }}</a>
+                </td>
                 <td>{{ item.brand }}</td>
                 <td>{{ item.mainCategory }}</td>
                 <td>
@@ -139,5 +141,24 @@
         {% endif %}
     </form>
 {% endif %}
+
+<script>
+    // Function to open links in a popup window
+    function openInPopup(event) {
+        event.preventDefault();
+        var width = 600;
+        var height = 400;
+        var left = (screen.width - width) / 2;
+        var top = (screen.height - height) / 2;
+        var url = this.href;
+        window.open(url, 'Product Order History', 'width=' + width + ', height=' + height + ', top=' + top + ', left=' + left + ', resizable=yes, scrollbars=yes');
+    }
+
+    // Attach the function to all links with the class "popup-link"
+    document.querySelectorAll('.popup-link').forEach(function(link) {
+        link.addEventListener('click', openInPopup);
+    });
+</script>
+
 
 {% endblock %}

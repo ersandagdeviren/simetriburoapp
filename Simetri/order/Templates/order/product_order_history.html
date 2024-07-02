@@ -1,8 +1,26 @@
-{% extends "order/navbar.html" %}
-
-{%block content %}
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <title>Simetri Büro Makinaları</title>
+    <style>
+        body {
+            font-size: 14px; /* Adjust this value as needed */
+        }
+        h2, h3 {
+            font-size: 18px; /* Adjust this value as needed */
+        }
+        .table th, .table td {
+            font-size: 14px; /* Adjust this value as needed */
+        }
+    </style>
+</head>
+<body>
 <h2>Satın Alım Geçmişi </h2>
-<h3>{{ product.description }}<h3>
+<h3>{{ product.description }}</h3>
 
 <table class="table">
     <thead>
@@ -22,5 +40,5 @@
         {% endfor %}
     </tbody>
 </table>
-
-{% endblock %}
+</body>
+</html>
