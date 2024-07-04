@@ -28,6 +28,7 @@
             <th>Tarih</th>
             <th>Cari</th>
             <th>Satış Fiyatı</th>
+            <th>Kur</th>
         </tr>
     </thead>
     <tbody>
@@ -36,6 +37,7 @@
             <td>{{ item.order.date|date:"d/m/Y H:i" }}</td>
             <td>{{ item.order.customer.companyName }}</td>
             <td>{{ item.price }}</td>
+            <td>{{ item.product.currency}}</td>
         </tr>
         {% endfor %}
     </tbody>

@@ -5,6 +5,8 @@
     {% if order_items_with_tl %}
     <h1>{{ order.customer }}</h1>
     <p>Sipariş Numarası: {{ order.order_number }}</p>
+    <p>Tarih: {{ order.date|date:"d-m-Y H:i" }}</p>
+    
 
     <h2>Sipariş Detayları</h2>
     <form method="POST">
