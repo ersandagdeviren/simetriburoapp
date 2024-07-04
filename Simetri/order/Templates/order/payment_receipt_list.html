@@ -33,7 +33,7 @@
                     <td>{{ payment_receipt.eur_amount }}</td>
                     <td>{{ payment_receipt.date|date:"d-m-Y" }}</td>
                     <td>
-                        <form method="POST" action="{% url 'order:payment_receipt_delete' payment_receipt.pk %}" style="display:inline;">
+                        <form method="POST" action="{% url 'order:payment_receipt_delete' payment_receipt.pk %}" style="display:inline;" onsubmit="return confirmDelete();">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-danger">Sil</button>
                         </form>
@@ -42,4 +42,10 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <script>
+        function confirmDelete() {
+            return confirm("Kasa işlemini silmek istediğinizden emin misiniz?");
+        }
+    </script>
 {% endblock %}

@@ -34,18 +34,24 @@
                     <td>{{ invoice.status }}</td>
                     {% if invoice.published == True %}
                         <td style="color:green;">Evet</td>
-                    {%else%}
+                    {% else %}
                         <td>Hayır</td>
-                    {%endif%}
+                    {% endif %}
                     <td>
-                        <form method="POST">
+                        <form method="POST" onsubmit="return confirmDelete();">
                             {% csrf_token %}
                             <input type="hidden" name="invoice_id" value="{{ invoice.id }}">
-                            <button type="submit" name="delete_invoice" class="btn btn-danger" >Sil</button>
+                            <button type="submit" name="delete_invoice" class="btn btn-danger">Sil</button>
                         </form>
                     </td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
+
+    <script>
+        function confirmDelete() {
+            return confirm("Faturayı silmek istediğinizden emin misiniz?");
+        }
+    </script>
 {% endblock %}

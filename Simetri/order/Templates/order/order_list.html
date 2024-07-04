@@ -22,7 +22,7 @@
         </thead>
         <tbody>
             {% for order_with_total in orders_with_totals %}
-            {%if order_with_total.order.is_billed == False %}
+            {% if order_with_total.order.is_billed == False %}
             <tr>
                 <td><a href="{% url 'order:order_detail' order_with_total.order.order_number %}">{{ order_with_total.order.order_number }}</a></td>
                 <td>{{ order_with_total.order_date }}</td>
@@ -35,7 +35,7 @@
                 <td>{{ order_with_total.total_tax }} TL</td>
                 <td><b>{{ order_with_total.grand_total }} TL</b></td>
                 <td>
-                    <form method="POST">
+                    <form method="POST" onsubmit="return confirmDelete();">
                         {% csrf_token %}
                         <input type="hidden" name="order_id" value="{{ order_with_total.order.id }}">
                         <button type="submit" name="delete_order">Sil</button>
@@ -44,8 +44,13 @@
             </tr>
             {% endif %}
             {% endfor %}
-
         </tbody>
     </table>
+
+    <script>
+        function confirmDelete() {
+            return confirm("Kaydı silmek istediğinizden emin misiniz?");
+        }
+    </script>
 </body>
 {% endblock %}
