@@ -7,39 +7,42 @@
 <br>
 <br>
 
-    <div class="search-container">
-        <form action="{% url 'order:customer_listed' %}" method="get">
-            <input type="text" placeholder="Cari Ünvanı" name="search">
-            <button type="submit">Ara</button>
-        </form>
-    </div>
+<div class="search-container">
+    <form action="{% url 'order:customer_listed' %}" method="get">
+        <input type="text" placeholder="Cari Ünvanı" name="search">
+        <button type="submit">Ara</button>
+    </form>
+</div>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Cari</th>
-                <th>Vergi Dairesi</th>
-                <th>Şehir</th>
-                <th>Eposta</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for customer in customers %}
-            <tr>
-                <td>{{ customer.companyName }}</a></td>
-                <td>{{ customer.taxOffice }}</td>
-                <td>{{ customer.city }}</td>
-                <td>{{ customer.email }}</td>
-                <td><td><a href="{% url 'order:customer_financials' customer_id=customer.id %}">Cari Ekstre</a></td>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</body>
-</html>
-
-
+<table class="table">
+    <thead>
+        <tr>
+            <th>Cari</th>
+            <th>İsim</th>
+            <th>Soyisim</th>
+            <th>Vergi Numarası</th>
+            <th>Şehir</th>
+            <th>Eposta</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for customer in customers %}
+        <tr>
+            <td>
+                <a href="{% url 'order:customer_details' customer.id %}">{{ customer.companyName }}</a>
+            </td>
+            <td>{{ customer.name }}</td>
+            <td>{{ customer.surname }}</td>
+            <td>{{ customer.tax_number }}</td>
+            <td>{{ customer.city }}</td>
+            <td>{{ customer.email }}</td>
+            <td>
+                <a href="{% url 'order:customer_financials' customer_id=customer.id %}">Cari Ekstre</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
 {% endblock %}

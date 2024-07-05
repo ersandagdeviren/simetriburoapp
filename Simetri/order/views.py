@@ -49,6 +49,10 @@ def get_currency_rates():
 def is_admin(user):
     return user.is_authenticated and user.is_staff
 
+def customer_details(request, id):
+    customer = get_object_or_404(Customer, id=id)
+    return render(request, 'order/customer_details.html', {'customer': customer})
+
 @login_required
 def search(request):
     if request.method == "POST":
@@ -168,6 +172,8 @@ def customer_list(request):
         request.session["customers"] = []
     if "products" not in request.session:
         request.session["products"] = []
+    if "product_query" not in request.session:
+        request.session["product_query"] = ""
 
     customer_list = []
     customer_selected = request.session['customers']
@@ -199,6 +205,7 @@ def customer_list(request):
         customer_name = Customer.objects.get(id=request.session['customers'][0]).companyName
         if product_form.is_valid():
             query = product_form.cleaned_data["product_name"]
+            request.session['product_query'] = query  # Store the search query in the session
             if query:
                 # Split the query into individual words
                 query_words = query.split()
@@ -243,21 +250,18 @@ def customer_list(request):
 
         customer_name = Customer.objects.get(id=request.session['customers'][0]).companyName
 
-        if product_form.is_valid():
-            query = product_form.cleaned_data["product_name"]
-            productresult = []
+        query = request.session.get('product_query', "")
+        if query:
+            # Split the query into individual words
+            query_words = query.split()
+            # Create a Q object to combine conditions
+            q_objects = Q()
+            for word in query_words:
+                # Update the Q object with each word
+                q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
             
-            if query:
-                # Split the query into individual words
-                query_words = query.split()
-                # Create a Q object to combine conditions
-                q_objects = Q()
-                for word in query_words:
-                    # Update the Q object with each word
-                    q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
-                
-                # Filter products based on the Q object
-                productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
+            # Filter products based on the Q object
+            productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
 
         return render(request, 'order/order_create.html', {
             "product_form": product_form,
@@ -274,21 +278,18 @@ def customer_list(request):
 
         customer_name = Customer.objects.get(id=request.session['customers'][0]).companyName
 
-        if product_form.is_valid():
-            query = product_form.cleaned_data["product_name"]
-            productresult = []
-
-            if query:
-                # Split the query into individual words
-                query_words = query.split()
-                # Create a Q object to combine conditions
-                q_objects = Q()
-                for word in query_words:
-                    # Update the Q object with each word
-                    q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
-                
-                # Filter products based on the Q object
-                productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
+        query = request.session.get('product_query', "")
+        if query:
+            # Split the query into individual words
+            query_words = query.split()
+            # Create a Q object to combine conditions
+            q_objects = Q()
+            for word in query_words:
+                # Update the Q object with each word
+                q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+            
+            # Filter products based on the Q object
+            productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
 
         return render(request, 'order/order_create.html', {
             "product_form": product_form,
@@ -311,6 +312,7 @@ def customer_list(request):
 
         request.session['products'] = []
         request.session['customers'] = []
+        request.session['product_query'] = ""
 
         return render(request, 'order/order_create.html', {
             "product_form": product_form,

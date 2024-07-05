@@ -13,16 +13,26 @@
     <table class="table">
         <thead>
             <tr>
-                <th>Cari Ünvan</th>
-                <th>Cari Şehir</th>
+                <th>Cari</th>
+                <th>İsim</th>
+                <th>Soyisim</th>
+                <th>Vergi Numarası</th>
+                <th>Şehir</th>
+                <th>Eposta</th>
                 <th>Ekle</th>
             </tr>
         </thead>
         <tbody>
             {% for customer in customer_list %}
             <tr>
-                <td>{{ customer.companyName }}</td>
+                <td>
+                    <a href="{% url 'order:customer_details' customer.id %}">{{ customer.companyName }}</a>
+                </td>
+                <td>{{ customer.name }}</td>
+                <td>{{ customer.surname }}</td>
+                <td>{{ customer.tax_number }}</td>
                 <td>{{ customer.city }}</td>
+                <td>{{ customer.email }}</td>
                 <td>
                     <form method="POST">
                         {% csrf_token %}
@@ -82,6 +92,15 @@
         </tbody>
     </table>
     {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        {% if products %}
+        <input type="submit" name="complete_order" value="Siparişi Tamamla" class="btn btn-success">
+        {% else %}
+        <input type="submit" name="complete_order" value="Siparişi Tamamla" class="btn btn-success" disabled style="opacity: 0.5; cursor: not-allowed;">
+        {% endif %}
+    </form>
 
     {% if product %}
     <table class="table">
@@ -121,7 +140,7 @@
                     {% if item.stockAmount > 0 %}
                     <input type="number" name="quantity" value="1" min="1" max="{{ item.stockAmount }}">
                     <input type="hidden" name="item_id" value="{{ item.id }}">
-                    <td><button type="submit" name="product_add">Ekle</button></td>
+                    <td><button type="submit" name="product_add" class="add-button" data-product-id="{{ item.id }}">Ekle</button></td>
                     {% else %}
                     <input type="hidden" name="item_id" value="{{ item.id }}">
                     {% endif %}
@@ -132,14 +151,7 @@
         </tbody>
     </table>
     {% endif %}
-    <form method="POST">
-        {% csrf_token %}
-        {% if products %}
-        <input type="submit" name="complete_order" value="Siparişi Tamamla" class="btn btn-success">
-        {% else %}
-        <input type="submit" name="complete_order" value="Siparişi Tamamla" class="btn btn-success" disabled style="opacity: 0.5; cursor: not-allowed;">
-        {% endif %}
-    </form>
+
 {% endif %}
 
 <script>
@@ -158,7 +170,30 @@
     document.querySelectorAll('.popup-link').forEach(function(link) {
         link.addEventListener('click', openInPopup);
     });
-</script>
 
+    // Function to update add button status
+    function updateAddButtonStatus() {
+        const products = {{ products|safe }};
+        const addButtons = document.querySelectorAll('.add-button');
+        
+        addButtons.forEach(button => {
+            const productId = button.getAttribute('data-product-id');
+            const productAdded = products.some(product => product.id == productId);
+            if (productAdded) {
+                button.textContent = 'Eklendi';
+                button.style.backgroundColor = '#4CAF50';
+                button.style.color = 'white';
+                button.style.border = 'none';
+                button.style.borderRadius = '4px';
+                button.style.padding = '4px 8px';
+                button.style.cursor = 'pointer';
+                button.disabled = true;
+            }
+        });
+    }
+
+    // Run the update function on page load
+    document.addEventListener('DOMContentLoaded', updateAddButtonStatus);
+</script>
 
 {% endblock %}
