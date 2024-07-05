@@ -1,0 +1,12 @@
+{% extends "order/navbar.html" %}
+
+{% block content %}
+<h2>{{ customer.companyName }}</h2>
+<p><strong>Vergi Dairesi:</strong> {{ customer.taxOffice }}</p>
+<p><strong>Eposta:</strong> {{ customer.email }}</p>
+<p><strong>Adres:</strong> {{ customer.adress }}</p>
+<p><strong>Şehir:</strong> {{ customer.city }}</p>
+<p><strong>Telefon:</strong> {{ customer.telephone }}</p>
+
+
+{% endblock %}
