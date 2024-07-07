@@ -171,27 +171,6 @@
         link.addEventListener('click', openInPopup);
     });
 
-    // Function to update add button status
-    function updateAddButtonStatus() {
-        const products = {{ products|safe }};
-        const addButtons = document.querySelectorAll('.add-button');
-        
-        addButtons.forEach(button => {
-            const productId = button.getAttribute('data-product-id');
-            const productAdded = products.some(product => product.id == productId);
-            if (productAdded) {
-                button.textContent = 'Eklendi';
-                button.style.backgroundColor = '#4CAF50';
-                button.style.color = 'white';
-                button.style.border = 'none';
-                button.style.borderRadius = '4px';
-                button.style.padding = '4px 8px';
-                button.style.cursor = 'pointer';
-                button.disabled = true;
-            }
-        });
-    }
-
     // Run the update function on page load
     document.addEventListener('DOMContentLoaded', updateAddButtonStatus);
 </script>

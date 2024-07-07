@@ -2,11 +2,20 @@
 
 {% block content %}
 <h2>{{ customer.companyName }}</h2>
+
 <p><strong>Vergi Dairesi:</strong> {{ customer.taxOffice }}</p>
+<p><strong>Vergi Numarası:</strong> {{ customer.tax_number }}</p>
 <p><strong>Eposta:</strong> {{ customer.email }}</p>
 <p><strong>Adres:</strong> {{ customer.adress }}</p>
 <p><strong>Şehir:</strong> {{ customer.city }}</p>
 <p><strong>Telefon:</strong> {{ customer.telephone }}</p>
 
+<p><strong>Kullanıcı adı:</strong> {{ customer.user }}</p>
+<p><strong>Müşteri Kodu:</strong> {{ customer.customerCode }}</p>
+<p><strong>Adı:</strong> {{ customer.name }}</p>
+<p><strong>Soyadı:</strong> {{ customer.surname }}</p>
+<p><strong>Telefon:</strong> {{ customer.telephone }}</p>
+<p><strong>İlgili Kişi:</strong> {{ customer.contactPerson }}</p>
+<p><strong>Sevk Adresi:</strong> {{ customer.telephone }}</p>
 
 {% endblock %}

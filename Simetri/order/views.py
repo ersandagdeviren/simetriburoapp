@@ -72,11 +72,17 @@ def search(request):
                 
                 # Filter products based on the Q object
                 productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
+
+                # Format numerical values with thousand separators
+                for product in productresult:
+                    product.stockAmount = f"{product.stockAmount:,.2f}"
+
                 return render(request, "order/product.html", {"form": form, "product": productresult})
             else:
                 return render(request, "order/product.html", {"form": ProductSearchForm()})
     else:
         return render(request, "order/product.html", {"form": ProductSearchForm()})
+
 @login_required
 def main(request):
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
@@ -85,16 +91,23 @@ def main(request):
     target_data_usd = soup.select_one(
         "html > body > div:nth-of-type(3) > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > table > tbody > tr:nth-of-type(1) > td:nth-of-type(3) > div > span").get_text()
     target_data_usd = round(float(str(target_data_usd).replace(" ", "").replace("\n", "")), 2)
+    target_data_usd = round(target_data_usd, 2)  # Keep it as a float for now
+
     target_data_eur = soup.select_one(
         "html > body > div:nth-of-type(3) > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > table > tbody > tr:nth-of-type(2) > td:nth-of-type(3) > div > span").get_text()
     target_data_eur = round(float(str(target_data_eur).replace(" ", "").replace("\n", "")), 2)
+    target_data_eur = round(target_data_eur, 2)  # Keep it as a float for now
 
     webpage_response2 = requests.get('https://www.altinkaynak.com/Doviz/Kur/Guncel')
     webpage2 = webpage_response2.content
     soup2 = BeautifulSoup(webpage2, "html.parser")
     target_data_usd2 = round(float(soup2.find(id="tdUSDSell").get_text().replace(",", ".")), 2)
+    target_data_usd2 = round(target_data_usd2, 2)  # Keep it as a float for now
+
     target_data_eur2 = round(float(soup2.find(id="tdEURSell").get_text().replace(",", ".")), 2)
-    today=datetime.date.today()
+    target_data_eur2 = round(target_data_eur2, 2)  # Keep it as a float for now
+
+    today = datetime.date.today()
     orders = Order.objects.filter(date__gt=today)
     orders_with_totals = []
 
@@ -103,18 +116,18 @@ def main(request):
         total_amount_eur = 0
         total_amount_tl = 0
         total_tax = 0
-        total_discount=0
+        total_discount = 0
 
         for item in order.order_items.all():
             product = item.product
             if item.discount_rate == 0:
                 price_in_tl = item.price * item.quantity * item.currency_rate
-                discount=0
+                discount = 0
             else:
-                price_in_tl = item.price *(100-item.discount_rate)/100 * item.quantity * item.currency_rate
-                discount=(item.price * item.quantity * item.currency_rate)-(item.price *(100-item.discount_rate)/100 * item.quantity * item.currency_rate)
+                price_in_tl = item.price * (100 - item.discount_rate) / 100 * item.quantity * item.currency_rate
+                discount = (item.price * item.quantity * item.currency_rate) - (item.price * (100 - item.discount_rate) / 100 * item.quantity * item.currency_rate)
             product_tax = price_in_tl * product.tax / 100
-        
+
             if str(product.currency) == 'USD':
                 total_amount_usd += item.price * item.quantity
             else:  # Assuming it's EUR if not USD
@@ -122,44 +135,54 @@ def main(request):
 
             total_amount_tl += price_in_tl
             total_tax += product_tax
-            total_discount+=discount
-
-
+            total_discount += discount
 
         total_amount_tl = round(total_amount_tl, 2)
         total_amount_eur = round(total_amount_eur, 2)
-        total_amount_usd=round(total_amount_usd, 2)
-        total_discount=round(total_discount, 2)
+        total_amount_usd = round(total_amount_usd, 2)
+        total_discount = round(total_discount, 2)
         total_tax = round(total_tax, 2)
         grand_total = total_amount_tl + total_tax
 
         orders_with_totals.append({
             'order': order,
-            'total_amount_usd': round(total_amount_usd, 2),
+            'total_amount_usd': total_amount_usd,
             'total_amount_eur': total_amount_eur,
             'total_amount_tl': total_amount_tl,
-            'total_discount':total_discount,
+            'total_discount': total_discount,
             'total_tax': total_tax,
             'grand_total': grand_total,
             'order_date': order.date.strftime('%d-%m-%Y'),  # Adding the order date
         })
+
+    # Format the numbers with thousand separators just before rendering
+    for order in orders_with_totals:
+        order['total_amount_usd'] = f"{order['total_amount_usd']:,.2f}"
+        order['total_amount_eur'] = f"{order['total_amount_eur']:,.2f}"
+        order['total_amount_tl'] = f"{order['total_amount_tl']:,.2f}"
+        order['total_discount'] = f"{order['total_discount']:,.2f}"
+        order['total_tax'] = f"{order['total_tax']:,.2f}"
+        order['grand_total'] = f"{order['grand_total']:,.2f}"
+
+    target_data_usd = f"{target_data_usd:,.2f}"
+    target_data_eur = f"{target_data_eur:,.2f}"
+    target_data_usd2 = f"{target_data_usd2:,.2f}"
+    target_data_eur2 = f"{target_data_eur2:,.2f}"
+
     invoices = Invoice.objects.all().order_by('-invoice_date')
-    invoices=invoices.filter(invoice_date__gt=today)
+    invoices = invoices.filter(invoice_date__gt=today)
     payment_receipts = PaymentReceipt.objects.all().filter(date__gt=today)
 
-
-    
-
-
     return render(request, "order/index.html", {
-        "target_data_usd": target_data_usd, 
+        "target_data_usd": target_data_usd,
         "target_data_eur": target_data_eur,
-        "target_data_usd2": target_data_usd2, 
+        "target_data_usd2": target_data_usd2,
         "target_data_eur2": target_data_eur2,
-        "orders_with_totals":orders_with_totals,
-        'invoices':invoices,
-        'payment_receipts':payment_receipts,
+        "orders_with_totals": orders_with_totals,
+        'invoices': invoices,
+        'payment_receipts': payment_receipts,
     })
+
 
 @login_required
 def comparison(request):
@@ -376,18 +399,19 @@ def order_list(request):
         total_amount_eur = 0
         total_amount_tl = 0
         total_tax = 0
-        total_discount=0
+        total_discount = 0
 
         for item in order.order_items.all():
             product = item.product
             if item.discount_rate == 0:
                 price_in_tl = item.price * item.quantity * item.currency_rate
-                discount=0
+                discount = 0
             else:
-                price_in_tl = item.price *(100-item.discount_rate)/100 * item.quantity * item.currency_rate
-                discount=(item.price * item.quantity * item.currency_rate)-(item.price *(100-item.discount_rate)/100 * item.quantity * item.currency_rate)
+                price_in_tl = item.price * (100 - item.discount_rate) / 100 * item.quantity * item.currency_rate
+                discount = (item.price * item.quantity * item.currency_rate) - (
+                        item.price * (100 - item.discount_rate) / 100 * item.quantity * item.currency_rate)
             product_tax = price_in_tl * product.tax / 100
-        
+
             if str(product.currency) == 'USD':
                 total_amount_usd += item.price * item.quantity
             else:  # Assuming it's EUR if not USD
@@ -395,25 +419,23 @@ def order_list(request):
 
             total_amount_tl += price_in_tl
             total_tax += product_tax
-            total_discount+=discount
-
-
+            total_discount += discount
 
         total_amount_tl = round(total_amount_tl, 2)
         total_amount_eur = round(total_amount_eur, 2)
-        total_amount_usd=round(total_amount_usd, 2)
-        total_discount=round(total_discount, 2)
+        total_amount_usd = round(total_amount_usd, 2)
+        total_discount = round(total_discount, 2)
         total_tax = round(total_tax, 2)
         grand_total = total_amount_tl + total_tax
 
         orders_with_totals.append({
             'order': order,
-            'total_amount_usd': round(total_amount_usd, 2),
-            'total_amount_eur': total_amount_eur,
-            'total_amount_tl': total_amount_tl,
-            'total_discount':total_discount,
-            'total_tax': total_tax,
-            'grand_total': grand_total,
+            'total_amount_usd': f"{total_amount_usd:,.2f}",
+            'total_amount_eur': f"{total_amount_eur:,.2f}",
+            'total_amount_tl': f"{total_amount_tl:,.2f}",
+            'total_discount': f"{total_discount:,.2f}",
+            'total_tax': f"{total_tax:,.2f}",
+            'grand_total': f"{grand_total:,.2f}",
             'order_date': order.date.strftime('%d-%m-%Y'),  # Adding the order date
         })
 
