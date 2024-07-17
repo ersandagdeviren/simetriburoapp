@@ -444,10 +444,7 @@ def order_list(request):
 @login_required
 def order_detail(request, order_number):
     defaultUSD, defaultEUR = get_currency_rates()
-
     order = get_object_or_404(Order, order_number=order_number)
-
-
     if order.customer.user != request.user and not request.user.is_superuser:
         return HttpResponseForbidden("You don't have permission to access this info.")
     
@@ -1134,10 +1131,10 @@ def post_invoice(request,invoice_number):
             WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#react > div > div:nth-child(1) > div.wrapper > div.main-panel > div.content > div > div.col-sm-12.satirBasi > div.col-sm-12.baseDashboard > div > div.card-header > div > div.col-sm-9 > div > div:nth-child(2) > button'))).click()
             time.sleep(1)
         time.sleep(10)
-        invoice.published = True
-        invoice.save()
     finally:
         pass
+    invoice.published = True
+    invoice.save()
 
     return render(request, 'order/invoice_publish_success.html', {'invoices': invoices})
 

@@ -171,6 +171,7 @@ class Invoice(models.Model):
         return self.invoice_number
 
     def save(self, *args, **kwargs):
+        is_new = self.pk is None 
         if not self.invoice_number:
             current_date = timezone.now()
             customer = self.order.customer
@@ -204,14 +205,20 @@ class Invoice(models.Model):
         for item in self.order.order_items.all():
             product = item.product
             if product.stockAmount < item.quantity:
-                raise ValueError(f"Not enough stock for product {product.description}.")
+                if is_new is False:
+                    pass
+                else:
+                    raise ValueError(f"Not enough stock for product {product.description}.")
         
         super().save(*args, **kwargs)
 
         for item in self.order.order_items.all():
             product = item.product
-            product.stockAmount -= item.quantity
-            product.save()
+            if is_new is False:
+                    product.save()
+            else:
+                product.stockAmount -= item.quantity
+                product.save()
 
         # Mark the associated order as billed
         self.order.is_billed = True

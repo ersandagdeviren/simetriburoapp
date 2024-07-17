@@ -26,7 +26,11 @@
             {% for customer in customer_list %}
             <tr>
                 <td>
-                    <a href="{% url 'order:customer_details' customer.id %}">{{ customer.companyName }}</a>
+                    <form method="POST" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="customer_id" value="{{ customer.id }}">
+                        <button type="submit" name="customer_selected" style="background:none; border:none; color:blue; text-decoration:underline; cursor:pointer;">{{ customer.companyName }}</button>
+                    </form>
                 </td>
                 <td>{{ customer.name }}</td>
                 <td>{{ customer.surname }}</td>
