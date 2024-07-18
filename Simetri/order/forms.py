@@ -17,7 +17,7 @@ class ProductForm(forms.Form):
 class ProductSearchForm(forms.Form):
     product_name = forms.CharField(
         max_length=100,
-        label='Search Product',
+        label='Ürün Ara',
         widget=forms.TextInput(attrs={'placeholder': 'Ürün'})
     )
 class ProductaddForm(forms.Form):

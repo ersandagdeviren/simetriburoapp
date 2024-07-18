@@ -5,7 +5,7 @@
 <form action="{% url 'order:search' %}" method="POST">
     {% csrf_token %}
     {{ form }}
-    <input type="Submit" value="Ara">
+    <input type="Submit" placeholder="Ürün Ara" value="Ara">
 </form>
 
 {% if product %}
