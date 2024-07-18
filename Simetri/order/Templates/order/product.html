@@ -19,6 +19,7 @@
             <th>Marka</th>
             <th>Kategori</th>
             <th>Fiyat</th>
+            <th>Kur</th>
             <th>Stok</th>
         </tr>
     </thead>
@@ -31,7 +32,8 @@
             <td>{{ item.unit }}</td>
             <td>{{ item.brand }}</td>
             <td>{{ item.mainCategory }}</td>
-            <td><a href="{% url 'order:product_order_history' item.id %}" class="popup-link">{{item.currency}} {{ item.priceSelling }}</a></td>
+            <td><a href="{% url 'order:product_order_history' item.id %}" class="popup-link"> {{ item.priceSelling }}</a></td>
+            <td>{{item.currency}}</td>
             <td>{{ item.stockAmount }}</td>
             <td></td>
         </tr>
