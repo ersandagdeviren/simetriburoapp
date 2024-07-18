@@ -1081,7 +1081,9 @@ def post_invoice(request,invoice_number):
     try:
         # Open the login page
         driver.get('https://portal.smartdonusum.com/accounting/login')
-        time.sleep(10)
+        
+        # Wait until the username field is present
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#username')))
 
         # Locate the username and password fields
         username_field = driver.find_element(By.CSS_SELECTOR, '#username')
@@ -1093,8 +1095,6 @@ def post_invoice(request,invoice_number):
         # Submit the form
         password_field.send_keys(Keys.RETURN)
 
-        # Wait for the login process to complete
-        time.sleep(5)
 
         # Click on the specified elements
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#style-7 > ul > li:nth-child(5) > a'))).click()
