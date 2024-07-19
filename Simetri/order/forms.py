@@ -1,5 +1,5 @@
 from django import forms
-from .models import Customer, Product , Order, PaymentReceipt
+from .models import Customer, Product , Order, PaymentReceipt, Production
 from .models import CustomerUpdateRequest
 
 
@@ -79,3 +79,4 @@ class CustomerUpdateRequestForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['updated_data'].widget = forms.HiddenInput()
+

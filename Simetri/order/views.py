@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib import messages
-from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt, CustomerUpdateRequest, Place, Inventory, Transfer
+from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt, CustomerUpdateRequest, Place, Inventory, Transfer,Production
 from .forms import ProductSearchForm ,PaymentReceiptForm,CustomerForm, CustomerUpdateRequestForm
 from decimal import Decimal, ROUND_HALF_UP
 from django.http import JsonResponse
@@ -1244,3 +1244,18 @@ def invoice_publish(request,invoice_number):
     invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
     return render(request, "order/invoice_publish.html",{'invoice':invoice})
 
+@login_required
+def make_production(request):
+    if request.method == "POST":
+        form = ProductSearchForm(request.POST)
+        if form.is_valid():
+            query = form.cleaned_data["product_name"]
+            productresult = []
+            if query:
+                productresult = Production.objects.filter(product__description__icontains=query)
+
+                return render(request, "order/production.html", {"form": form, "product": productresult})
+            else:
+                return render(request, "order/production.html", {"form": ProductSearchForm()})
+    else:
+        return render(request, "order/production.html", {"form": ProductSearchForm()})
