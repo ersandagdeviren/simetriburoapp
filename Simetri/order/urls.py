@@ -31,7 +31,5 @@ urlpatterns = [
     path('customer/<int:pk>/update/', views.customer_update_request_view, name='customer_update_request'),
     path('customer/update/<int:pk>/approve/', views.approve_customer_update_view, name='approve_customer_update'),
     path('customer/<int:id>/', views.customer_details, name='customer_details'),
-
-
   
 ]

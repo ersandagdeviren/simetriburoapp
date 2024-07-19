@@ -7,6 +7,8 @@ import re
 import urllib.request
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+
 User = get_user_model()
 
 def get_currency_rates():
@@ -36,8 +38,6 @@ class taxoffice(models.Model):
 
     def __str__(self):
         return self.vd
-
-
     
 class currency (models.Model):
     currency=models.CharField(max_length=3)
@@ -113,8 +113,8 @@ class Product(models.Model):
     priceSelling3 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     tax = models.PositiveIntegerField(blank=True, default=20)
     currency = models.ForeignKey('Currency', on_delete=models.CASCADE, related_name="currency_name")
-    stockAmount = models.PositiveIntegerField(default=0)
     photoPath = models.CharField(max_length=1000, blank=True)
+    final_product=models.BooleanField(default=True)
 
     def __str__(self):
         return self.codeUyum
@@ -152,20 +152,20 @@ class OrderItem(models.Model):
     discount_rate=models.PositiveIntegerField(blank=True, default=0)
     def __str__(self):
         return f"{self.order.order_number} - {self.product.description}"
-    
+
 class Invoice(models.Model):
     invoice_number = models.CharField(max_length=20, unique=True, blank=True)
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="invoice")
     invoice_date = models.DateTimeField(auto_now_add=True)
     billing_address = models.CharField(max_length=250, blank=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
-    total_discount=models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    total_discount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     grand_total = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     grand_total_USD = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     grand_total_EUR = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     status = models.CharField(max_length=50, default='Pending')
-    published=models.BooleanField(default=False)
+    published = models.BooleanField(default=False)
 
     def __str__(self):
         return self.invoice_number
@@ -201,23 +201,26 @@ class Invoice(models.Model):
                     new_invoice_number = 1
                 self.invoice_number = f"{filter_prefix}{new_invoice_number:05d}"
         
-        # Decrease the stock amounts if there is sufficient stock for all items
+        # Check stock amounts before saving
         for item in self.order.order_items.all():
             product = item.product
-            if product.stockAmount < item.quantity:
-                if is_new is False:
+            inventory = product.inventory_set.filter(place__name="D1").first()  # Adjust place name as needed
+            if inventory is None or inventory.quantity < item.quantity:
+                if not is_new:
                     pass
                 else:
-                    raise ValueError(f"Not enough stock for product {product.description}.")
-        
+                    raise ValueError(f"Not enough stock for product {product.description} in D1.")
+
         super().save(*args, **kwargs)
 
+        # Adjust stock amounts after saving
         for item in self.order.order_items.all():
             product = item.product
-            if is_new is False:
-                    product.save()
+            inventory = product.inventory_set.filter(place__name="D1").first()  # Adjust place name as needed
+            if is_new:
+                inventory.quantity -= item.quantity
+                inventory.save()
             else:
-                product.stockAmount -= item.quantity
                 product.save()
 
         # Mark the associated order as billed
@@ -228,13 +231,16 @@ class Invoice(models.Model):
         # Increase the stock amounts before deleting the invoice
         for item in self.order.order_items.all():
             product = item.product
-            product.stockAmount += item.quantity
-            product.save()
+            inventory = product.inventory_set.filter(place__name="D1").first()  # Adjust place name as needed
+            if inventory:
+                inventory.quantity += item.quantity
+                inventory.save()
 
         # Mark the associated order as unbilled before deleting the invoice
         self.order.is_billed = False
         self.order.save()
         super().delete(*args, **kwargs)
+
 
 class CashRegister(models.Model):
     cash_code=models.CharField(max_length=255)
@@ -379,3 +385,61 @@ class CustomerUpdateRequest(models.Model):
 
     def __str__(self):
         return f'Update Request for {self.customer}'
+    
+class Place(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+class Inventory(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    place = models.ForeignKey(Place, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ('product', 'place')
+
+    def __str__(self):
+        return f"{self.product} at {self.place}"
+
+class Transfer(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    from_place = models.ForeignKey(Place, on_delete=models.CASCADE, related_name='transfers_from')
+    to_place = models.ForeignKey(Place, on_delete=models.CASCADE, related_name='transfers_to')
+    quantity = models.PositiveIntegerField()
+    date = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        from_inventory, created = Inventory.objects.get_or_create(product=self.product, place=self.from_place)
+        to_inventory, created = Inventory.objects.get_or_create(product=self.product, place=self.to_place)
+        
+        # Update inventory quantities
+        from_inventory.quantity -= self.quantity
+        from_inventory.save()
+        
+        to_inventory.quantity += self.quantity
+        to_inventory.save()
+
+    def __str__(self):
+        return f"Transfer {self.quantity} of {self.product} from {self.from_place} to {self.to_place} on {self.date}"
+
+
+from django.db import models
+from django.core.exceptions import ValidationError
+
+class Production(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="productions")
+    chip = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, related_name="chip_productions")
+    empty_cartridge = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, related_name="empty_cartridge_productions")
+    cartridge_head = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, related_name="cartridge_head_productions")
+    box = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, related_name="box_productions")
+    waste_box = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, related_name="waste_box_productions")
+    powder = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, related_name="powder_productions")
+    powder_gram = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    developer = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, related_name="developer_productions")
+    developer_gram = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    def __str__(self):
+        return f"Production of {self.product}"

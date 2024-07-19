@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib import messages
-from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt, CustomerUpdateRequest
+from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt, CustomerUpdateRequest, Place, Inventory, Transfer
 from .forms import ProductSearchForm ,PaymentReceiptForm,CustomerForm, CustomerUpdateRequestForm
 from decimal import Decimal, ROUND_HALF_UP
 from django.http import JsonResponse
@@ -24,6 +24,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 from selenium.common.exceptions import NoSuchElementException ,TimeoutException
+from .forms import ProductForm 
 
 
 """
@@ -71,7 +72,12 @@ def search(request):
                     q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
                 
                 # Filter products based on the Q object
-                productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
+                productresult = Product.objects.filter(q_objects)
+
+                # Retrieve stock amount from Inventory where place is "D1"
+                for product in productresult:
+                    inventory = Inventory.objects.filter(product=product, place__name="D1").first()
+                    product.stockAmount = inventory.quantity if inventory else 0
 
                 # Format numerical values with thousand separators
                 for product in productresult:
@@ -82,7 +88,6 @@ def search(request):
                 return render(request, "order/product.html", {"form": ProductSearchForm()})
     else:
         return render(request, "order/product.html", {"form": ProductSearchForm()})
-
 @login_required
 def main(request):
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
@@ -239,7 +244,13 @@ def customer_list(request):
                     q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
                 
                 # Filter products based on the Q object
-                productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
+                productresult = Product.objects.filter(q_objects)
+
+                # Retrieve stock amount from Inventory where place is "D1"
+                for product in productresult:
+                    inventory = Inventory.objects.filter(product=product, place__name="D1").first()
+                    product.stockAmount = inventory.quantity if inventory else 0
+
                 return render(request, 'order/order_create.html', {
                     "product_form": product_form,
                     "product": productresult,
@@ -284,7 +295,12 @@ def customer_list(request):
                 q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
             
             # Filter products based on the Q object
-            productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
+            productresult = Product.objects.filter(q_objects)
+
+            # Retrieve stock amount from Inventory where place is "D1"
+            for product in productresult:
+                inventory = Inventory.objects.filter(product=product, place__name="D1").first()
+                product.stockAmount = inventory.quantity if inventory else 0
 
         return render(request, 'order/order_create.html', {
             "product_form": product_form,
@@ -312,7 +328,12 @@ def customer_list(request):
                 q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
             
             # Filter products based on the Q object
-            productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
+            productresult = Product.objects.filter(q_objects)
+
+            # Retrieve stock amount from Inventory where place is "D1"
+            for product in productresult:
+                inventory = Inventory.objects.filter(product=product, place__name="D1").first()
+                product.stockAmount = inventory.quantity if inventory else 0
 
         return render(request, 'order/order_create.html', {
             "product_form": product_form,
@@ -347,41 +368,76 @@ def customer_list(request):
         })
 
 
-@login_required
 def create_order(request):
-    if request.method == "POST" and "create_order" in request.POST:
-        customer_id = request.session.get('customers', [None])[0]
-        product_ids = request.session.get('products', [])
-        if not customer_id or not product_ids:
-            messages.error(request, 'Customer and products must be selected to create an order.')
-            return redirect('order:create_order')
+    if request.method == 'POST':
+        # Handling product search
+        if 'product_submit' in request.POST:
+            product_form = ProductForm(request.POST)
+            if product_form.is_valid():
+                product_name = product_form.cleaned_data['product_name']
+                # Fetching products that match the search criteria
+                products = Product.objects.filter(name__icontains=product_name)
+            else:
+                products = Product.objects.none()  # No products if form is invalid
+        else:
+            products = Product.objects.none()
 
-        order = Order(customer_id=customer_id, user=request.user)
-        order.save()
-        
-        for product_id in product_ids:
-            product = Product.objects.get(id=product_id)
-            quantity = int(request.POST.get(f'quantity_{product_id}', 1))
-            order_item = OrderItem(order=order, product=product, quantity=quantity, price=product.priceSelling)
-            order_item.save()
+        # Handling adding products to the cart
+        if 'product_add' in request.POST:
+            item_id = request.POST.get('item_id')
+            quantity = int(request.POST.get('quantity', 1))
 
-        request.session['customers'] = []
-        request.session['products'] = []
-        return redirect('order:order_list')
+            product = Product.objects.get(id=item_id)
+            inventory = Inventory.objects.filter(product=product, place__name="D1").first()
+            if inventory and inventory.quantity >= quantity:
+                # Logic to add product to cart, e.g., save to session or database
+                messages.success(request, f'Added {quantity} of {product.name} to the cart.')
+            else:
+                messages.error(request, 'Not enough stock available.')
+
+        # Handling deleting products from the cart
+        if 'delete_product' in request.POST:
+            product_id = request.POST.get('product_id')
+            # Logic to remove product from cart, e.g., update session or database
+            messages.success(request, f'Removed product with ID {product_id} from the cart.')
+
+        # Handling completing the order
+        if 'complete_order' in request.POST:
+            # Logic to complete the order, e.g., save order and redirect
+            messages.success(request, 'Order completed successfully.')
+            return redirect('order:order_list')
+
+        # Handling form submission for price, quantity, etc.
+        if 'product_form' in request.POST:
+            # Fetching products for display
+            product_form = ProductForm()
+            products = Product.objects.all()
+
+        else:
+            product_form = ProductForm()
+            products = Product.objects.all()
+
     else:
-        product_form = ProductSearchForm()
-        customer_selected = request.session.get('customers', [])
-        customer_name = None
-        if customer_selected:
-            customer_name = Customer.objects.get(id=customer_selected[0]).companyName
-        
+        # Initial GET request
+        product_form = ProductForm()
+        products = Product.objects.all()
 
-        return render(request, 'order/order_create.html', {
-            "product_form": product_form,
-            "customer_name": customer_name,
-            "products": request.session.get('products', [])
-        })
-    
+    # Prepare inventory data for template
+    inventory_dict = {}
+    for product in products:
+        inventory = Inventory.objects.filter(product=product, place__name="D1").first()
+        if inventory:
+            inventory_dict[product.id] = inventory.quantity
+        else:
+            inventory_dict[product.id] = 0
+
+    context = {
+        'products': products,
+        'product_form': product_form,
+        'inventory_dict': inventory_dict,
+    }
+    return render(request, 'order/create_order.html', context)
+
 @login_required
 @user_passes_test(is_admin)
 def order_list(request):
@@ -448,9 +504,8 @@ def order_detail(request, order_number):
     if order.customer.user != request.user and not request.user.is_superuser:
         return HttpResponseForbidden("You don't have permission to access this info.")
     
-    
     product_form = ProductSearchForm(request.POST or None)
-    productresult = None 
+    productresult = None
 
     if request.method == 'POST':
         if 'product_submit' in request.POST:
@@ -466,7 +521,16 @@ def order_detail(request, order_number):
                         q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
                     
                     # Filter products based on the Q object
-                    productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
+                    productresult = Product.objects.filter(q_objects)
+
+                    # Retrieve stock amount from Inventory where place is "D1"
+                    for product in productresult:
+                        inventory = Inventory.objects.filter(product=product, place__name="D1").first()
+                        product.stockAmount = inventory.quantity if inventory else 0
+
+                    # Format numerical values with thousand separators
+                    for product in productresult:
+                        product.stockAmount = f"{product.stockAmount:,.2f}"
                 else:
                     productresult = []
         elif 'delete_item' in request.POST:
@@ -562,9 +626,11 @@ def create_invoice(request, order_number):
         messages.error(request, 'Invoice already exists for this order.')
         return redirect('order:order_detail', order_number=order_number)
     
-    # Check stock for each item in the order
+    # Check stock for each item in the order from Inventory where place is "D1"
     for item in order.order_items.all():
-        if item.product.stockAmount < item.quantity:
+        inventory = Inventory.objects.filter(product=item.product, place__name="D1").first()
+        stock_amount = inventory.quantity if inventory else 0
+        if stock_amount < item.quantity:
             messages.error(request, f"Not enough stock for product {item.product.description}.")
             return redirect('order:order_detail', order_number=order_number)
 
@@ -841,14 +907,12 @@ def user_financial(request):
     
     return render(request, 'order/user_financial.html', context)
 @login_required
-def user_order (request):
+def user_order(request):
     if "products" not in request.session:
         request.session["products"] = []
 
     product_form = ProductSearchForm(request.POST)
     productresult = []  # Initialize productresult
-
-
 
     if request.method == "POST" and "product_submit" in request.POST:
         if product_form.is_valid():
@@ -875,27 +939,31 @@ def user_order (request):
         new_price = float(Product.objects.get(id=product_id).priceSelling)
         quantity = request.POST.get('quantity')
         description = Product.objects.get(id=product_id).description
-        currency=Product.objects.get(id=product_id).currency
-       
-        if str(currency)== 'USD':
-            currency_rate=float(get_currency_rates()[0])
-        if str(currency)== 'EUR':
-            currency_rate=float(get_currency_rates()[1])
+        currency = Product.objects.get(id=product_id).currency
 
-        
+        if str(currency) == 'USD':
+            currency_rate = float(get_currency_rates()[0])
+        elif str(currency) == 'EUR':
+            currency_rate = float(get_currency_rates()[1])
+
+        # Check stock from Inventory where place is "D1"
+        inventory = Inventory.objects.filter(product_id=product_id, place__name="D1").first()
+        stock_amount = inventory.quantity if inventory else 0
+        if stock_amount < int(quantity):
+            messages.error(request, f"Not enough stock for product {description}.")
+            return redirect('order:user_order')
 
         product_entry = {
             'id': product_id,
             'price': new_price,
             'quantity': quantity,
             'description': description,
-            'currency_rate':currency_rate
+            'currency_rate': currency_rate
         }
 
         products = request.session.get('products', [])
         products.append(product_entry)
         request.session['products'] = products
-
 
         if product_form.is_valid():
             query = product_form.cleaned_data["product_name"]
@@ -947,20 +1015,19 @@ def user_order (request):
             "product": productresult
         })
     elif request.method == "POST" and "complete_order" in request.POST:
-        customer_id = get_object_or_404(Customer,user=request.user).pk
+        customer_id = get_object_or_404(Customer, user=request.user).pk
         product_ids = [item['id'] for item in request.session.get('products', [])]
         quantities = [item['quantity'] for item in request.session.get('products', [])]
         prices = [item['price'] for item in request.session.get('products', [])]
-        currencies=[item['currency_rate'] for item in request.session.get('products', [])]
+        currencies = [item['currency_rate'] for item in request.session.get('products', [])]
 
-        order = Order.objects.create(customer_id=customer_id,user=request.user)
+        order = Order.objects.create(customer_id=customer_id, user=request.user)
 
-        for product_id, quantity, price, currency_rate in zip(product_ids, quantities, prices,currencies):
-            OrderItem.objects.create(order=order, product_id=product_id, quantity=quantity, price=price,currency_rate=currency_rate,discount_rate=0)
+        for product_id, quantity, price, currency_rate in zip(product_ids, quantities, prices, currencies):
+            OrderItem.objects.create(order=order, product_id=product_id, quantity=quantity, price=price, currency_rate=currency_rate, discount_rate=0)
 
         request.session['products'] = []
         request.session['customers'] = []
-
 
         return render(request, 'order/user_order.html', {
             "product_form": product_form,
@@ -969,6 +1036,7 @@ def user_order (request):
         return render(request, 'order/user_order.html', {
             "product_form": product_form,
         })
+
 @login_required
 def user_order_list(request):
     if request.method == 'POST':
