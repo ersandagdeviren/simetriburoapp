@@ -1246,8 +1246,15 @@ def invoice_publish(request,invoice_number):
 
 @login_required
 def make_production(request):
-    if request.method == "POST":
-        form = ProductSearchForm(request.POST)
+    if "productions" not in request.session:
+        request.session["productions"] = []
+    if "production_query" not in request.session:
+        request.session["production_query"] = ""
+
+    form= ProductSearchForm(request.POST or None)
+    productresult = []  # Initialize productresult
+
+    if request.method == "POST"and "product_submit" in request.POST:
         if form.is_valid():
             query = form.cleaned_data["product_name"]
             productresult = []
