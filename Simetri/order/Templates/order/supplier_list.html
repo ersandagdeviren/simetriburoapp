@@ -1,0 +1,45 @@
+{% extends "order/navbar.html" %}
+
+{% block content %}
+
+<h2>Cari Listesi</h2>
+<a href="{% url 'order:supplier_new' %}" class="btn btn-success mb-2">Yeni Cari</a>
+<br>
+<br>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Firma Kodu</th>
+            <th>Firma Adı</th>
+            <th>Vergi Dairesi</th>
+            <th>Vergi Numarası</th>
+            <th>Şehir</th>
+            <th>Adres</th>
+            <th>Ülke</th>
+            <th>Eposta</th>
+            <th>Telefon</th>
+            <th>İlgili Kişi</th>
+
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for supplier in suppliers %}
+        <tr>
+            <td>{{ supplier.supplierCode }}</td>
+            <td>{{ supplier.companyName }}</td>
+            <td>{{ supplier.taxOffice }}</td>
+            <td>{{ supplier.tax_number }}</td>
+            <td>{{ supplier.city }}</td>
+            <td>{{ supplier.adress }}</td>
+            <td>{{ supplier.country }}</td>
+            <td>{{ supplier.email }}</td>
+            <td>{{ supplier.telephone }}</td>
+            <td>{{ supplier.contactPerson }}</td>
+
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

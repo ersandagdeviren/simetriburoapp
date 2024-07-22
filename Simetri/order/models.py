@@ -442,4 +442,16 @@ class Production(models.Model):
         return f"Production of {self.product}"
     
 
-
+class Supplier (models.Model):
+    supplierCode = models.CharField(max_length=50)
+    companyName = models.CharField(max_length=50)
+    taxOffice = models.CharField(max_length=50, null=True, blank=True)
+    tax_number = models.CharField(max_length=50, null=True, blank=True)
+    city = models.CharField(max_length=50, null=True, blank=True)
+    adress = models.CharField(max_length=250, null=True, blank=True)
+    country = models.CharField(max_length=50, blank=True,)
+    email = models.EmailField( null=True, blank=True)
+    telephone = models.CharField(max_length=11, null=True, blank=True)
+    contactPerson = models.CharField(max_length=50, null=True, blank=True)
+    def __str__(self):
+        return self.companyName

@@ -6,8 +6,8 @@ import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib import messages
-from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt, CustomerUpdateRequest, Place, Inventory, Transfer,Production
-from .forms import ProductSearchForm ,PaymentReceiptForm,CustomerForm, CustomerUpdateRequestForm
+from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt, CustomerUpdateRequest, Place, Inventory, Transfer,Production,Supplier
+from .forms import ProductSearchForm ,PaymentReceiptForm,CustomerForm, CustomerUpdateRequestForm,SupplierForm
 from decimal import Decimal, ROUND_HALF_UP
 from django.http import JsonResponse
 import datetime
@@ -1369,12 +1369,34 @@ def change_product (request, product_id):
     else:
         return render(request, "order/production.html", {"form": form, "product": productresult})
 
+@login_required
+@user_passes_test(is_admin)
+def supplier_new(request):
+    if request.method == 'POST':
+        form = SupplierForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('order:supplier_listed')  # Redirect to customer list page after successful submission
+    else:
+        form = SupplierForm()
+
+    context = {
+        'form': form
+    }
+    return render(request, 'order/supplier_new.html', context)
 
 
 
+@login_required
+@user_passes_test(is_admin)
+def supplier_listed(request):
+    suppliers = Supplier.objects.all()
 
-    
+    search_query = request.GET.get('search')
+    if search_query:
+        customers = suppliers.filter(companyName__icontains=search_query)
 
-
-    
-    
+    context = {
+        'suppliers': suppliers
+    }
+    return render(request, 'order/supplier_list.html', context)

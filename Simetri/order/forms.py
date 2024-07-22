@@ -1,12 +1,6 @@
 from django import forms
-from .models import Customer, Product , Order, PaymentReceipt, Production
+from .models import Customer, Product , Order, PaymentReceipt, Production, Supplier
 from .models import CustomerUpdateRequest
-
-
-class CustomerForm(forms.ModelForm):
-    class Meta:
-        model = Customer
-        fields = ['companyName']
 
 class ProductForm(forms.Form):
     class Meta:
@@ -80,3 +74,7 @@ class CustomerUpdateRequestForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['updated_data'].widget = forms.HiddenInput()
 
+class SupplierForm(forms.ModelForm):
+    class Meta:
+        model = Supplier
+        fields = "__all__"
