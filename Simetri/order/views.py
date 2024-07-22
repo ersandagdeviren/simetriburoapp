@@ -1251,18 +1251,130 @@ def make_production(request):
     if "production_query" not in request.session:
         request.session["production_query"] = ""
 
-    form= ProductSearchForm(request.POST or None)
-    productresult = []  # Initialize productresult
+    form = ProductSearchForm(request.POST or None)
+    productresult = []
 
-    if request.method == "POST"and "product_submit" in request.POST:
-        if form.is_valid():
-            query = form.cleaned_data["product_name"]
-            productresult = []
+    if request.method == "POST":
+        if "production_submit" in request.POST:
+            if form.is_valid():
+                query = form.cleaned_data["product_name"]
+                request.session["production_query"] = query
+                if query:
+                    query_words = query.split()
+                    q_objects = Q()
+                    for word in query_words:
+                        q_objects &= Q(product__description__icontains=word) | Q(product__codeUyum__icontains=word)
+
+                    productresult = Production.objects.filter(q_objects)
+                    for production in productresult:
+                        inventory = Inventory.objects.filter(product=production.product, place__name="D1").first()
+                        production.stockAmount = inventory.quantity if inventory else 0
+
+                    return render(request, "order/production.html", {
+                        "form": form,
+                        "product": productresult,
+                        "productions": request.session["productions"],
+                    })
+
+        elif "production_add" in request.POST:
+            production_id = request.POST.get("item_id")
+            new_powder_gr = request.POST.get("new_powder_gr")
+            new_developer_gr = request.POST.get("new_developer_gr")
+            quantity = request.POST.get("quantity")
+            production = Production.objects.get(id=production_id)
+            product_entry = {
+                "id": production_id,
+                "new_powder_gr": new_powder_gr,
+                "new_developer_gr": new_developer_gr,
+                "quantity": quantity,
+                "description": production.product.description,
+            }
+
+            productions = request.session.get("productions", [])
+            productions.append(product_entry)
+            request.session["productions"] = productions
+
+            query = request.session.get("production_query", "")
             if query:
-                productresult = Production.objects.filter(product__description__icontains=query)
+                query_words = query.split()
+                q_objects = Q()
+                for word in query_words:
+                    q_objects &= Q(product__description__icontains=word) | Q(product__codeUyum__icontains=word)
 
-                return render(request, "order/production.html", {"form": form, "product": productresult})
-            else:
-                return render(request, "order/production.html", {"form": ProductSearchForm()})
+                productresult = Production.objects.filter(q_objects)
+                for production in productresult:
+                    inventory = Inventory.objects.filter(product=production.product, place__name="D1").first()
+                    production.stockAmount = inventory.quantity if inventory else 0
+
+            return render(request, "order/production.html", {
+                "form": form,
+                "product": productresult,
+                "productions": request.session["productions"],
+            })
+
+        elif "delete_production" in request.POST:
+            production_id = request.POST.get("production_id")
+            productions = request.session.get("productions", [])
+            productions = [production for production in productions if production["id"] != production_id]
+            request.session["productions"] = productions
+
+            query = request.session.get("production_query", "")
+            if query:
+                query_words = query.split()
+                q_objects = Q()
+                for word in query_words:
+                    q_objects &= Q(product__description__icontains=word) | Q(product__codeUyum__icontains=word)
+
+                productresult = Production.objects.filter(q_objects)
+                for production in productresult:
+                    inventory = Inventory.objects.filter(product=production.product, place__name="D1").first()
+                    production.stockAmount = inventory.quantity if inventory else 0
+
+            return render(request, "order/production.html", {
+                "form": form,
+                "product": productresult,
+                "productions": request.session["productions"],
+            })
+
+        elif "complete_production" in request.POST:
+            production_ids = [item["id"] for item in request.session.get("productions", [])]
+            quantities = [item["quantity"] for item in request.session.get("productions", [])]
+            new_powder_grs = [item["new_powder_gr"] for item in request.session.get("productions", [])]
+            new_developer_grs = [item["new_developer_gr"] for item in request.session.get("productions", [])]
+
+            for production_id, quantity, new_powder_gr, new_developer_gr in zip(production_ids, quantities, new_powder_grs, new_developer_grs):
+                production = Production.objects.get(id=production_id)
+                # Save the production process or perform necessary updates here
+
+            request.session["productions"] = []
+            request.session["production_query"] = ""
+
+            return redirect("order:make_production")
+
+    return render(request, "order/production.html", {
+        "form": form,
+        "product": productresult,
+        "productions": request.session["productions"],
+    })
+
+@login_required
+def change_product (request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    form = ProductSearchForm()
+    if form.is_valid():
+        query = form.cleaned_data["product_name"]
+    if query:
+        productresult = Production.objects.filter(product__description__icontains=query)
+        return render(request, "order/change_product.html", {"form": form, "product": productresult})
     else:
-        return render(request, "order/production.html", {"form": ProductSearchForm()})
+        return render(request, "order/production.html", {"form": form, "product": productresult})
+
+
+
+
+
+    
+
+
+    
+    
