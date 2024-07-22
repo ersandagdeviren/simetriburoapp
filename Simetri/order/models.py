@@ -396,6 +396,7 @@ class Inventory(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     place = models.ForeignKey(Place, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=0)
+    priceBuying = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
 
     class Meta:
         unique_together = ('product', 'place')
@@ -439,3 +440,6 @@ class Production(models.Model):
 
     def __str__(self):
         return f"Production of {self.product}"
+    
+
+
