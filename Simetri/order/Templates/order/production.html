@@ -1,11 +1,10 @@
 {% extends "order/navbar.html" %}
 
 {% block content %}
-
 <form action="{% url 'order:make_production' %}" method="POST">
     {% csrf_token %}
-    {{ form }}
-    <input type="Submit" value="Ara">
+    {{ form.as_p }}
+    <input type="submit" name="production_submit" value="Ara" style="padding: 4px 8px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
 </form>
 
 {% if product %}
@@ -23,7 +22,8 @@
             <th>Kutu</th>
             <th>kafa</th>
             <th>Atık kutusu</th>
-            <th></th>
+            <th>Miktar</th>
+            <th>ekle</th>
         </tr>
     </thead>
     <tbody>
@@ -34,18 +34,63 @@
             <td>{{ item.empty_cartridge|default_if_none:'' }}</td>
             <td>{{ item.chip|default_if_none:'' }}</td>
             <td>{{ item.powder|default_if_none:'' }}</td>
-            <td>{{ item.powder_gram|default_if_none:'' }}</td>
+            <td>
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="number" name="new_powder_gr" value="{{ item.powder_gram|default_if_none:'' }}" step="0.01" min="0.01" required>
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+            </td>
             <td>{{ item.developer|default_if_none:'' }}</td>
-            <td>{{ item.developer_gram|default_if_none:'' }}</td>
+            <td>
+                <input type="number" name="new_developer_gr" value="{{ item.developer_gram|default_if_none:'0' }}">
+                <input type="hidden" name="item_id" value="{{ item.id }}">
+            </td>
+            
             <td>{{ item.box|default_if_none:'' }}</td>
             <td>{{ item.cartridge_head|default_if_none:'' }}</td>
             <td>{{ item.waste_box|default_if_none:'' }}</td>
-            <td><a href="{% url 'order:product_order_history' item.id %}" class="popup-link">{{ item.priceSelling|default_if_none:'' }}</a></td>
-            <td></td>
+            <td><input type="number" name="quantity" value="1"></td>
+            <td><button type="submit" name="production_add" class="add-button" data-product-id="{{ item.id }}">Ekle</button></td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+{% endif %}
+
+{% if productions %}
+<h3>Sepete Eklenen Üretimler</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Ürün Açıklaması</th>
+            <th>Toz Gram</th>
+            <th>Developer Gram</th>
+            <th>Miktar</th>
+            <th>Sil</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for production in productions %}
+        <tr>
+            <td>{{ production.description|slice:":100" }}</td>
+            <td>{{ production.new_powder_gr }}</td>
+            <td>{{ production.new_developer_gr }}</td>
+            <td>{{ production.quantity }}</td>
+            <td>
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="production_id" value="{{ production.id }}">
+                    <button type="submit" name="delete_production">Sil</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<form method="POST">
+    {% csrf_token %}
+    <input type="submit" name="complete_production" value="Üretimi Tamamla" class="btn btn-success">
+</form>
 {% endif %}
 
 <script>
@@ -57,7 +102,7 @@
         var left = (screen.width - width) / 2;
         var top = (screen.height - height) / 2;
         var url = this.href;
-        window.open(url, 'Product Order History', 'width=' + width + ', height=' + height + ', top=' + top + ', left=' + left + ', resizable=yes, scrollbars=yes');
+        window.open(url, 'Product Order History', 'width=' + width + ', height=' + height + ', top=' + top + ', resizable=yes, scrollbars=yes');
     }
 
     // Attach the function to all links with the class "popup-link"
