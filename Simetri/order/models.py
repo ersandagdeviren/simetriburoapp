@@ -425,10 +425,6 @@ class Transfer(models.Model):
     def __str__(self):
         return f"Transfer {self.quantity} of {self.product} from {self.from_place} to {self.to_place} on {self.date}"
 
-
-from django.db import models
-from django.core.exceptions import ValidationError
-
 class Production(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="productions")
     chip = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, related_name="chip_productions")
