@@ -24,8 +24,8 @@
                     <th>TL</th>
                     <th>KDV</th>
                     <th>Toplam</th>
-                    <th></th>
-                    <th></th>
+                    <th>Güncelle</th>
+                    <th>Sil</th>
                 </tr>
             </thead>
             <tbody>
@@ -36,24 +36,24 @@
                     <td>
                         <input type="number" name="quantity_{{ item_with_tl.item.id }}" value="{{ item_with_tl.item.quantity }}" min="1" style="width: 70px" required>
                     </td>
-                    <td>{%if order.customer.user == request.user %}
+                    <td>{% if order.customer.user == request.user %}
                         {{ item_with_tl.item.price }}
-                        {%else%}
+                        {% else %}
                         <input type="number" name="price_{{ item_with_tl.item.id }}" value="{{ item_with_tl.item.price }}" step="0.01" min="0" style="width: 70px" required>
-                        {%endif%}
+                        {% endif %}
                     </td>
                     <td>{{ item_with_tl.item.product.currency }}</td>
-                    <td>{%if order.customer.user == request.user %}
+                    <td>{% if order.customer.user == request.user %}
                         {{ item_with_tl.currency_rate }}
-                        {%else%}
+                        {% else %}
                         <input type="number" name="currency_rate_{{ item_with_tl.item.id }}" value="{{ item_with_tl.currency_rate }}" step="0.01" min="0" style="width: 70px" required>
-                        {%endif%}
+                        {% endif %}
                     </td>
-                    <td>{%if order.customer.user == request.user %}
+                    <td>{% if order.customer.user == request.user %}
                         {{ item_with_tl.discount_rate }}
-                        {%else%}
+                        {% else %}
                         <input type="number" name="discount_rate_{{ item_with_tl.item.id }}" value="{{ item_with_tl.discount_rate }}" step="0.01" min="0" style="width: 70px" required>
-                        {%endif%}
+                        {% endif %}
                     </td>
                     <td>{{ item_with_tl.tl_value }}</td>
                     <td>{{ item_with_tl.tax }}</td>
@@ -69,12 +69,12 @@
             </tbody>
         </table>
     </form>
-    {%if order.customer.user != request.user %}
+    {% if order.customer.user != request.user %}
     <form method="POST" action="{% url 'order:create_invoice' order_number=order.order_number %}">
         {% csrf_token %}
         <button type="submit" class="btn btn-success">Faturaya Çevir</button>
     </form>
-    {%endif%}
+    {% endif %}
     
     <h2>Ürün Ekle</h2>
     <form method="POST">
@@ -119,13 +119,12 @@
                 <td>{{ item.currency }}</td>
                 <td>{{ item.stockAmount }}</td>
                 <td>
-                    {% if item.stockAmount > 0 %}
                     <input type="number" name="quantity" value="1" min="1" max="{{ item.stockAmount }}">
                     <input type="hidden" name="item_id" value="{{ item.id }}">
-                    <td><button type="submit" name="product_add">Ekle</button></td>
-                    {% else %}
+                </td>
+                <td>
+                    <button type="submit" name="product_add" class="btn btn-primary">Ekle</button>
                     <input type="hidden" name="item_id" value="{{ item.id }}">
-                    {% endif %}
                 </td>
                 </form>
             </tr>

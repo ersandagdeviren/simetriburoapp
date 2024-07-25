@@ -25,6 +25,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 from selenium.common.exceptions import NoSuchElementException ,TimeoutException
 from .forms import ProductForm 
+from selenium.webdriver.chrome.service import Service
 
 
 """
@@ -90,28 +91,37 @@ def search(request):
         return render(request, "order/product.html", {"form": ProductSearchForm()})
 @login_required
 def main(request):
-    webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
-    webpage = webpage_response.content
-    soup = BeautifulSoup(webpage, "html.parser")
-    target_data_usd = soup.select_one(
-        "html > body > div:nth-of-type(3) > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > table > tbody > tr:nth-of-type(1) > td:nth-of-type(3) > div > span").get_text()
-    target_data_usd = round(float(str(target_data_usd).replace(" ", "").replace("\n", "")), 2)
-    target_data_usd = round(target_data_usd, 2)  # Keep it as a float for now
+    try:
+        webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
+        webpage = webpage_response.content
+        soup = BeautifulSoup(webpage, "html.parser")
+        target_data_usd = soup.select_one(
+            "body > div.flex.w-full.justify-center.px-3 > div > div.flex.flex-col.sc1300\:flex-row.justify-center.max-w-\[1500px\].gap-3.min-w-0 > div > div.flex.gap-3.w-full.flex-col.lg\:flex-row > div.w-full > div.flex.lg\:px-3.flex-col.flex-\[1_1_auto\].lg\:bg-pholder.lg\:theme-dark\:bg-dPholder.lg\:theme-light\:bg-wPholder.shadow-boxShadow > div.py-0 > table > tbody > tr:nth-child(1) > td.align-middle.md\:align-top.text-right.w-24.truncate.ml-6 > div").get_text()
+        target_data_usd = round(float(str(target_data_usd).replace(" ", "").replace("\n", "")[:5]), 2)
+        target_data_usd = round(target_data_usd, 2)  # Keep it as a float for now
 
-    target_data_eur = soup.select_one(
-        "html > body > div:nth-of-type(3) > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > table > tbody > tr:nth-of-type(2) > td:nth-of-type(3) > div > span").get_text()
-    target_data_eur = round(float(str(target_data_eur).replace(" ", "").replace("\n", "")), 2)
-    target_data_eur = round(target_data_eur, 2)  # Keep it as a float for now
+        target_data_eur = soup.select_one(
+            "body > div.flex.w-full.justify-center.px-3 > div > div.flex.flex-col.sc1300\:flex-row.justify-center.max-w-\[1500px\].gap-3.min-w-0 > div > div.flex.gap-3.w-full.flex-col.lg\:flex-row > div.w-full > div.flex.lg\:px-3.flex-col.flex-\[1_1_auto\].lg\:bg-pholder.lg\:theme-dark\:bg-dPholder.lg\:theme-light\:bg-wPholder.shadow-boxShadow > div.py-0 > table > tbody > tr:nth-child(2) > td.align-middle.md\:align-top.text-right.w-24.truncate.ml-6 > div").get_text()
+        target_data_eur = round(float(str(target_data_eur).replace(" ", "").replace("\n", "")[:5]), 2)
+        target_data_eur = round(target_data_eur, 2)  # Keep it as a float for now
+    except:
+        target_data_usd=0
+        target_data_eur=0
 
-    webpage_response2 = requests.get('https://www.altinkaynak.com/Doviz/Kur/Guncel')
-    webpage2 = webpage_response2.content
-    soup2 = BeautifulSoup(webpage2, "html.parser")
-    target_data_usd2 = round(float(soup2.find(id="tdUSDSell").get_text().replace(",", ".")), 2)
-    target_data_usd2 = round(target_data_usd2, 2)  # Keep it as a float for now
+        
+    try:
+        webpage_response2 = requests.get('https://www.altinkaynak.com/Doviz/Kur/Guncel')
+        webpage2 = webpage_response2.content
+        soup2 = BeautifulSoup(webpage2, "html.parser")
+        target_data_usd2 = round(float(soup2.find(id="tdUSDSell").get_text().replace(",", ".")), 2)
+        target_data_usd2 = round(target_data_usd2, 2)  # Keep it as a float for now
 
-    target_data_eur2 = round(float(soup2.find(id="tdEURSell").get_text().replace(",", ".")), 2)
-    target_data_eur2 = round(target_data_eur2, 2)  # Keep it as a float for now
-
+        target_data_eur2 = round(float(soup2.find(id="tdEURSell").get_text().replace(",", ".")), 2)
+        target_data_eur2 = round(target_data_eur2, 2)  # Keep it as a float for now
+    except:
+        target_data_usd=0
+        target_data_eur=0
+        
     today = datetime.date.today()
     orders = Order.objects.filter(date__gt=today)
     orders_with_totals = []
@@ -321,7 +331,7 @@ def customer_list(request):
         if query:
             # Split the query into individual words
             query_words = query.split()
-            # Create a Q object to combine conditions
+            # Create a Q object to combine conditions 
             q_objects = Q()
             for word in query_words:
                 # Update the Q object with each word
@@ -542,6 +552,7 @@ def order_detail(request, order_number):
         elif 'product_add' in request.POST:
             product_id = request.POST.get('item_id')
             new_price = request.POST.get('new_price')
+            
             quantity = request.POST.get('quantity')
             product = get_object_or_404(Product, id=product_id)
             currency = product.currency
@@ -925,9 +936,12 @@ def user_order(request):
                 for word in query_words:
                     # Update the Q object with each word
                     q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
-                
                 # Filter products based on the Q object
-                productresult = Product.objects.filter(q_objects).order_by('-stockAmount')
+                productresult = Product.objects.filter(q_objects)
+
+                for product in productresult:
+                    inventory = Inventory.objects.filter(product=product, place__name="D1").first()
+                    product.stockAmount = inventory.quantity if inventory else 0
                 return render(request, 'order/user_order.html', {
                     "product_form": product_form,
                     "product": productresult,
@@ -1102,20 +1116,19 @@ def user_invoice_list(request):
     return render(request, 'order/user_invoice_list.html', {'invoices': invoices})
 
 @user_passes_test(lambda u: u.is_superuser)
-def post_invoice(request,invoice_number):
+def post_invoice(request, invoice_number):
     invoices = Invoice.objects.all().order_by('-invoice_date')
     invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
     order = invoice.order
-    order_items_with_tl = []
+
+    products = []
+    product_price = []
+    product_quantity = []
 
     total_amount = 0
     total_discount = 0
     total_tax = 0
     grand_total = 0
-    
-    products=[]
-    product_price=[]
-    product_quantity=[]
 
     for item in order.order_items.all():
         currency_rate = item.currency_rate
@@ -1127,48 +1140,50 @@ def post_invoice(request,invoice_number):
         product_price.append((item.price - discount_amount) * currency_rate)
         product_quantity.append(item.quantity)
 
-
-
         total_amount += tl_value
         total_tax += item_tax
         total_discount += round(discount_amount * item.quantity * currency_rate, 2)
         grand_total = total_amount + total_tax
-        item_quantity=item.quantity
-        customer_tax_number=str(item.order.customer.tax_number)
 
+    customer_tax_number = str(order.customer.tax_number)
 
     # Configure webdriver options for headless mode
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--window-size=1920x1080")
+    chrome_options.page_load_strategy = 'normal'
 
-    # Set up the webdriver using webdriver_manager
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), ) #options=chrome_options
-    driver.maximize_window()
     try:
-        # Open the login page
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service,options=chrome_options)#options=chrome_options 
+    except:
+        chromedriver_path = "order/static/chromedriver.exe"
+        service = Service(chromedriver_path)
+
+    chromedriver_path = "order/static/chromedriver.exe"
+    service = Service(chromedriver_path)
+    driver = webdriver.Chrome(service=service, options=chrome_options)#options=chrome_options
+    driver.maximize_window()
+
+
+
+    try:
         driver.get('https://portal.smartdonusum.com/accounting/login')
-        
-        # Wait until the username field is present
+
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#username')))
 
-        # Locate the username and password fields
         username_field = driver.find_element(By.CSS_SELECTOR, '#username')
         password_field = driver.find_element(By.CSS_SELECTOR, '#password')
 
-        # Enter the username and password
         username_field.send_keys('admin_005256')
         password_field.send_keys('x&2U*bnD')
-        # Submit the form
         password_field.send_keys(Keys.RETURN)
-
-
-        # Click on the specified elements
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#style-7 > ul > li:nth-child(5) > a'))).click()
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#pagesTransformation > ul > li:nth-child(1) > a'))).click()
 
-        # Wait for the input field to be visible and send the number
         input_field = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.CSS_SELECTOR, '#react-select-4--value > div.Select-input > input')))
         input_field.send_keys(customer_tax_number)
         time.sleep(3)
@@ -1200,12 +1215,12 @@ def post_invoice(request,invoice_number):
             time.sleep(1)
         time.sleep(10)
     finally:
-        pass
+        driver.quit()
+
     invoice.published = True
     invoice.save()
 
     return render(request, 'order/invoice_publish_success.html', {'invoices': invoices})
-
 @login_required
 def customer_update_request_view(request, pk):
     customer = get_object_or_404(Customer, user_id=pk)
