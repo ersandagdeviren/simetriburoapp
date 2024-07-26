@@ -1180,8 +1180,6 @@ def post_invoice(request, invoice_number):
         chromedriver_path = "order/static/chromedriver.exe"
         service = Service(chromedriver_path)
 
-    chromedriver_path = "order/static/chromedriver.exe"
-    service = Service(chromedriver_path)
     driver = webdriver.Chrome(service=service, options=chrome_options)#options=chrome_options
     driver.maximize_window()
 
