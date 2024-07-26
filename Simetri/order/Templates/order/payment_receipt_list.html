@@ -20,7 +20,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for payment_receipt in payment_receipts %}
+            {% for payment_receipt in page_obj %}
                 <tr>
                     <td><a href="{% url 'order:payment_receipt_detail' payment_receipt.pk %}">{{ payment_receipt.transaction_number }}</a></td>
                     <td>{{ payment_receipt.user }}</td>
@@ -42,6 +42,24 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; İlk</a>
+                <a href="?page={{ page_obj.previous_page_number }}">Önceki</a>
+            {% endif %}
+
+            <span class="current">
+                Sayfa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">Sonraki</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">Son &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
 
     <script>
         function confirmDelete() {

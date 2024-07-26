@@ -73,7 +73,7 @@ for index, row in df.iterrows():
         priceSelling3=row['priceSelling3'],
         tax=row['tax'],
         currency=currency_instance,
-        stockAmount=row['stockAmount'],
+        #stockAmount=row['stockAmount'],
         photoPath=row['photoPath']
     )
 

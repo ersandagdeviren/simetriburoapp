@@ -12,14 +12,36 @@ from django.core.exceptions import ValidationError
 User = get_user_model()
 
 def get_currency_rates():
-    webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
-    webpage = webpage_response.content
-    soup = BeautifulSoup(webpage, "html.parser")
-    target_data_usd = soup.select_one("html > body > div:nth-of-type(3) > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > table > tbody > tr:nth-of-type(1) > td:nth-of-type(3) > div > span").get_text()
-    target_data_usd = Decimal(str(target_data_usd).replace(" ", "").replace("\n", "")).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-    target_data_eur = soup.select_one("html > body > div:nth-of-type(3) > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > table > tbody > tr:nth-of-type(2) > td:nth-of-type(3) > div > span").get_text()
-    target_data_eur = Decimal(str(target_data_eur).replace(" ", "").replace("\n", "")).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    try:
+        webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
+        webpage = webpage_response.content
+        soup = BeautifulSoup(webpage, "html.parser")
+        target_data_usd = soup.select_one(
+            "body > div.flex.w-full.justify-center.px-3 > div > div.flex.flex-col.sc1300\:flex-row.justify-center.max-w-\[1500px\].gap-3.min-w-0 > div > div.flex.gap-3.w-full.flex-col.lg\:flex-row > div.w-full > div.flex.lg\:px-3.flex-col.flex-\[1_1_auto\].lg\:bg-pholder.lg\:theme-dark\:bg-dPholder.lg\:theme-light\:bg-wPholder.shadow-boxShadow > div.py-0 > table > tbody > tr:nth-child(1) > td.align-middle.md\:align-top.text-right.w-24.truncate.ml-6 > div").get_text()
+        target_data_usd = round(float(str(target_data_usd).replace(" ", "").replace("\n", "")[:5]), 2)
+        target_data_usd = round(target_data_usd, 2)  # Keep it as a float for now
 
+        target_data_eur = soup.select_one(
+            "body > div.flex.w-full.justify-center.px-3 > div > div.flex.flex-col.sc1300\:flex-row.justify-center.max-w-\[1500px\].gap-3.min-w-0 > div > div.flex.gap-3.w-full.flex-col.lg\:flex-row > div.w-full > div.flex.lg\:px-3.flex-col.flex-\[1_1_auto\].lg\:bg-pholder.lg\:theme-dark\:bg-dPholder.lg\:theme-light\:bg-wPholder.shadow-boxShadow > div.py-0 > table > tbody > tr:nth-child(2) > td.align-middle.md\:align-top.text-right.w-24.truncate.ml-6 > div").get_text()
+        target_data_eur = round(float(str(target_data_eur).replace(" ", "").replace("\n", "")[:5]), 2)
+        target_data_eur = round(target_data_eur, 2)  # Keep it as a float for now
+    except:
+        target_data_usd=0
+        target_data_eur=0
+
+        
+    try:
+        webpage_response2 = requests.get('https://www.altinkaynak.com/Doviz/Kur/Guncel')
+        webpage2 = webpage_response2.content
+        soup2 = BeautifulSoup(webpage2, "html.parser")
+        target_data_usd2 = round(float(soup2.find(id="tdUSDSell").get_text().replace(",", ".")), 2)
+        target_data_usd2 = round(target_data_usd2, 2)  # Keep it as a float for now
+
+        target_data_eur2 = round(float(soup2.find(id="tdEURSell").get_text().replace(",", ".")), 2)
+        target_data_eur2 = round(target_data_eur2, 2)  # Keep it as a float for now
+    except:
+        target_data_usd2=0
+        target_data_eur2=0
     return target_data_usd, target_data_eur
 
 # Create your models here.
@@ -279,8 +301,8 @@ class PaymentReceipt(models.Model):
     def save(self, *args, **kwargs):
         usd_rate, eur_rate = get_currency_rates()
 
-        self.usd_amount = (self.amount / usd_rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-        self.eur_amount = (self.amount / eur_rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        self.usd_amount = (float(self.amount )/ usd_rate)
+        self.eur_amount = (float(self.amount) / eur_rate)
 
         if not self.transaction_number:
             current_date = timezone.now()

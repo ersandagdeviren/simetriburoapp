@@ -26,6 +26,7 @@ import time
 from selenium.common.exceptions import NoSuchElementException ,TimeoutException
 from .forms import ProductForm 
 from selenium.webdriver.chrome.service import Service
+from django.core.paginator import Paginator
 
 
 """
@@ -57,38 +58,39 @@ def customer_details(request, id):
 
 @login_required
 def search(request):
-    if request.method == "POST":
-        form = ProductSearchForm(request.POST)
-        if form.is_valid():
-            query = form.cleaned_data["product_name"]
-            productresult = []
+    form = ProductSearchForm(request.POST or None)
+    query = ''
+    productresult = Product.objects.all()
 
-            if query:
-                # Split the query into individual words
-                query_words = query.split()
-                # Create a Q object to combine conditions
-                q_objects = Q()
-                for word in query_words:
-                    # Update the Q object with each word
-                    q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
-                
-                # Filter products based on the Q object
-                productresult = Product.objects.filter(q_objects)
+    if request.method == "POST" and form.is_valid():
+        query = form.cleaned_data["product_name"]
 
-                # Retrieve stock amount from Inventory where place is "D1"
-                for product in productresult:
-                    inventory = Inventory.objects.filter(product=product, place__name="D1").first()
-                    product.stockAmount = inventory.quantity if inventory else 0
+        if query:
+            # Split the query into individual words
+            query_words = query.split()
+            # Create a Q object to combine conditions
+            q_objects = Q()
+            for word in query_words:
+                # Update the Q object with each word
+                q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+            
+            # Filter products based on the Q object
+            productresult = Product.objects.filter(q_objects)
 
-                # Format numerical values with thousand separators
-                for product in productresult:
-                    product.stockAmount = f"{product.stockAmount:,.2f}"
+    # Retrieve stock amount from Inventory where place is "D1"
+    for product in productresult:
+        inventory = Inventory.objects.filter(product=product, place__name="D1").first()
+        product.stockAmount = inventory.quantity if inventory else 0
 
-                return render(request, "order/product.html", {"form": form, "product": productresult})
-            else:
-                return render(request, "order/product.html", {"form": ProductSearchForm()})
-    else:
-        return render(request, "order/product.html", {"form": ProductSearchForm()})
+    # Format numerical values with thousand separators
+    for product in productresult:
+        product.stockAmount = f"{product.stockAmount:,.2f}"
+
+    paginator = Paginator(productresult, 20)  # Show 20 products per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "order/product.html", {"form": form, "page_obj": page_obj, "query": query})
 @login_required
 def main(request):
     try:
@@ -119,8 +121,8 @@ def main(request):
         target_data_eur2 = round(float(soup2.find(id="tdEURSell").get_text().replace(",", ".")), 2)
         target_data_eur2 = round(target_data_eur2, 2)  # Keep it as a float for now
     except:
-        target_data_usd=0
-        target_data_eur=0
+        target_data_usd2=0
+        target_data_eur2=0
         
     today = datetime.date.today()
     orders = Order.objects.filter(date__gt=today)
@@ -505,8 +507,11 @@ def order_list(request):
             'order_date': order.date.strftime('%d-%m-%Y'),  # Adding the order date
         })
 
-    return render(request, 'order/order_list.html', {'orders_with_totals': orders_with_totals})
+    paginator = Paginator(orders_with_totals, 20)  # Show 20 orders per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
+    return render(request, 'order/order_list.html', {'page_obj': page_obj})
 @login_required
 def order_detail(request, order_number):
     defaultUSD, defaultEUR = get_currency_rates()
@@ -712,6 +717,11 @@ def create_invoice(request, order_number):
 
     return redirect('order:invoice_detail', invoice_number=invoice.invoice_number)
 
+from django.core.paginator import Paginator
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required, user_passes_test
+from .models import Invoice
+
 @login_required
 @user_passes_test(is_admin)
 def invoice_list(request):
@@ -725,8 +735,11 @@ def invoice_list(request):
         return redirect('order:invoice_list')
 
     invoices = Invoice.objects.all().order_by('-invoice_date')
+    paginator = Paginator(invoices, 20)  # Show 20 invoices per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
-    return render(request, 'order/invoice_list.html', {'invoices': invoices})
+    return render(request, 'order/invoice_list.html', {'page_obj': page_obj})
 
 def invoice_detail(request, invoice_number):
     invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
@@ -775,9 +788,13 @@ def invoice_detail(request, invoice_number):
 @login_required
 @user_passes_test(is_admin)
 def payment_receipt_list(request):
-    payment_receipts = PaymentReceipt.objects.all()
-    return render(request, 'order/payment_receipt_list.html', {'payment_receipts': payment_receipts})
+    payment_receipts = PaymentReceipt.objects.all().order_by('-date')
 
+    paginator = Paginator(payment_receipts, 20)  # Show 20 payment receipts per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'order/payment_receipt_list.html', {'page_obj': page_obj})
 @login_required
 def payment_receipt_detail(request, pk):
     payment_receipt = get_object_or_404(PaymentReceipt, pk=pk)
@@ -870,17 +887,17 @@ def customer_financials(request, customer_id):
 @login_required
 @user_passes_test(is_admin)
 def customer_listed(request):
+    search_query = request.GET.get('search', '')
     customers = Customer.objects.all()
-
-    # Handle search functionality
-    search_query = request.GET.get('search')
+    
     if search_query:
         customers = customers.filter(companyName__icontains=search_query)
-
-    context = {
-        'customers': customers
-    }
-    return render(request, 'order/customer_list.html', context)
+    
+    paginator = Paginator(customers, 20)  # Show 20 customers per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'order/customer_list.html', {'page_obj': page_obj})
 @login_required
 @user_passes_test(is_admin)
 def customer_new(request):
@@ -1406,12 +1423,16 @@ def supplier_new(request):
 @user_passes_test(is_admin)
 def supplier_listed(request):
     suppliers = Supplier.objects.all()
-
+    
     search_query = request.GET.get('search')
     if search_query:
-        customers = suppliers.filter(companyName__icontains=search_query)
+        suppliers = suppliers.filter(companyName__icontains=search_query)
+
+    paginator = Paginator(suppliers, 20)  # Show 20 suppliers per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     context = {
-        'suppliers': suppliers
+        'page_obj': page_obj
     }
     return render(request, 'order/supplier_list.html', context)

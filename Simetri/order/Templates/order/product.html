@@ -5,10 +5,10 @@
 <form action="{% url 'order:search' %}" method="POST">
     {% csrf_token %}
     {{ form }}
-    <input type="Submit"  value="Ara">
+    <input type="Submit" value="Ara">
 </form>
 
-{% if product %}
+{% if page_obj %}
 <table class="table">
     <thead>
         <tr>
@@ -24,7 +24,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for item in product %}
+        {% for item in page_obj %}
         <tr>
             <td><img src="{{ item.photoPath }}" alt="" width="100"></td>
             <td>{{ item.codeUyum }}</td>
@@ -32,14 +32,31 @@
             <td>{{ item.unit }}</td>
             <td>{{ item.brand }}</td>
             <td>{{ item.mainCategory }}</td>
-            <td><a href="{% url 'order:product_order_history' item.id %}" class="popup-link"> {{ item.priceSelling }}</a></td>
-            <td>{{item.currency}}</td>
+            <td><a href="{% url 'order:product_order_history' item.id %}" class="popup-link">{{ item.priceSelling }}</a></td>
+            <td>{{ item.currency }}</td>
             <td>{{ item.stockAmount }}</td>
-            <td></td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1{% if query %}&product_name={{ query }}{% endif %}">&laquo; İlk</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&product_name={{ query }}{% endif %}">Önceki</a>
+        {% endif %}
+
+        <span class="current">
+            Sayfa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if query %}&product_name={{ query }}{% endif %}">Sonraki</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if query %}&product_name={{ query }}{% endif %}">Son &raquo;</a>
+        {% endif %}
+    </span>
+</div>
 {% endif %}
 
 <script>

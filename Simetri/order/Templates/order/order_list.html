@@ -10,7 +10,7 @@
                 <th>Sipariş Numarası</th>
                 <th>Tarih</th>
                 <th>Cari</th>
-                <th>Kullanıcı</th> <!-- Add this line -->
+                <th>Kullanıcı</th>
                 <th>Toplam (USD)</th>
                 <th>Toplam (EUR)</th>
                 <th>Toplam TL</th>
@@ -21,13 +21,13 @@
             </tr>
         </thead>
         <tbody>
-            {% for order_with_total in orders_with_totals %}
-            {% if order_with_total.order.is_billed == False %}
+            {% for order_with_total in page_obj %}
+            {% if not order_with_total.order.is_billed %}
             <tr>
                 <td><a href="{% url 'order:order_detail' order_with_total.order.order_number %}">{{ order_with_total.order.order_number }}</a></td>
                 <td>{{ order_with_total.order_date }}</td>
                 <td>{{ order_with_total.order.customer }}</td>
-                <td>{{ order_with_total.order.user.username }}</td> <!-- Add this line -->
+                <td>{{ order_with_total.order.user.username }}</td>
                 <td>${{ order_with_total.total_amount_usd }}</td>
                 <td>€{{ order_with_total.total_amount_eur }}</td>
                 <td>{{ order_with_total.total_amount_tl }} TL</td>
@@ -46,6 +46,24 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; İlk</a>
+                <a href="?page={{ page_obj.previous_page_number }}">Önceki</a>
+            {% endif %}
+
+            <span class="current">
+                Sayfa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">Sonraki</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">Son &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
 
     <script>
         function confirmDelete() {
