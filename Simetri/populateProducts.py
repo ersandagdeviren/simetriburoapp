@@ -12,7 +12,7 @@ from order.models import Product, unit, brand, mainCategory, category, currency
 from django.core.exceptions import ObjectDoesNotExist
 
 # Read Excel File
-df = pd.read_excel('/Users/ersandagdeviren/Desktop/simetriburoapp/Simetri/order/static/products2.xls')
+df = pd.read_excel(r'C:\Users\MALIHP\Desktop\simetriburoapp\Simetri\order\static\products.xls')
 
 # Iterate Through Rows
 for index, row in df.iterrows():
