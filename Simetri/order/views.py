@@ -86,7 +86,7 @@ def search(request):
     for product in productresult:
         product.stockAmount = f"{product.stockAmount:,.2f}"
 
-    paginator = Paginator(productresult, 20)  # Show 20 products per page
+    paginator = Paginator(productresult, 50)  # Show 20 products per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -507,7 +507,7 @@ def order_list(request):
             'order_date': order.date.strftime('%d-%m-%Y'),  # Adding the order date
         })
 
-    paginator = Paginator(orders_with_totals, 20)  # Show 20 orders per page
+    paginator = Paginator(orders_with_totals, 50)  # Show 20 orders per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -717,11 +717,6 @@ def create_invoice(request, order_number):
 
     return redirect('order:invoice_detail', invoice_number=invoice.invoice_number)
 
-from django.core.paginator import Paginator
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import Invoice
-
 @login_required
 @user_passes_test(is_admin)
 def invoice_list(request):
@@ -735,7 +730,7 @@ def invoice_list(request):
         return redirect('order:invoice_list')
 
     invoices = Invoice.objects.all().order_by('-invoice_date')
-    paginator = Paginator(invoices, 20)  # Show 20 invoices per page
+    paginator = Paginator(invoices, 50)  # Show 20 invoices per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -790,7 +785,7 @@ def invoice_detail(request, invoice_number):
 def payment_receipt_list(request):
     payment_receipts = PaymentReceipt.objects.all().order_by('-date')
 
-    paginator = Paginator(payment_receipts, 20)  # Show 20 payment receipts per page
+    paginator = Paginator(payment_receipts, 50)  # Show 20 payment receipts per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -798,8 +793,9 @@ def payment_receipt_list(request):
 @login_required
 def payment_receipt_detail(request, pk):
     payment_receipt = get_object_or_404(PaymentReceipt, pk=pk)
-    if payment_receipt.customer.user != request.user and not request.user.is_superuser:
-        return HttpResponseForbidden("You don't have permission to access this info.")
+    if payment_receipt.transaction_type == "Tahsilat":
+        if payment_receipt.customer.user != request.user and not request.user.is_superuser:
+            return HttpResponseForbidden("You don't have permission to access this info.")
     return render(request, 'order/payment_receipt_detail.html', {'payment_receipt': payment_receipt})
 
 @login_required
@@ -893,7 +889,7 @@ def customer_listed(request):
     if search_query:
         customers = customers.filter(companyName__icontains=search_query)
     
-    paginator = Paginator(customers, 20)  # Show 20 customers per page
+    paginator = Paginator(customers, 50)  # Show 20 customers per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -1426,7 +1422,7 @@ def supplier_listed(request):
     if search_query:
         suppliers = suppliers.filter(companyName__icontains=search_query)
 
-    paginator = Paginator(suppliers, 20)  # Show 20 suppliers per page
+    paginator = Paginator(suppliers, 50)  # Show 20 suppliers per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -1434,3 +1430,195 @@ def supplier_listed(request):
         'page_obj': page_obj
     }
     return render(request, 'order/supplier_list.html', context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def supplier_list(request):
+    if "suppliers" not in request.session:
+        request.session["suppliers"] = []
+    if "products" not in request.session:
+        request.session["products"] = []
+    if "product_query" not in request.session:
+        request.session["product_query"] = ""
+
+    supplier_list = []
+    supplier_selected = request.session['suppliers']
+    product_form = ProductSearchForm(request.POST or None)
+    productresult = []  # Initialize productresult
+    places = Place.objects.all()  # Fetch all places here
+
+    if request.method == "POST" and "supplier_searched" in request.POST:
+        input_supplier = request.POST.get('supplier')
+        supplier_list = Supplier.objects.filter(companyName__icontains=input_supplier)
+        if not supplier_list:
+            messages.info(request, 'No suppliers found matching your search.')
+        return render(request, 'order/purchase_create.html', {
+            "supplier_list": supplier_list,
+            "supplier_selected": supplier_selected,
+            "places": places,  # Pass places to the template
+        })
+
+    elif request.method == "POST" and "supplier_selected" in request.POST:
+        request.session['suppliers'] = []
+        supplier_id = request.POST.get('supplier_id')
+        supplier_name = Supplier.objects.get(id=supplier_id).companyName
+        request.session['suppliers'].append(supplier_id)
+        return render(request, 'order/purchase_create.html', {
+            "supplier_name": supplier_name,
+            "product_form": product_form,
+            "products": request.session['products'],
+            "places": places,  # Pass places to the template
+        })
+
+    elif request.method == "POST" and "product_submit" in request.POST:
+        supplier_name = Supplier.objects.get(id=request.session['suppliers'][0]).companyName
+        if product_form.is_valid():
+            query = product_form.cleaned_data["product_name"]
+            request.session['product_query'] = query  # Store the search query in the session
+            if query:
+                # Split the query into individual words
+                query_words = query.split()
+                # Create a Q object to combine conditions
+                q_objects = Q()
+                for word in query_words:
+                    # Update the Q object with each word
+                    q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+                
+                # Filter products based on the Q object
+                productresult = Product.objects.filter(q_objects)
+                return render(request, 'order/purchase_create.html', {
+                    "product_form": product_form,
+                    "product": productresult,
+                    "supplier_name": supplier_name,
+                    "products": request.session['products'],
+                    "places": places,  # Pass places to the template
+                })
+
+    elif request.method == "POST" and "product_add" in request.POST:
+        product_id = request.POST.get('item_id')
+        new_price = request.POST.get('new_price')
+        quantity = request.POST.get('quantity')
+        place_id = request.POST.get('place_id')
+        place_name = Place.objects.get(id=place_id).name  # Get the place name
+        description = Product.objects.get(id=product_id).description
+
+        product_entry = {
+            'id': product_id,
+            'price': new_price,
+            'quantity': quantity,
+            'description': description,
+            'place_id': place_id,
+            'place_name': place_name  # Include place name
+        }
+
+        products = request.session.get('products', [])
+        products.append(product_entry)
+        request.session['products'] = products
+
+        supplier_name = Supplier.objects.get(id=request.session['suppliers'][0]).companyName
+
+        query = request.session.get('product_query', "")
+        if query:
+            # Split the query into individual words
+            query_words = query.split()
+            # Create a Q object to combine conditions
+            q_objects = Q()
+            for word in query_words:
+                # Update the Q object with each word
+                q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+
+            # Filter products based on the Q object
+            productresult = Product.objects.filter(q_objects)
+
+            # Retrieve stock amount from Inventory where place is "D1"
+            for product in productresult:
+                inventory = Inventory.objects.filter(product=product, place__name="D1").first()
+                product.stockAmount = inventory.quantity if inventory else 0
+
+        return render(request, 'order/purchase_create.html', {
+            "product_form": product_form,
+            "supplier_name": supplier_name,
+            "products": request.session['products'],
+            "product": productresult
+        })
+
+    elif request.method == "POST" and "delete_product" in request.POST:
+        product_id = request.POST.get('product_id')
+        products = request.session.get('products', [])
+        products = [product for product in products if product['id'] != product_id]
+        request.session['products'] = products
+
+        supplier_name = Supplier.objects.get(id=request.session['suppliers'][0]).companyName
+
+        query = request.session.get('product_query', "")
+        if query:
+            # Split the query into individual words
+            query_words = query.split()
+            # Create a Q object to combine conditions 
+            q_objects = Q()
+            for word in query_words:
+                # Update the Q object with each word
+                q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+            
+            # Filter products based on the Q object
+            productresult = Product.objects.filter(q_objects)
+
+            # Retrieve stock amount from Inventory where place is "D1"
+            for product in productresult:
+                inventory = Inventory.objects.filter(product=product, place__name="D1").first()
+                product.stockAmount = inventory.quantity if inventory else 0
+
+        
+        return render(request, 'order/purchase_create.html', {
+            "product_form": product_form,
+            "supplier_name": supplier_name,
+            "products": request.session['products'],
+            "product": productresult,
+            "places": places,  # Pass places to the template
+        })
+    else:
+        return render(request, 'order/purchase_create.html', {
+            "product_form": product_form,
+            "supplier_selected": supplier_selected,
+            "places": places,  # Pass places to the template
+        })
+
+@login_required
+@user_passes_test(is_admin)
+def complete_purchase(request):
+    if request.method == "POST":
+        supplier_id = request.session.get('suppliers')[0]
+        product_entries = request.session.get('products', [])
+
+        # Debugging: Log the received data
+        print(f"Supplier ID: {supplier_id}")
+        print(f"Product Entries: {product_entries}")
+
+        for entry in product_entries:
+            product = Product.objects.get(id=entry['id'])
+            place = Place.objects.get(id=entry['place_id'])
+            quantity = int(entry['quantity'])
+            price = float(entry['price'])
+
+            # Debugging: Log each entry processing
+            print(f"Processing product {product} at place {place} with quantity {quantity} and price {price}")
+
+            # Update inventory
+            inventory, created = Inventory.objects.get_or_create(product=product, place=place)
+            if created:
+                inventory.quantity = quantity
+            else:
+                inventory.quantity += quantity
+            inventory.priceBuying = price
+            inventory.save()
+
+        # Clear session data
+        request.session['products'] = []
+        request.session['suppliers'] = []
+        request.session['product_query'] = ""
+
+        messages.success(request, 'Purchase completed successfully.')
+        return redirect('order:supplier_list')
+
+    return redirect('order:supplier_list')

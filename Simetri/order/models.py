@@ -423,9 +423,12 @@ class Inventory(models.Model):
     class Meta:
         unique_together = ('product', 'place')
 
+    def update_quantity(self, quantity):
+        self.quantity += quantity
+        self.save()
+
     def __str__(self):
         return f"{self.product} at {self.place}"
-
 class Transfer(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     from_place = models.ForeignKey(Place, on_delete=models.CASCADE, related_name='transfers_from')
