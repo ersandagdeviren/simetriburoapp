@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib import messages
-from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt, CustomerUpdateRequest, Place, Inventory, Transfer,Production,Supplier
+from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt, CustomerUpdateRequest, Place, Inventory, Transfer,Production,Supplier,BuyingInvoice,BuyingItem
 from .forms import ProductSearchForm ,PaymentReceiptForm,CustomerForm, CustomerUpdateRequestForm,SupplierForm
 from decimal import Decimal, ROUND_HALF_UP
 from django.http import JsonResponse
@@ -1412,7 +1412,6 @@ def supplier_new(request):
     return render(request, 'order/supplier_new.html', context)
 
 
-
 @login_required
 @user_passes_test(is_admin)
 def supplier_listed(request):
@@ -1577,6 +1576,71 @@ def supplier_list(request):
             "product": productresult,
             "places": places,  # Pass places to the template
         })
+    elif request.method == "POST" and "complete_purchase" in request.POST:
+        supplier_id = request.session['suppliers'][0]
+        supplier = Supplier.objects.get(id=supplier_id)
+        
+        # Retrieve products from session
+        products = request.session.get('products', [])
+
+        # Create a new buying invoice
+        buying_invoice = BuyingInvoice.objects.create(
+            supplier=supplier,
+            billing_address=supplier.adress,
+            total_amount=0,  # This will be calculated later
+            total_discount=0,  # If applicable
+            tax_amount=0,  # If applicable
+            grand_total=0,  # This will be calculated later
+            status='Completed'  # Assuming the order is completed
+        )
+
+        total_amount = 0
+
+        # Create buying items and update inventory
+        for product_entry in products:
+            product = Product.objects.get(id=product_entry['id'])
+            place = Place.objects.get(id=product_entry['place_id'])
+            quantity = int(product_entry['quantity'])
+            price = Decimal(product_entry['price'])
+
+            # Update Inventory
+            inventory, created = Inventory.objects.get_or_create(product=product, place=place, defaults={'quantity': 0})
+            inventory.priceBuying = price
+            inventory.save()
+
+            # Create BuyingItem
+            BuyingItem.objects.create(
+                buying_invoice=buying_invoice,
+                product=product,
+                inventory=inventory,
+                quantity=quantity,
+                price=price,
+                currency_rate=1,  # Assuming default rate, update if necessary
+                discount_rate=0  # Assuming no discount, update if necessary
+            )
+
+            total_amount += price * quantity
+
+        # Update buying invoice totals
+        buying_invoice.total_amount = total_amount
+        # Calculate tax, discounts and grand total if applicable
+        buying_invoice.grand_total = total_amount
+        buying_invoice.save()
+
+        # Clear session data
+        request.session['suppliers'] = []
+        request.session['products'] = []
+        request.session['product_query'] = ""
+
+        messages.success(request, "Purchase completed successfully!")
+
+        return render(request, 'order/purchase_create.html', {
+            "product_form": product_form,
+            "supplier_selected": [],
+            "products": [],
+            "places": places,  # Pass places to the template
+        })
+    
     else:
         return render(request, 'order/purchase_create.html', {
             "product_form": product_form,
@@ -1586,39 +1650,16 @@ def supplier_list(request):
 
 @login_required
 @user_passes_test(is_admin)
-def complete_purchase(request):
-    if request.method == "POST":
-        supplier_id = request.session.get('suppliers')[0]
-        product_entries = request.session.get('products', [])
+def buying_invoice_list(request):
+    if request.method == 'POST' and 'delete_invoice' in request.POST:
+        invoice_id = request.POST.get('invoice_id')
+        invoice = get_object_or_404(BuyingInvoice, id=invoice_id)
+        invoice.delete()
+        return redirect('order:buying_invoice_list')
 
-        # Debugging: Log the received data
-        print(f"Supplier ID: {supplier_id}")
-        print(f"Product Entries: {product_entries}")
+    invoices = BuyingInvoice.objects.all().order_by('-invoice_date')
+    paginator = Paginator(invoices, 50)  # Show 50 invoices per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
-        for entry in product_entries:
-            product = Product.objects.get(id=entry['id'])
-            place = Place.objects.get(id=entry['place_id'])
-            quantity = int(entry['quantity'])
-            price = float(entry['price'])
-
-            # Debugging: Log each entry processing
-            print(f"Processing product {product} at place {place} with quantity {quantity} and price {price}")
-
-            # Update inventory
-            inventory, created = Inventory.objects.get_or_create(product=product, place=place)
-            if created:
-                inventory.quantity = quantity
-            else:
-                inventory.quantity += quantity
-            inventory.priceBuying = price
-            inventory.save()
-
-        # Clear session data
-        request.session['products'] = []
-        request.session['suppliers'] = []
-        request.session['product_query'] = ""
-
-        messages.success(request, 'Purchase completed successfully.')
-        return redirect('order:supplier_list')
-
-    return redirect('order:supplier_list')
+    return render(request, 'order/buying_invoice_list.html', {'page_obj': page_obj})

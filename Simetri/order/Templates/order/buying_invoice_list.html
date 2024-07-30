@@ -1,0 +1,70 @@
+{% extends "order/navbar.html" %}
+
+{% block content %}
+    <h2>Alım Faturaları</h2>
+    <a href="{% url 'order:supplier_list' %}" class="btn btn-success mb-2">Yeni Alım</a>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Fatura Numarası</th>
+                <th>Fatura Tarihi</th>
+                <th>Tedarikçi</th>
+                <th>Toplam TL</th>
+                <th>Total İskonto</th>
+                <th>Toplam KDV</th>
+                <th>Genel Toplam (USD)</th>
+                <th>Genel Toplam (EUR)</th>
+                <th>Genel Toplam TL</th>
+                <th>Durum</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for invoice in page_obj %}
+                <tr>
+                    <td>{{ invoice.invoice_number }}</a></td>
+                    <td>{{ invoice.invoice_date|date:"Y-m-d H:i" }}</td>
+                    <td>{{ invoice.supplier }}</td>
+                    <td>{{ invoice.total_amount }}</td>
+                    <td>{{ invoice.total_discount }}</td>
+                    <td>{{ invoice.tax_amount }}</td>
+                    <td>{{ invoice.grand_total_USD }}</td>
+                    <td>{{ invoice.grand_total_EUR }}</td>
+                    <td><b>{{ invoice.grand_total }}</b></td>
+                    <td>{{ invoice.status }}</td>
+                    <td>
+                        <form method="POST" onsubmit="return confirmDelete();">
+                            {% csrf_token %}
+                            <input type="hidden" name="invoice_id" value="{{ invoice.id }}">
+                            <button type="submit" name="delete_invoice" class="btn btn-danger">Sil</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; İlk</a>
+                <a href="?page={{ page_obj.previous_page_number }}">Önceki</a>
+            {% endif %}
+
+            <span class="current">
+                Sayfa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">Sonraki</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">Son &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+
+    <script>
+        function confirmDelete() {
+            return confirm("Faturayı silmek istediğinizden emin misiniz?");
+        }
+    </script>
+{% endblock %}

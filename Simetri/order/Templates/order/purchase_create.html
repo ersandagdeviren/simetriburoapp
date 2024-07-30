@@ -58,7 +58,7 @@
 {% endif %}
 
 {% if supplier_name %}
-    <p> Seçilen Tedarikçi {{ supplier_name }} </p>
+    <p> Seçilen Tedarikçi: {{ supplier_name }} </p>
     <form method="POST">
         {% csrf_token %}
         <div class="form-group">
@@ -97,17 +97,15 @@
             {% endfor %}
         </tbody>
     </table>
-{% endif %}
-<form method="POST" action="{% url 'order:complete_purchase' %}">
-    {% csrf_token %}
-    {% if products %}
-    <input type="submit" name="complete_purchase" value="Satın Almayı Tamamla" class="btn btn-success">
-    {% else %}
-    <input type="submit" name="complete_purchase" value="Satın Almayı Tamamla" class="btn btn-success" disabled style="opacity: 0.5; cursor: not-allowed;">
     {% endif %}
-</form>
-  
-
+    <form method="POST" >
+        {% csrf_token %}
+        {% if products %}
+        <input type="submit" name="complete_purchase" value="Satın Almayı Tamamla" class="btn btn-success">
+        {% else %}
+        <input type="submit" name="complete_purchase" value="Satın Almayı Tamamla" class="btn btn-success" disabled style="opacity: 0.5; cursor: not-allowed;">
+        {% endif %}
+    </form>
 
     {% if product %}
     <table class="table">

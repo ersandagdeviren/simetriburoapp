@@ -36,5 +36,5 @@ urlpatterns = [
     path('supplier_new', views.supplier_new, name='supplier_new'),
     path('supplier_listed', views.supplier_listed, name='supplier_listed'),
     path('supplier_list/', views.supplier_list, name='supplier_list'),
-    path('complete_purchase/', views.complete_purchase, name='complete_purchase'),
+    path('buying-invoices/', views.buying_invoice_list, name='buying_invoice_list'),
 ]

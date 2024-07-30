@@ -344,12 +344,49 @@ class PaymentReceipt(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.transaction_type} - {self.amount}"
+    
+class Supplier(models.Model):
+    supplierCode = models.CharField(max_length=50)
+    companyName = models.CharField(max_length=50)
+    taxOffice = models.CharField(max_length=50, null=True, blank=True)
+    tax_number = models.CharField(max_length=50, null=True, blank=True)
+    city = models.CharField(max_length=50, null=True, blank=True)
+    adress = models.CharField(max_length=250, null=True, blank=True)
+    country = models.CharField(max_length=50, blank=True)
+    email = models.EmailField(null=True, blank=True)
+    telephone = models.CharField(max_length=11, null=True, blank=True)
+    contactPerson = models.CharField(max_length=50, null=True, blank=True)
+
+    def __str__(self):
+        return self.companyName
+    
+class Place(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+    
+class Inventory(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    place = models.ForeignKey(Place, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=0)
+    priceBuying = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+
+    class Meta:
+        unique_together = ('product', 'place')
+
+    def update_quantity(self, quantity):
+        self.quantity += quantity
+        self.save()
+
+    def __str__(self):
+        return f"{self.product} at {self.place}"
 
 class BuyingInvoice(models.Model):
     invoice_number = models.CharField(max_length=20, unique=True, blank=True)
-    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="buying_invoice")
+    supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT, related_name="supplier_invoices")
     invoice_date = models.DateTimeField(auto_now_add=True)
-    billing_address = models.CharField(max_length=250, blank=True)
+    billing_address = models.CharField(max_length=250, blank=True, null=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     total_discount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
@@ -376,28 +413,33 @@ class BuyingInvoice(models.Model):
             self.invoice_number = f"{filter_prefix}{new_invoice_number:05d}"
 
         super().save(*args, **kwargs)
-        
-        # Mark the associated order as billed
-        self.order.is_billed = True
-        self.order.save()
 
         # Increase the stock amounts for buying invoice
-        for item in self.order.order_items.all():
-            product = item.product
-            product.stockAmount += item.quantity
-            product.save()
+        for item in self.buying_items.all():
+            inventory = item.inventory
+            inventory.update_quantity(item.quantity)
 
     def delete(self, *args, **kwargs):
         # Decrease the stock amounts before deleting the buying invoice
-        for item in self.order.order_items.all():
-            product = item.product
-            product.stockAmount -= item.quantity
-            product.save()
+        for item in self.buying_items.all():
+            inventory = item.inventory
+            inventory.update_quantity(-item.quantity)
 
-        # Mark the associated order as unbilled before deleting the invoice
-        self.order.is_billed = False
-        self.order.save()
+        # Ensure the invoice is deleted after stock adjustments
         super().delete(*args, **kwargs)
+
+class BuyingItem(models.Model):
+    buying_invoice = models.ForeignKey(BuyingInvoice, on_delete=models.CASCADE, related_name="buying_items")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    currency_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    discount_rate = models.PositiveIntegerField(blank=True, default=0)
+
+    def __str__(self):
+        return f"{self.buying_invoice.invoice_number} - {self.product.description}"
+
 
 class CustomerUpdateRequest(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='update_requests')
@@ -407,28 +449,7 @@ class CustomerUpdateRequest(models.Model):
 
     def __str__(self):
         return f'Update Request for {self.customer}'
-    
-class Place(models.Model):
-    name = models.CharField(max_length=100)
 
-    def __str__(self):
-        return self.name
-
-class Inventory(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    place = models.ForeignKey(Place, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField(default=0)
-    priceBuying = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
-
-    class Meta:
-        unique_together = ('product', 'place')
-
-    def update_quantity(self, quantity):
-        self.quantity += quantity
-        self.save()
-
-    def __str__(self):
-        return f"{self.product} at {self.place}"
 class Transfer(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     from_place = models.ForeignKey(Place, on_delete=models.CASCADE, related_name='transfers_from')
@@ -466,17 +487,3 @@ class Production(models.Model):
     def __str__(self):
         return f"Production of {self.product}"
     
-
-class Supplier (models.Model):
-    supplierCode = models.CharField(max_length=50)
-    companyName = models.CharField(max_length=50)
-    taxOffice = models.CharField(max_length=50, null=True, blank=True)
-    tax_number = models.CharField(max_length=50, null=True, blank=True)
-    city = models.CharField(max_length=50, null=True, blank=True)
-    adress = models.CharField(max_length=250, null=True, blank=True)
-    country = models.CharField(max_length=50, blank=True,)
-    email = models.EmailField( null=True, blank=True)
-    telephone = models.CharField(max_length=11, null=True, blank=True)
-    contactPerson = models.CharField(max_length=50, null=True, blank=True)
-    def __str__(self):
-        return self.companyName
