@@ -1130,6 +1130,7 @@ def user_invoice_list(request):
 
 @user_passes_test(lambda u: u.is_superuser)
 def post_invoice(request, invoice_number):
+    #pip install --upgrade webdriver-manager
     invoices = Invoice.objects.all().order_by('-invoice_date')
     invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
     order = invoice.order
@@ -1169,14 +1170,10 @@ def post_invoice(request, invoice_number):
     chrome_options.add_argument("--window-size=1920x1080")
     chrome_options.page_load_strategy = 'normal'
 
-    try:
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service,options=chrome_options)#options=chrome_options 
-    except:
-        chromedriver_path = "order/static/chromedriver.exe"
-        service = Service(chromedriver_path)
 
-    driver = webdriver.Chrome(service=service, options=chrome_options)#options=chrome_options
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service,options=chrome_options)#options=chrome_options 
+
     driver.maximize_window()
 
 
@@ -1501,6 +1498,8 @@ def supplier_list(request):
         place_id = request.POST.get('place_id')
         place_name = Place.objects.get(id=place_id).name  # Get the place name
         description = Product.objects.get(id=product_id).description
+        currency=Product.objects.get(id=product_id).currency.currency
+        tax=Product.objects.get(id=product_id).tax
 
         product_entry = {
             'id': product_id,
@@ -1508,7 +1507,9 @@ def supplier_list(request):
             'quantity': quantity,
             'description': description,
             'place_id': place_id,
-            'place_name': place_name  # Include place name
+            'place_name': place_name,  # Include place name
+            'currency': currency,
+            'tax': tax
         }
 
         products = request.session.get('products', [])
@@ -1582,26 +1583,42 @@ def supplier_list(request):
         
         # Retrieve products from session
         products = request.session.get('products', [])
+        
 
         # Create a new buying invoice
         buying_invoice = BuyingInvoice.objects.create(
             supplier=supplier,
             billing_address=supplier.adress,
-            total_amount=0,  # This will be calculated later
+            total_amount_tl=0,  # This will be calculated later
             total_discount=0,  # If applicable
             tax_amount=0,  # If applicable
-            grand_total=0,  # This will be calculated later
+            grand_total_tl=0,  # This will be calculated later
             status='Completed'  # Assuming the order is completed
         )
 
-        total_amount = 0
-
+        total_amount_USD = 0
+        total_amount_EUR = 0
+        total_amount_tl = 0
+        total_tax = 0
+        total_discount = 0
+  
         # Create buying items and update inventory
         for product_entry in products:
             product = Product.objects.get(id=product_entry['id'])
             place = Place.objects.get(id=product_entry['place_id'])
             quantity = int(product_entry['quantity'])
-            price = Decimal(product_entry['price'])
+            price = float(product_entry['price'])
+            tax=Product.objects.get(id=product_entry['tax'])
+            
+            if str(product_entry["currency"]) == 'USD':
+                currency_rate = float(get_currency_rates()[0])
+                total_amount_USD +=price*quantity
+                total_amount_tl+=price*quantity*currency_rate
+ 
+            if str(product_entry["currency"])== 'EUR':
+                currency_rate = float(get_currency_rates()[1])
+                total_amount_EUR+=price*quantity
+                total_amount_tl+=price*quantity*currency_rate
 
             # Update Inventory
             inventory, created = Inventory.objects.get_or_create(product=product, place=place, defaults={'quantity': 0})
@@ -1615,16 +1632,18 @@ def supplier_list(request):
                 inventory=inventory,
                 quantity=quantity,
                 price=price,
-                currency_rate=1,  # Assuming default rate, update if necessary
+                currency_rate=currency_rate,  # Assuming default rate, update if necessary
                 discount_rate=0  # Assuming no discount, update if necessary
             )
 
-            total_amount += price * quantity
-
+            
+        
         # Update buying invoice totals
-        buying_invoice.total_amount = total_amount
+        buying_invoice.total_amount_tl = total_amount_tl
+        buying_invoice.total_amount_USD = total_amount_USD
+        buying_invoice.total_amount_EUR = total_amount_EUR
+
         # Calculate tax, discounts and grand total if applicable
-        buying_invoice.grand_total = total_amount
         buying_invoice.save()
 
         # Clear session data
@@ -1663,3 +1682,63 @@ def buying_invoice_list(request):
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'order/buying_invoice_list.html', {'page_obj': page_obj})
+
+
+def buying_invoice_detail(request, invoice_number):
+    invoice = get_object_or_404(BuyingInvoice, invoice_number=invoice_number)
+    
+    if not request.user.is_superuser:
+        return HttpResponseForbidden("You don't have permission to access this info.")
+
+    invoice_items = []
+    total_amount_tl = 0
+    total_amount_USD=0
+    total_amount_EUR=0
+
+    total_discount = 0
+    total_tax = 0
+    grand_total_amount_tl = 0
+    grand_total_amount_USD=0
+    grand_total_amount_EUR=0
+
+
+    for item in invoice.buying_items.all():
+        currency_rate = item.currency_rate
+        discount_amount = item.price * item.discount_rate / 100
+        tl_value = round((item.price - discount_amount) * currency_rate * item.quantity, 2)
+        item_tax = round(tl_value * item.product.tax / 100, 2)
+        item_total = tl_value + item_tax
+        total_amount_tl += tl_value
+        total_tax += item_tax
+        total_discount += round(discount_amount * item.quantity * currency_rate, 2)
+        grand_total = total_amount_tl + total_tax
+
+        if str(item.product.currency) =="USD":
+            total_amount_USD=item.price * item.quantity
+        if str(item.product.currency) =="EUR":
+            total_amount_EUR=item.price * item.quantity
+
+
+        invoice_items.append({
+            'item': item,
+            'tl_value': tl_value,
+            'currency_rate': currency_rate,
+            'tax': item_tax,
+            'total': item_total,
+            'discount_rate': item.discount_rate,
+            'total_amount_USD':total_amount_USD,
+            'total_amount_EUR':total_amount_EUR
+
+
+        })
+
+    return render(request, 'order/buying_invoice_detail.html', {
+        'invoice': invoice,
+        'invoice_items': invoice_items,
+        'total_amount_tl': total_amount_tl,
+        'total_tax': total_tax,
+        'total_discount': total_discount,
+        'grand_total': grand_total,
+
+        
+    })

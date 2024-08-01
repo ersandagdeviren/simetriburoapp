@@ -136,7 +136,7 @@
                 <td>
                     <form method="POST">
                         {% csrf_token %}
-                        <input type="number" name="new_price" class="narrow-field" value="" required>
+                        <input type="number" name="new_price" class="narrow-field" value="" required  step="0.01">
                         <input type="hidden" name="item_id" value="{{ item.id }}">
                 </td>
                 <td>{{ item.currency }}</td>

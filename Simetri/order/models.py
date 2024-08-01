@@ -375,22 +375,26 @@ class Inventory(models.Model):
     class Meta:
         unique_together = ('product', 'place')
 
-    def update_quantity(self, quantity):
-        self.quantity += quantity
+    def update_quantity(self, quantity, increase=True):
+        if increase:
+            self.quantity += quantity
+        else:
+            self.quantity -= quantity
         self.save()
 
     def __str__(self):
         return f"{self.product} at {self.place}"
-
 class BuyingInvoice(models.Model):
     invoice_number = models.CharField(max_length=20, unique=True, blank=True)
     supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT, related_name="supplier_invoices")
     invoice_date = models.DateTimeField(auto_now_add=True)
     billing_address = models.CharField(max_length=250, blank=True, null=True)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    total_amount_tl = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    total_amount_USD = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    total_amount_EUR = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     total_discount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
-    grand_total = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    grand_total_tl = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     grand_total_USD = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     grand_total_EUR = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     status = models.CharField(max_length=50, default='Pending')
@@ -417,13 +421,13 @@ class BuyingInvoice(models.Model):
         # Increase the stock amounts for buying invoice
         for item in self.buying_items.all():
             inventory = item.inventory
-            inventory.update_quantity(item.quantity)
+            inventory.update_quantity(item.quantity, increase=True)
 
     def delete(self, *args, **kwargs):
         # Decrease the stock amounts before deleting the buying invoice
         for item in self.buying_items.all():
             inventory = item.inventory
-            inventory.update_quantity(-item.quantity)
+            inventory.update_quantity(item.quantity, increase=False)
 
         # Ensure the invoice is deleted after stock adjustments
         super().delete(*args, **kwargs)
