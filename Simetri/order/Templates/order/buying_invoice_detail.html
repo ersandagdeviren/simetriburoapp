@@ -9,52 +9,66 @@
     <p>Fatura Adresi: {{ invoice.billing_address }}</p>
 
     <h2>Fatura Detayları</h2>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Ürün Görseli</th>
-                <th>Ürün Açıklaması</th>
-                <th>Miktar</th>
-                <th>Fiyat</th>
-                <th>Döviz</th>
-                <th>Kur</th>
-                <th>İskonto%</th>
-                <th>Toplam USD</th>
-                <th>Toplam EUR</th>
-
-
-
-
-                <th>TL</th>
-                <th>KDV</th>
-                <th>Toplam</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item_with_tl in invoice_items %}
-            <tr>
-                <td><img src="{{ item_with_tl.item.product.photoPath }}" alt="" width="50"></td>
-                <td>{{ item_with_tl.item.product.description }}</td>
-                <td>{{ item_with_tl.item.quantity }}</td>
-                <td>{{ item_with_tl.item.price }}</td>
-                <td>{{ item_with_tl.item.product.currency }}</td>
-                <td>{{ item_with_tl.currency_rate }}</td>
-                <td>{{ item_with_tl.discount_rate }}</td>
-                <td>{{ item_with_tl.total_amount_USD }}</td>
-                <td>{{ item_with_tl.total_amount_EUR }}</td>
-                <td>{{ item_with_tl.tl_value }}</td>
-                <td>{{ item_with_tl.tax }}</td>
-                <td>{{ item_with_tl.total }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <form method="POST">
+        {% csrf_token %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Ürün Görseli</th>
+                    <th>Ürün Açıklaması</th>
+                    <th>Miktar</th>
+                    <th>Fiyat</th>
+                    <th>Döviz</th>
+                    <th>Kur</th>
+                    <th>İskonto%</th>
+                    <th>Toplam USD</th>
+                    <th>Toplam EUR</th>
+                    <th>TL</th>
+                    <th>KDV</th>
+                    <th>Toplam</th>
+                    <th>Güncelle</th>
+                    <th>Sil</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item_with_tl in invoice_items %}
+                <tr>
+                    <td><img src="{{ item_with_tl.item.product.photoPath }}" alt="" width="50"></td>
+                    <td>{{ item_with_tl.item.product.description }}</td>
+                    <td>
+                        <input type="number" name="quantity_{{ item_with_tl.item.id }}" value="{{ item_with_tl.item.quantity }}" min="1" style="width: 70px" required>
+                    </td>
+                    <td>
+                        <input type="number" name="price_{{ item_with_tl.item.id }}" value="{{ item_with_tl.item.price }}" step="0.01" min="0" style="width: 70px" required>
+                    </td>
+                    <td>{{ item_with_tl.item.product.currency }}</td>
+                    <td>
+                        <input type="number" name="currency_rate_{{ item_with_tl.item.id }}" value="{{ item_with_tl.currency_rate }}" step="0.01" min="0" style="width: 70px" required>
+                    </td>
+                    <td>
+                        <input type="number" name="discount_rate_{{ item_with_tl.item.id }}" value="{{ item_with_tl.discount_rate }}" step="0.01" min="0" style="width: 70px" required>
+                    </td>
+                    <td>{{ item_with_tl.total_amount_USD }}</td>
+                    <td>{{ item_with_tl.total_amount_EUR }}</td>
+                    <td>{{ item_with_tl.tl_value }}</td>
+                    <td>{{ item_with_tl.tax }}</td>
+                    <td>{{ item_with_tl.total }}</td>
+                    <td>
+                        <button type="submit" name="update_item_{{ item_with_tl.item.id }}" class="btn btn-primary">Güncelle</button>
+                    </td>
+                    <td>
+                        <button type="submit" name="delete_item" value="{{ item_with_tl.item.id }}" class="btn btn-danger">Sil</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </form>
 
     <h5>Toplam Tutar: {{ total_amount_tl }} TL</h5>
     <h5>Toplam İskonto: {{ total_discount }} TL</h5>
     <h5>Toplam KDV: {{ total_tax }} TL</h5>
     <h5>Genel Toplam: {{ grand_total }} TL</h5>
-
     
     {% else %}
     <h1>Fatura Detayları silinmiştir</h1>
@@ -70,7 +84,6 @@
         var top = (screen.height - height) / 2;
         var url = this.href;
         window.open(url, 'Faturayı Yayınla', 'width=' + width + ', height=' + height + ', top=' + top + ', resizable=yes, scrollbars=yes');
-        // Change button color to grey
         this.style.backgroundColor = 'grey';
         this.style.borderColor = 'grey';
         this.style.pointerEvents = 'none';

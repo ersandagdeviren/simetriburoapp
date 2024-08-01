@@ -1684,6 +1684,7 @@ def buying_invoice_list(request):
     return render(request, 'order/buying_invoice_list.html', {'page_obj': page_obj})
 
 
+@login_required
 def buying_invoice_detail(request, invoice_number):
     invoice = get_object_or_404(BuyingInvoice, invoice_number=invoice_number)
     
@@ -1692,15 +1693,12 @@ def buying_invoice_detail(request, invoice_number):
 
     invoice_items = []
     total_amount_tl = 0
-    total_amount_USD=0
-    total_amount_EUR=0
+    total_amount_USD = 0
+    total_amount_EUR = 0
 
     total_discount = 0
     total_tax = 0
-    grand_total_amount_tl = 0
-    grand_total_amount_USD=0
-    grand_total_amount_EUR=0
-
+    grand_total = 0
 
     for item in invoice.buying_items.all():
         currency_rate = item.currency_rate
@@ -1713,11 +1711,10 @@ def buying_invoice_detail(request, invoice_number):
         total_discount += round(discount_amount * item.quantity * currency_rate, 2)
         grand_total = total_amount_tl + total_tax
 
-        if str(item.product.currency) =="USD":
-            total_amount_USD=item.price * item.quantity
-        if str(item.product.currency) =="EUR":
-            total_amount_EUR=item.price * item.quantity
-
+        if str(item.product.currency) == "USD":
+            total_amount_USD = item.price * item.quantity
+        if str(item.product.currency) == "EUR":
+            total_amount_EUR = item.price * item.quantity
 
         invoice_items.append({
             'item': item,
@@ -1726,11 +1723,27 @@ def buying_invoice_detail(request, invoice_number):
             'tax': item_tax,
             'total': item_total,
             'discount_rate': item.discount_rate,
-            'total_amount_USD':total_amount_USD,
-            'total_amount_EUR':total_amount_EUR
-
-
+            'total_amount_USD': total_amount_USD,
+            'total_amount_EUR': total_amount_EUR,
         })
+
+    if request.method == 'POST':
+        if 'delete_item' in request.POST:
+            item_id = request.POST.get('delete_item')
+            item = get_object_or_404(BuyingItem, id=item_id, buying_invoice=invoice)
+            item.delete()
+            return redirect('order:buying_invoice_detail', invoice_number=invoice.invoice_number)
+
+        else:
+            for item in invoice.buying_items.all():
+                if f'update_item_{item.id}' in request.POST:
+                    item.quantity = request.POST.get(f'quantity_{item.id}', item.quantity)
+                    item.price = request.POST.get(f'price_{item.id}', item.price)
+                    item.currency_rate = request.POST.get(f'currency_rate_{item.id}', item.currency_rate)
+                    item.discount_rate = request.POST.get(f'discount_rate_{item.id}', item.discount_rate)
+                    item.save()
+
+            return redirect('order:buying_invoice_detail', invoice_number=invoice.invoice_number)
 
     return render(request, 'order/buying_invoice_detail.html', {
         'invoice': invoice,
@@ -1739,6 +1752,4 @@ def buying_invoice_detail(request, invoice_number):
         'total_tax': total_tax,
         'total_discount': total_discount,
         'grand_total': grand_total,
-
-        
     })
