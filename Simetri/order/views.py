@@ -1540,7 +1540,9 @@ def supplier_list(request):
             "product_form": product_form,
             "supplier_name": supplier_name,
             "products": request.session['products'],
-            "product": productresult
+            "product": productresult,
+            "places": places,
+            
         })
 
     elif request.method == "POST" and "delete_product" in request.POST:
@@ -1593,7 +1595,6 @@ def supplier_list(request):
             total_discount=0,  # If applicable
             tax_amount=0,  # If applicable
             grand_total_tl=0,  # This will be calculated later
-            status='Completed'  # Assuming the order is completed
         )
 
         total_amount_USD = 0
@@ -1687,7 +1688,10 @@ def buying_invoice_list(request):
 @login_required
 def buying_invoice_detail(request, invoice_number):
     invoice = get_object_or_404(BuyingInvoice, invoice_number=invoice_number)
-    
+    defaultUSD, defaultEUR = get_currency_rates()  # Assuming you have this function available
+    product_form = ProductSearchForm(request.POST or None)
+    places = Place.objects.all()
+
     if not request.user.is_superuser:
         return HttpResponseForbidden("You don't have permission to access this info.")
 
@@ -1727,11 +1731,64 @@ def buying_invoice_detail(request, invoice_number):
             'total_amount_EUR': total_amount_EUR,
         })
 
+    productresult = None
+
     if request.method == 'POST':
-        if 'delete_item' in request.POST:
+        if 'product_submit' in request.POST:
+            if product_form.is_valid():
+                query = product_form.cleaned_data.get("product_name", "")
+                if query:
+                    query_words = query.split()
+                    q_objects = Q()
+                    for word in query_words:
+                        q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+                    productresult = Product.objects.filter(q_objects)
+
+                    for product in productresult:
+                        inventory = Inventory.objects.filter(product=product, place__name="D1").first()
+                        product.stockAmount = inventory.quantity if inventory else 0
+
+                    for product in productresult:
+                        product.stockAmount = f"{product.stockAmount:,.2f}"
+                else:
+                    productresult = []
+        elif 'delete_item' in request.POST:
             item_id = request.POST.get('delete_item')
             item = get_object_or_404(BuyingItem, id=item_id, buying_invoice=invoice)
             item.delete()
+            return redirect('order:buying_invoice_detail', invoice_number=invoice.invoice_number)
+        
+        elif 'product_add' in request.POST:
+            product_id = request.POST.get('item_id')
+            new_price = request.POST.get('new_price')
+            quantity = request.POST.get('quantity')
+            place_id = request.POST.get('place_id')
+            product = get_object_or_404(Product, id=product_id)
+            currency = product.currency
+            place = get_object_or_404(Place, id=place_id)
+
+            if str(currency) == 'USD':
+                currency_rate = float(defaultUSD)
+            elif str(currency) == 'EUR':
+                currency_rate = float(defaultEUR)
+            else:
+                currency_rate = 1
+            
+            inventory, created = Inventory.objects.get_or_create(product=product, place=place, defaults={'quantity': 0})
+            inventory.priceBuying = new_price
+            inventory.save()
+
+            buying_item = BuyingItem(
+                buying_invoice=invoice,
+                product=product,
+                inventory=inventory,
+                quantity=int(quantity),
+                price=float(new_price),
+                currency_rate=currency_rate,
+                discount_rate=0
+                
+            )
+            buying_item.save()
             return redirect('order:buying_invoice_detail', invoice_number=invoice.invoice_number)
 
         else:
@@ -1752,4 +1809,7 @@ def buying_invoice_detail(request, invoice_number):
         'total_tax': total_tax,
         'total_discount': total_discount,
         'grand_total': grand_total,
+        'product_form': product_form,
+        'productresult': productresult,
+        'places':places
     })

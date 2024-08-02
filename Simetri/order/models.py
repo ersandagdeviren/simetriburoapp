@@ -418,19 +418,33 @@ class BuyingInvoice(models.Model):
 
         super().save(*args, **kwargs)
 
-        # Increase the stock amounts for buying invoice
-        for item in self.buying_items.all():
-            inventory = item.inventory
-            inventory.update_quantity(item.quantity, increase=True)
+    def update_totals(self):
+        self.total_amount_tl = 0
+        self.total_amount_USD = 0
+        self.total_amount_EUR = 0
+        self.total_discount = 0
+        self.tax_amount = 0
+        self.grand_total_tl = 0
 
-    def delete(self, *args, **kwargs):
-        # Decrease the stock amounts before deleting the buying invoice
         for item in self.buying_items.all():
-            inventory = item.inventory
-            inventory.update_quantity(item.quantity, increase=False)
+            currency_rate = item.currency_rate
+            discount_amount = item.price * item.discount_rate / 100
+            tl_value = round((item.price - discount_amount) * currency_rate * item.quantity, 2)
+            item_tax = round(tl_value * item.product.tax / 100, 2)
+            item_total = tl_value + item_tax
+            self.total_amount_tl += tl_value
+            self.tax_amount += item_tax
+            self.total_discount += round(discount_amount * item.quantity * currency_rate, 2)
 
-        # Ensure the invoice is deleted after stock adjustments
-        super().delete(*args, **kwargs)
+            if str(item.product.currency) == "USD":
+                self.total_amount_USD += item.price * item.quantity
+            if str(item.product.currency) == "EUR":
+                self.total_amount_EUR += item.price * item.quantity
+
+        self.grand_total_tl = self.total_amount_tl + self.tax_amount
+        self.grand_total_USD = self.total_amount_USD
+        self.grand_total_EUR = self.total_amount_EUR
+        self.save()
 
 class BuyingItem(models.Model):
     buying_invoice = models.ForeignKey(BuyingInvoice, on_delete=models.CASCADE, related_name="buying_items")
@@ -443,6 +457,15 @@ class BuyingItem(models.Model):
 
     def __str__(self):
         return f"{self.buying_invoice.invoice_number} - {self.product.description}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.buying_invoice.update_totals()
+
+    def delete(self, *args, **kwargs):
+        invoice = self.buying_invoice
+        super().delete(*args, **kwargs)
+        invoice.update_totals()
 
 
 class CustomerUpdateRequest(models.Model):

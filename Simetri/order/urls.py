@@ -40,6 +40,5 @@ urlpatterns = [
     path('buying_invoice/<str:invoice_number>/', views.buying_invoice_detail, name='buying_invoice_detail'),
     
 
-    
 
 ]
