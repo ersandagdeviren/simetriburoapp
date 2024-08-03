@@ -384,6 +384,7 @@ class Inventory(models.Model):
 
     def __str__(self):
         return f"{self.product} at {self.place}"
+
 class BuyingInvoice(models.Model):
     invoice_number = models.CharField(max_length=20, unique=True, blank=True)
     supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT, related_name="supplier_invoices")
@@ -464,8 +465,10 @@ class BuyingItem(models.Model):
 
     def delete(self, *args, **kwargs):
         invoice = self.buying_invoice
+        self.inventory.update_quantity(self.quantity, increase=False)  # Decrease the inventory
         super().delete(*args, **kwargs)
         invoice.update_totals()
+
 
 
 class CustomerUpdateRequest(models.Model):

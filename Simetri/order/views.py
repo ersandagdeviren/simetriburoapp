@@ -82,9 +82,6 @@ def search(request):
         inventory = Inventory.objects.filter(product=product, place__name="D1").first()
         product.stockAmount = inventory.quantity if inventory else 0
 
-    # Format numerical values with thousand separators
-    for product in productresult:
-        product.stockAmount = f"{product.stockAmount:,.2f}"
 
     paginator = Paginator(productresult, 50)  # Show 20 products per page
     page_number = request.GET.get('page')
@@ -1586,7 +1583,6 @@ def supplier_list(request):
         # Retrieve products from session
         products = request.session.get('products', [])
         
-
         # Create a new buying invoice
         buying_invoice = BuyingInvoice.objects.create(
             supplier=supplier,
@@ -1609,20 +1605,21 @@ def supplier_list(request):
             place = Place.objects.get(id=product_entry['place_id'])
             quantity = int(product_entry['quantity'])
             price = float(product_entry['price'])
-            tax=Product.objects.get(id=product_entry['tax'])
+            tax = Product.objects.get(id=product_entry['id']).tax
             
             if str(product_entry["currency"]) == 'USD':
                 currency_rate = float(get_currency_rates()[0])
-                total_amount_USD +=price*quantity
-                total_amount_tl+=price*quantity*currency_rate
+                total_amount_USD += price * quantity
+                total_amount_tl += price * quantity * currency_rate
  
-            if str(product_entry["currency"])== 'EUR':
+            if str(product_entry["currency"]) == 'EUR':
                 currency_rate = float(get_currency_rates()[1])
-                total_amount_EUR+=price*quantity
-                total_amount_tl+=price*quantity*currency_rate
+                total_amount_EUR += price * quantity
+                total_amount_tl += price * quantity * currency_rate
 
             # Update Inventory
             inventory, created = Inventory.objects.get_or_create(product=product, place=place, defaults={'quantity': 0})
+            inventory.update_quantity(quantity, increase=True)  # Increase the inventory
             inventory.priceBuying = price
             inventory.save()
 
@@ -1636,8 +1633,6 @@ def supplier_list(request):
                 currency_rate=currency_rate,  # Assuming default rate, update if necessary
                 discount_rate=0  # Assuming no discount, update if necessary
             )
-
-            
         
         # Update buying invoice totals
         buying_invoice.total_amount_tl = total_amount_tl
@@ -1674,6 +1669,13 @@ def buying_invoice_list(request):
     if request.method == 'POST' and 'delete_invoice' in request.POST:
         invoice_id = request.POST.get('invoice_id')
         invoice = get_object_or_404(BuyingInvoice, id=invoice_id)
+        
+        # Update inventory quantities before deleting the invoice
+        for item in invoice.buying_items.all():
+            inventory = item.inventory
+            inventory.quantity -= item.quantity
+            inventory.save()
+
         invoice.delete()
         return redirect('order:buying_invoice_list')
 
@@ -1683,8 +1685,6 @@ def buying_invoice_list(request):
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'order/buying_invoice_list.html', {'page_obj': page_obj})
-
-
 @login_required
 def buying_invoice_detail(request, invoice_number):
     invoice = get_object_or_404(BuyingInvoice, invoice_number=invoice_number)
@@ -1774,8 +1774,9 @@ def buying_invoice_detail(request, invoice_number):
             else:
                 currency_rate = 1
             
-            inventory, created = Inventory.objects.get_or_create(product=product, place=place, defaults={'quantity': 0})
+            inventory, created = Inventory.objects.get_or_create(product=product, place=place)
             inventory.priceBuying = new_price
+            inventory.quantity += int(quantity)  # Update inventory quantity
             inventory.save()
 
             buying_item = BuyingItem(
@@ -1786,7 +1787,6 @@ def buying_invoice_detail(request, invoice_number):
                 price=float(new_price),
                 currency_rate=currency_rate,
                 discount_rate=0
-                
             )
             buying_item.save()
             return redirect('order:buying_invoice_detail', invoice_number=invoice.invoice_number)
@@ -1794,11 +1794,18 @@ def buying_invoice_detail(request, invoice_number):
         else:
             for item in invoice.buying_items.all():
                 if f'update_item_{item.id}' in request.POST:
-                    item.quantity = request.POST.get(f'quantity_{item.id}', item.quantity)
+                    old_quantity = item.quantity
+                    new_quantity = int(request.POST.get(f'quantity_{item.id}', item.quantity))
+                    item.quantity = new_quantity
                     item.price = request.POST.get(f'price_{item.id}', item.price)
                     item.currency_rate = request.POST.get(f'currency_rate_{item.id}', item.currency_rate)
                     item.discount_rate = request.POST.get(f'discount_rate_{item.id}', item.discount_rate)
                     item.save()
+
+                    # Update inventory quantity based on the difference between old and new quantity
+                    inventory = item.inventory
+                    inventory.quantity += (new_quantity - old_quantity)
+                    inventory.save()
 
             return redirect('order:buying_invoice_detail', invoice_number=invoice.invoice_number)
 
@@ -1811,5 +1818,5 @@ def buying_invoice_detail(request, invoice_number):
         'grand_total': grand_total,
         'product_form': product_form,
         'productresult': productresult,
-        'places':places
+        'places': places
     })
