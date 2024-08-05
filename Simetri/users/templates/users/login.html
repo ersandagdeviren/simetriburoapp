@@ -6,20 +6,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simetri Büro Makinaları</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-
-</head>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f8f9fa;
+        }
+        .login-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .login-container img {
+            max-width: 100px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head> 
 <body>
 
-{% if message %}
-        <div>{{ message }}</div>
-{% endif %}
+    <div class="login-container">
+        {% if message %}
+            <div class="alert alert-warning">{{ message }}</div>
+        {% endif %}
 
+        <img src="{% static 'simetrilogo.png' %}" alt="Logo">
 
-<form action="{% url 'users:login' %}" method="post">
-    {% csrf_token %}
-    <input type="text" name="username" placeholder= "username">
-    <input type="password" name="password" placeholder="Password">
-    <input type="submit" value= "login">
-</form>
+        <form action="{% url 'users:login' %}" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <input type="text" name="username" class="form-control" placeholder="Username" required>
+            </div>
+            <div class="form-group">
+                <input type="password" name="password" class="form-control" placeholder="Password" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Login</button>
+        </form>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfW2Bpq4f1M1sI8eFlq8ZK7eg2ZzZc1k7gaq9sDOr" crossorigin="anonymous"></script>
 </body>
 </html>
