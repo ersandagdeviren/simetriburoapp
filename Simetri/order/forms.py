@@ -23,11 +23,10 @@ class ProductSessionAddForm(forms.Form):
     item_id = forms.IntegerField(widget=forms.HiddenInput())
     quantity = forms.IntegerField(min_value=1)
 
-
 class PaymentReceiptForm(forms.ModelForm):
     class Meta:
         model = PaymentReceipt
-        fields = ['customer','transaction_type','cash_register',  'expense_item',  'amount']
+        fields = ['customer', 'transaction_type', 'cash_register', 'expense_item', 'amount', 'supplier', 'usd_amount', 'eur_amount']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -39,6 +38,10 @@ class PaymentReceiptForm(forms.ModelForm):
         self.fields['expense_item'].label = 'Harcama'
         self.fields['transaction_type'].label = 'İşlem Hareketi'
         self.fields['amount'].label = 'Miktar'
+        self.fields['supplier'].label = 'Tedarikçi'
+        self.fields['usd_amount'].label = 'USD Tutarı'
+        self.fields['eur_amount'].label = 'EUR Tutarı'
+
 class CustomerForm(forms.ModelForm):
     class Meta:
         model = Customer

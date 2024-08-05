@@ -19,6 +19,9 @@
             <th>Eposta</th>
             <th>Telefon</th>
             <th>İlgili Kişi</th>
+            <th>Ekstre</th>
+
+            
         </tr>
     </thead>
     <tbody>
@@ -34,6 +37,9 @@
             <td>{{ supplier.email }}</td>
             <td>{{ supplier.telephone }}</td>
             <td>{{ supplier.contactPerson }}</td>
+            <td>
+                <a href="{% url 'order:supplier_financials' supplier_id=supplier.id %}">Cari Ekstre</a>
+            </td>
         </tr>
         {% endfor %}
     </tbody>

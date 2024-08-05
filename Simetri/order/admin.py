@@ -25,8 +25,7 @@ admin.site.register(Production)
 admin.site.register(Supplier)
 admin.site.register(BuyingItem)
 
+@admin.register(PaymentReceipt)
 class PaymentReceiptAdmin(admin.ModelAdmin):
-    list_display = ('user', 'cash_register', 'customer', 'transaction_type', 'amount', 'usd_amount', 'eur_amount', 'date', 'transaction_number')
-    readonly_fields = ('usd_amount', 'eur_amount', 'transaction_number')
-
-admin.site.register(PaymentReceipt, PaymentReceiptAdmin)
+    list_display = ('user', 'transaction_type', 'amount', 'usd_amount', 'eur_amount', 'date', 'transaction_number')
+    fields = ('user', 'cash_register', 'customer', 'supplier', 'expense_item', 'transaction_type', 'amount', 'usd_amount', 'eur_amount', 'date', 'transaction_number')

@@ -29,6 +29,7 @@ from selenium.webdriver.chrome.service import Service
 from django.core.paginator import Paginator
 
 
+
 """
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
     webpage = webpage_response.content
@@ -823,7 +824,6 @@ def payment_receipt_create(request):
     else:
         form = PaymentReceiptForm()
     return render(request, 'order/payment_receipt_form.html', {'form': form})
-
 @login_required
 @user_passes_test(is_admin)
 def customer_search(request):
@@ -1820,3 +1820,39 @@ def buying_invoice_detail(request, invoice_number):
         'productresult': productresult,
         'places': places
     })
+@login_required
+@user_passes_test(is_admin)
+def supplier_financials(request, supplier_id):
+    supplier = Supplier.objects.get(id=supplier_id)
+    buying_invoices = BuyingInvoice.objects.filter(supplier=supplier)
+    payments = PaymentReceipt.objects.filter(supplier=supplier)
+
+    # Calculate the total balance
+    total_invoiced_USD = sum(buying_invoice.grand_total_USD for buying_invoice in buying_invoices)
+    total_invoiced_EUR = sum(buying_invoice.grand_total_EUR for buying_invoice in buying_invoices)
+    total_invoiced_tl = sum(buying_invoice.grand_total_tl for buying_invoice in buying_invoices)
+
+  
+    total_payments_USD = sum(payment.usd_amount for payment in payments)
+    total_payments_EUR = sum(payment.eur_amount for payment in payments)
+    total_payments_tl = sum(payment.amount for payment in payments)
+    
+    
+    total_balance_USD = total_invoiced_USD - total_payments_USD
+    total_balance_EUR=total_invoiced_EUR-total_payments_EUR
+    total_balance_tl=total_invoiced_tl-total_payments_tl
+
+
+    context = {
+        'supplier': supplier,
+        'buying_invoices': buying_invoices,
+        'payments': payments,
+        'total_balance_USD': total_balance_USD,
+        'total_balance_EUR': total_balance_EUR,
+        'total_balance_tl': total_balance_tl,
+        
+
+        
+    }
+    
+    return render(request, 'order/supplier_financials.html', context)

@@ -8,7 +8,6 @@ import urllib.request
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-
 User = get_user_model()
 
 def get_currency_rates():
@@ -118,6 +117,26 @@ class Customer(models.Model):
    
     def __str__(self):
         return self.companyName
+class Supplier(models.Model):
+    supplierCode = models.CharField(max_length=50)
+    companyName = models.CharField(max_length=50)
+    taxOffice = models.CharField(max_length=50, null=True, blank=True)
+    tax_number = models.CharField(max_length=50, null=True, blank=True)
+    city = models.CharField(max_length=50, null=True, blank=True)
+    adress = models.CharField(max_length=250, null=True, blank=True)
+    country = models.CharField(max_length=50, blank=True)
+    email = models.EmailField(null=True, blank=True)
+    telephone = models.CharField(max_length=11, null=True, blank=True)
+    contactPerson = models.CharField(max_length=50, null=True, blank=True)
+
+    def __str__(self):
+        return self.companyName
+    
+class Place(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
 
 class Product(models.Model):
     codeUyum = models.CharField(max_length=50)
@@ -265,12 +284,15 @@ class Invoice(models.Model):
 
 
 class CashRegister(models.Model):
-    cash_code=models.CharField(max_length=255)
+    cash_code = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
-    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    balance_USD = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    balance_EUR = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    balance_tl = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
         return self.name
+
 
 class ExpenseItem(models.Model):
     expense_code=models.CharField(max_length=255)
@@ -278,6 +300,7 @@ class ExpenseItem(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class PaymentReceipt(models.Model):
     RECEIPT = 'Tahsilat'
@@ -290,20 +313,37 @@ class PaymentReceipt(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     cash_register = models.ForeignKey(CashRegister, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.PROTECT, null=True, blank=True)
+    supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT, null=True, blank=True)
     expense_item = models.ForeignKey(ExpenseItem, on_delete=models.CASCADE, null=True, blank=True)
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    usd_amount = models.DecimalField(max_digits=10, decimal_places=2, editable=False, null=True)
-    eur_amount = models.DecimalField(max_digits=10, decimal_places=2, editable=False, null=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    usd_amount = models.DecimalField(max_digits=10, decimal_places=2, editable=True, null=True, blank=True)
+    eur_amount = models.DecimalField(max_digits=10, decimal_places=2, editable=True, null=True, blank=True)
     date = models.DateTimeField(default=timezone.now)
     transaction_number = models.CharField(max_length=20, unique=True, blank=True)
 
     def save(self, *args, **kwargs):
         usd_rate, eur_rate = get_currency_rates()
+        
+        usd_rate = Decimal(usd_rate)
+        eur_rate = Decimal(eur_rate)
 
-        self.usd_amount = (float(self.amount )/ usd_rate)
-        self.eur_amount = (float(self.amount) / eur_rate)
-
+        if self.amount is not None:
+            self.amount = Decimal(self.amount)
+            self.usd_amount = self.amount / usd_rate
+            self.eur_amount = self.amount / eur_rate
+        
+        elif self.usd_amount is not None:
+            
+            self.usd_amount = Decimal(self.usd_amount)
+            self.amount = self.usd_amount * usd_rate
+            self.eur_amount = self.usd_amount * usd_rate / eur_rate
+          
+        elif self.eur_amount is not None:
+            self.eur_amount = Decimal(self.eur_amount)
+            self.amount = self.eur_amount * eur_rate
+            self.usd_amount = self.eur_amount * eur_rate / usd_rate
+           
         if not self.transaction_number:
             current_date = timezone.now()
             date_prefix = current_date.strftime('%Y%m%d')
@@ -326,46 +366,44 @@ class PaymentReceipt(models.Model):
                 self.transaction_number = f"{filter_prefix}{new_transaction_number:05d}"
 
         if self.transaction_type == self.RECEIPT:
-            self.cash_register.balance += self.amount
+            if self.amount is not None:
+                self.cash_register.balance_tl += self.amount
+            if self.usd_amount is not None:
+                self.cash_register.balance_USD += self.usd_amount
+            if self.eur_amount is not None:
+                self.cash_register.balance_EUR += self.eur_amount
         elif self.transaction_type == self.PAYMENT:
-            self.cash_register.balance -= self.amount
-
+            if self.amount is not None:
+                self.cash_register.balance_tl -= self.amount
+            if self.usd_amount is not None:
+                self.cash_register.balance_USD -= self.usd_amount
+            if self.eur_amount is not None:
+                self.cash_register.balance_EUR -= self.eur_amount
         self.cash_register.save()
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         if self.transaction_type == self.RECEIPT:
-            self.cash_register.balance -= self.amount
+            if self.amount is not None:
+                self.cash_register.balance_tl -= self.amount
+            if self.usd_amount is not None:
+                self.cash_register.balance_USD -= self.usd_amount
+            if self.eur_amount is not None:
+                self.cash_register.balance_EUR -= self.eur_amount
         elif self.transaction_type == self.PAYMENT:
-            self.cash_register.balance += self.amount
+            if self.amount is not None:
+                self.cash_register.balance_tl += self.amount
+            if self.usd_amount is not None:
+                self.cash_register.balance_USD += self.usd_amount
+            if self.eur_amount is not None:
+                self.cash_register.balance_EUR += self.eur_amount
 
         self.cash_register.save()
         super().delete(*args, **kwargs)
 
     def __str__(self):
         return f"{self.user} - {self.transaction_type} - {self.amount}"
-    
-class Supplier(models.Model):
-    supplierCode = models.CharField(max_length=50)
-    companyName = models.CharField(max_length=50)
-    taxOffice = models.CharField(max_length=50, null=True, blank=True)
-    tax_number = models.CharField(max_length=50, null=True, blank=True)
-    city = models.CharField(max_length=50, null=True, blank=True)
-    adress = models.CharField(max_length=250, null=True, blank=True)
-    country = models.CharField(max_length=50, blank=True)
-    email = models.EmailField(null=True, blank=True)
-    telephone = models.CharField(max_length=11, null=True, blank=True)
-    contactPerson = models.CharField(max_length=50, null=True, blank=True)
 
-    def __str__(self):
-        return self.companyName
-    
-class Place(models.Model):
-    name = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.name
-    
 class Inventory(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     place = models.ForeignKey(Place, on_delete=models.CASCADE)
