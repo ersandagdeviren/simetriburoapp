@@ -9,7 +9,8 @@
                 <th>İşlem No</th>
                 <th>Kullanıcı</th>
                 <th>Kasa Hesabı</th>
-                <th>Cari</th>
+                <th>Müşteri</th>
+                <th>Tedarikçi</th>
                 <th>Harcama Kalemi</th>
                 <th>İşlem Türü</th>
                 <th>Miktar TL</th>
@@ -26,6 +27,7 @@
                     <td>{{ payment_receipt.user }}</td>
                     <td>{{ payment_receipt.cash_register }}</td>
                     <td>{{ payment_receipt.customer }}</td>
+                    <td>{{ payment_receipt.supplier }}</td>
                     <td>{{ payment_receipt.expense_item }}</td>
                     <td>{{ payment_receipt.get_transaction_type_display }}</td>
                     <td>{{ payment_receipt.amount }}</td>

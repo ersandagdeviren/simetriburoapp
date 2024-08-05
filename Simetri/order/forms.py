@@ -1,6 +1,8 @@
 from django import forms
 from .models import Customer, Product , Order, PaymentReceipt, Production, Supplier
 from .models import CustomerUpdateRequest
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 
 class ProductForm(forms.Form):
     class Meta:
@@ -26,10 +28,13 @@ class ProductSessionAddForm(forms.Form):
 class PaymentReceiptForm(forms.ModelForm):
     class Meta:
         model = PaymentReceipt
-        fields = ['customer', 'transaction_type', 'cash_register', 'expense_item', 'amount', 'supplier', 'usd_amount', 'eur_amount']
+        fields = ['customer', 'supplier', 'transaction_type', 'cash_register', 'expense_item', 'amount', 'usd_amount', 'eur_amount']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.add_input(Submit('submit', 'Kaydet'))
         self.fields['customer'].widget.attrs['id'] = 'id_customer'
         self.fields['expense_item'].widget.attrs['id'] = 'id_expense_item'
         self.fields['transaction_type'].widget.attrs['id'] = 'id_transaction_type'
@@ -37,11 +42,11 @@ class PaymentReceiptForm(forms.ModelForm):
         self.fields['customer'].label = 'Müşteri'
         self.fields['expense_item'].label = 'Harcama'
         self.fields['transaction_type'].label = 'İşlem Hareketi'
-        self.fields['amount'].label = 'Miktar'
+        self.fields['amount'].label = 'TL Tutar'
         self.fields['supplier'].label = 'Tedarikçi'
         self.fields['usd_amount'].label = 'USD Tutarı'
         self.fields['eur_amount'].label = 'EUR Tutarı'
-
+        
 class CustomerForm(forms.ModelForm):
     class Meta:
         model = Customer
