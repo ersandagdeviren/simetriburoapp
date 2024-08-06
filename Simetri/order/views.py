@@ -862,16 +862,20 @@ def customer_financials(request, customer_id):
     customer = Customer.objects.get(id=customer_id)
     invoices = Invoice.objects.filter(order__customer=customer)
     payments = PaymentReceipt.objects.filter(customer=customer)
+    buyinginvoices=BuyingInvoice.objects.filter(customer=customer)
+
 
     # Calculate the total balance
     total_invoiced = sum(invoice.grand_total for invoice in invoices)
     total_payments = sum(payment.amount for payment in payments)
-    total_balance = total_invoiced - total_payments
+    total_buyinginvoices=sum(buyinginvoice.grand_total_tl for buyinginvoice in buyinginvoices )
+    total_balance = total_invoiced - total_buyinginvoices - total_payments
 
     context = {
         'customer': customer,
         'invoices': invoices,
         'payments': payments,
+        'buyinginvoices':buyinginvoices,
         'total_balance': total_balance
     }
     
@@ -913,16 +917,19 @@ def user_financial(request):
     customer = get_object_or_404(Customer, user=request.user)
     invoices = Invoice.objects.filter(order__customer=customer)
     payments = PaymentReceipt.objects.filter(customer=customer)
+    buyinginvoices=BuyingInvoice.objects.filter(customer=customer)
 
     # Calculate the total balance
     total_invoiced = sum(invoice.grand_total for invoice in invoices)
     total_payments = sum(payment.amount for payment in payments)
-    total_balance = total_invoiced - total_payments
+    total_buyinginvoices=sum(buyinginvoice.grand_total_tl for buyinginvoice in buyinginvoices )
+    total_balance = total_invoiced - total_buyinginvoices - total_payments
 
     context = {
         'customer': customer,
         'invoices': invoices,
         'payments': payments,
+        'buyinginvoices':buyinginvoices,
         'total_balance': total_balance
     }
     
@@ -1856,3 +1863,241 @@ def supplier_financials(request, supplier_id):
     }
     
     return render(request, 'order/supplier_financials.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def loc_supplier_list(request):
+    if "suppliers" not in request.session:
+        request.session["suppliers"] = []
+    if "products" not in request.session:
+        request.session["products"] = []
+    if "product_query" not in request.session:
+        request.session["product_query"] = ""
+
+    supplier_list = []
+    supplier_selected = request.session['suppliers']
+    product_form = ProductSearchForm(request.POST or None)
+    productresult = []  # Initialize productresult
+    places = Place.objects.all()  # Fetch all places here
+
+    if request.method == "POST" and "supplier_searched" in request.POST:
+        input_supplier = request.POST.get('supplier')
+        supplier_list = Customer.objects.filter(companyName__icontains=input_supplier)
+        if not supplier_list:
+            messages.info(request, 'No suppliers found matching your search.')
+        return render(request, 'order/purchase_create_loc.html', {
+            "supplier_list": supplier_list,
+            "supplier_selected": supplier_selected,
+            "places": places,  # Pass places to the template
+        })
+
+    elif request.method == "POST" and "supplier_selected" in request.POST:
+        request.session['suppliers'] = []
+        supplier_id = request.POST.get('supplier_id')
+        supplier_name = Customer.objects.get(id=supplier_id).companyName
+        request.session['suppliers'].append(supplier_id)
+        return render(request, 'order/purchase_create_loc.html', {
+            "supplier_name": supplier_name,
+            "product_form": product_form,
+            "products": request.session['products'],
+            "places": places,  # Pass places to the template
+        })
+
+    elif request.method == "POST" and "product_submit" in request.POST:
+        supplier_name = Customer.objects.get(id=request.session['suppliers'][0]).companyName
+        if product_form.is_valid():
+            query = product_form.cleaned_data["product_name"]
+            request.session['product_query'] = query  # Store the search query in the session
+            if query:
+                # Split the query into individual words
+                query_words = query.split()
+                # Create a Q object to combine conditions
+                q_objects = Q()
+                for word in query_words:
+                    # Update the Q object with each word
+                    q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+                
+                # Filter products based on the Q object
+                productresult = Product.objects.filter(q_objects)
+                return render(request, 'order/purchase_create_loc.html', {
+                    "product_form": product_form,
+                    "product": productresult,
+                    "supplier_name": supplier_name,
+                    "products": request.session['products'],
+                    "places": places,  # Pass places to the template
+                })
+
+    elif request.method == "POST" and "product_add" in request.POST:
+        product_id = request.POST.get('item_id')
+        new_price = request.POST.get('new_price')
+        quantity = request.POST.get('quantity')
+        place_id = request.POST.get('place_id')
+        place_name = Place.objects.get(id=place_id).name  # Get the place name
+        description = Product.objects.get(id=product_id).description
+        currency=Product.objects.get(id=product_id).currency.currency
+        tax=Product.objects.get(id=product_id).tax
+
+        product_entry = {
+            'id': product_id,
+            'price': new_price,
+            'quantity': quantity,
+            'description': description,
+            'place_id': place_id,
+            'place_name': place_name,  # Include place name
+            'currency': currency,
+            'tax': tax
+        }
+
+        products = request.session.get('products', [])
+        products.append(product_entry)
+        request.session['products'] = products
+
+        supplier_name = Customer.objects.get(id=request.session['suppliers'][0]).companyName
+
+        query = request.session.get('product_query', "")
+        if query:
+            # Split the query into individual words
+            query_words = query.split()
+            # Create a Q object to combine conditions
+            q_objects = Q()
+            for word in query_words:
+                # Update the Q object with each word
+                q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+
+            # Filter products based on the Q object
+            productresult = Product.objects.filter(q_objects)
+
+            # Retrieve stock amount from Inventory where place is "D1"
+            for product in productresult:
+                inventory = Inventory.objects.filter(product=product, place__name="D1").first()
+                product.stockAmount = inventory.quantity if inventory else 0
+
+        return render(request, 'order/purchase_create_loc.html', {
+            "product_form": product_form,
+            "supplier_name": supplier_name,
+            "products": request.session['products'],
+            "product": productresult,
+            "places": places,
+            
+        })
+
+    elif request.method == "POST" and "delete_product" in request.POST:
+        product_id = request.POST.get('product_id')
+        products = request.session.get('products', [])
+        products = [product for product in products if product['id'] != product_id]
+        request.session['products'] = products
+
+        supplier_name = Customer.objects.get(id=request.session['suppliers'][0]).companyName
+
+        query = request.session.get('product_query', "")
+        if query:
+            # Split the query into individual words
+            query_words = query.split()
+            # Create a Q object to combine conditions 
+            q_objects = Q()
+            for word in query_words:
+                # Update the Q object with each word
+                q_objects &= Q(description__icontains=word) | Q(codeUyum__icontains=word)
+            
+            # Filter products based on the Q object
+            productresult = Product.objects.filter(q_objects)
+
+            # Retrieve stock amount from Inventory where place is "D1"
+            for product in productresult:
+                inventory = Inventory.objects.filter(product=product, place__name="D1").first()
+                product.stockAmount = inventory.quantity if inventory else 0
+
+        
+        return render(request, 'order/purchase_create_loc.html', {
+            "product_form": product_form,
+            "supplier_name": supplier_name,
+            "products": request.session['products'],
+            "product": productresult,
+            "places": places,  # Pass places to the template
+        })
+    elif request.method == "POST" and "complete_purchase" in request.POST:
+        supplier_id = request.session['suppliers'][0]
+        supplier = Customer.objects.get(id=supplier_id)
+        
+        # Retrieve products from session
+        products = request.session.get('products', [])
+        
+        # Create a new buying invoice
+        buying_invoice = BuyingInvoice.objects.create(
+            customer=supplier,
+            billing_address=supplier.adress,
+            total_amount_tl=0,  # This will be calculated later
+            total_discount=0,  # If applicable
+            tax_amount=0,  # If applicable
+            grand_total_tl=0,  # This will be calculated later
+        )
+
+        total_amount_USD = 0
+        total_amount_EUR = 0
+        total_amount_tl = 0
+        total_tax = 0
+        total_discount = 0
+  
+        # Create buying items and update inventory
+        for product_entry in products:
+            product = Product.objects.get(id=product_entry['id'])
+            place = Place.objects.get(id=product_entry['place_id'])
+            quantity = int(product_entry['quantity'])
+            price = float(product_entry['price'])
+            tax = Product.objects.get(id=product_entry['id']).tax
+            
+            if str(product_entry["currency"]) == 'USD':
+                currency_rate = float(get_currency_rates()[0])
+                total_amount_USD += price * quantity
+                total_amount_tl += price * quantity * currency_rate
+ 
+            if str(product_entry["currency"]) == 'EUR':
+                currency_rate = float(get_currency_rates()[1])
+                total_amount_EUR += price * quantity
+                total_amount_tl += price * quantity * currency_rate
+
+            # Update Inventory
+            inventory, created = Inventory.objects.get_or_create(product=product, place=place, defaults={'quantity': 0})
+            inventory.update_quantity(quantity, increase=True)  # Increase the inventory
+            inventory.priceBuying = price
+            inventory.save()
+
+            # Create BuyingItem
+            BuyingItem.objects.create(
+                buying_invoice=buying_invoice,
+                product=product,
+                inventory=inventory,
+                quantity=quantity,
+                price=price,
+                currency_rate=currency_rate,  # Assuming default rate, update if necessary
+                discount_rate=0  # Assuming no discount, update if necessary
+            )
+        
+        # Update buying invoice totals
+        buying_invoice.total_amount_tl = total_amount_tl
+        buying_invoice.total_amount_USD = total_amount_USD
+        buying_invoice.total_amount_EUR = total_amount_EUR
+
+        # Calculate tax, discounts and grand total if applicable
+        buying_invoice.save()
+
+        # Clear session data
+        request.session['suppliers'] = []
+        request.session['products'] = []
+        request.session['product_query'] = ""
+
+        messages.success(request, "Purchase completed successfully!")
+
+        return render(request, 'order/purchase_create_loc.html', {
+            "product_form": product_form,
+            "supplier_selected": [],
+            "products": [],
+            "places": places,  # Pass places to the template
+        })
+    
+    else:
+        return render(request, 'order/purchase_create_loc.html', {
+            "product_form": product_form,
+            "supplier_selected": supplier_selected,
+            "places": places,  # Pass places to the template
+        })

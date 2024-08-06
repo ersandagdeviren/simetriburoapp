@@ -425,7 +425,8 @@ class Inventory(models.Model):
 
 class BuyingInvoice(models.Model):
     invoice_number = models.CharField(max_length=20, unique=True, blank=True)
-    supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT, related_name="supplier_invoices")
+    customer = models.ForeignKey(Customer, on_delete=models.PROTECT, null=True, blank=True)
+    supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT,null=True, blank=True, related_name="supplier_invoices")
     invoice_date = models.DateTimeField(auto_now_add=True)
     billing_address = models.CharField(max_length=250, blank=True, null=True)
     total_amount_tl = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)

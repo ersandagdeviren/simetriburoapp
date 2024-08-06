@@ -5,7 +5,7 @@
 <body>
     <h1>Cari Ekstre: {{ customer.companyName }}</h1>
 
-    <h2>Faturalar</h2>
+    <h2>Satış Faturaları</h2>
     <table class="table">
         <thead>
             <tr>
@@ -26,6 +26,33 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <h2>Alım Faturaları</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Fatura No</th>
+                <th>Tarih</th>
+                <th>Toplam Tutar</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            {% for buyinginvoice in buyinginvoices %}
+            <tr>
+                <td><a href="{% url 'order:buying_invoice_detail' buyinginvoice.invoice_number %}">{{ buyinginvoice.invoice_number }}</td>
+                <td>{{ buyinginvoice.invoice_date|date:"d-m-Y" }}</td>
+                <td>{{ buyinginvoice.grand_total_tl }}</td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+
+
+
 
     <h2>Ödemeler</h2>
     <table class="table">

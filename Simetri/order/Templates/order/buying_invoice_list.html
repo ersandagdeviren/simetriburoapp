@@ -1,8 +1,9 @@
 {% extends "order/navbar.html" %}
 
 {% block content %}
-    <h2>İthalat Faturaları</h2>
+    <h2>ALım Faturaları</h2>
     <a href="{% url 'order:supplier_list' %}" class="btn btn-success mb-2">Yeni İthalat</a>
+    <a href="{% url 'order:loc_supplier_list' %}" class="btn btn-success mb-2">Yeni Alım</a>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -24,7 +25,11 @@
             {% for invoice in page_obj %}
                 <tr>
                     <td><a href="{% url 'order:buying_invoice_detail' invoice.invoice_number %}">{{ invoice.invoice_number }}</a></td>
+                    {%if invoice.supplier is None %}
+                    <td>{{ invoice.customer }}</td>
+                    {%else%}
                     <td>{{ invoice.supplier }}</td>
+                    {%endif%}
                     <td>{{ invoice.invoice_date|date:"Y-m-d H:i" }}</td>
                     <td>{{ invoice.total_amount_EUR }}</td>
                     <td>{{ invoice.total_amount_USD }}</td>
