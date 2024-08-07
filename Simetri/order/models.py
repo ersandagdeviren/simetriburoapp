@@ -286,15 +286,53 @@ class Invoice(models.Model):
 class CashRegister(models.Model):
     cash_code = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
-    currency = models.ForeignKey('Currency', on_delete=models.CASCADE, related_name="currency_name_bank")
+    currency = models.ForeignKey(currency, on_delete=models.CASCADE, related_name="currency_name_bank")
     balance_USD = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     balance_EUR = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     balance_tl = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
+    
     def __str__(self):
         return self.name
 
-
+    def transfer(self, amount, target_register, fee, expense_item, user):
+        # Assume the amount is in balance_tl for simplicity. You can extend this to other currencies.
+        if self.balance_tl >= amount + fee:
+            self.balance_tl -= amount
+            target_register.balance_tl += amount
+            self.save()
+            target_register.save()
+            
+            # Create a transaction record for the source register
+            Transaction.objects.create(
+                user=user,
+                cash_register=self,
+                target_register=target_register,
+                transaction_type=Transaction.TRANSFER_OUT,
+                amount=amount,
+                fee=fee,
+                expense_item=expense_item
+            )
+            
+            # Create a transaction record for the target register
+            Transaction.objects.create(
+                user=user,
+                cash_register=target_register,
+                transaction_type=Transaction.TRANSFER_IN,
+                amount=amount,
+                fee=fee
+            )
+            
+            # Record the transfer fee as an expense
+            PaymentReceipt.objects.create(
+                user=user,
+                cash_register=self,
+                expense_item=expense_item,
+                transaction_type=PaymentReceipt.PAYMENT,
+                amount=fee
+            )
+            return True
+        return False
+    
 class ExpenseItem(models.Model):
     expense_code=models.CharField(max_length=255)
     name = models.CharField(max_length=255)
@@ -313,8 +351,8 @@ class PaymentReceipt(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     cash_register = models.ForeignKey(CashRegister, on_delete=models.CASCADE)
-    customer = models.ForeignKey(Customer, on_delete=models.PROTECT, null=True, blank=True)
-    supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT, null=True, blank=True)
+    customer = models.ForeignKey('Customer', on_delete=models.PROTECT, null=True, blank=True)
+    supplier = models.ForeignKey('Supplier', on_delete=models.PROTECT, null=True, blank=True)
     expense_item = models.ForeignKey(ExpenseItem, on_delete=models.CASCADE, null=True, blank=True)
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -335,7 +373,6 @@ class PaymentReceipt(models.Model):
             self.eur_amount = self.amount / eur_rate
         
         elif self.usd_amount is not None:
-            
             self.usd_amount = Decimal(self.usd_amount)
             self.amount = self.usd_amount * usd_rate
             self.eur_amount = self.usd_amount * usd_rate / eur_rate
@@ -404,7 +441,28 @@ class PaymentReceipt(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.transaction_type} - {self.amount}"
+    
 
+class Transaction(models.Model):
+    TRANSFER_OUT = 'Out'
+    TRANSFER_IN = 'In'
+    TRANSACTION_TYPES = [
+        (TRANSFER_OUT, 'Out'),
+        (TRANSFER_IN, 'In'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    cash_register = models.ForeignKey(CashRegister, on_delete=models.CASCADE, related_name='transactions')
+    target_register = models.ForeignKey(CashRegister, on_delete=models.CASCADE, related_name='incoming_transactions', null=True, blank=True)
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    expense_item = models.ForeignKey(ExpenseItem, on_delete=models.CASCADE, null=True, blank=True)
+    date = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.user} - {self.transaction_type} - {self.amount}"
+    
 class Inventory(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     place = models.ForeignKey(Place, on_delete=models.CASCADE)
@@ -556,4 +614,5 @@ class Production(models.Model):
 
     def __str__(self):
         return f"Production of {self.product}"
-    
+
+

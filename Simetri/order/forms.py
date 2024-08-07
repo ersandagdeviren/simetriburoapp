@@ -1,5 +1,5 @@
 from django import forms
-from .models import Customer, Product , Order, PaymentReceipt, Production, Supplier
+from .models import Customer, Product , Order, PaymentReceipt, Production, Supplier,CashRegister,ExpenseItem
 from .models import CustomerUpdateRequest
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
@@ -86,3 +86,10 @@ class SupplierForm(forms.ModelForm):
     class Meta:
         model = Supplier
         fields = "__all__"
+
+class TransferForm(forms.Form):
+    source_register = forms.ModelChoiceField(queryset=CashRegister.objects.all())
+    target_register = forms.ModelChoiceField(queryset=CashRegister.objects.all())
+    amount = forms.DecimalField(max_digits=10, decimal_places=2)
+    fee = forms.DecimalField(max_digits=10, decimal_places=2)
+    expense_item = forms.ModelChoiceField(queryset=ExpenseItem.objects.all())

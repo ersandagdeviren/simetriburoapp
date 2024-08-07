@@ -3,7 +3,7 @@
 {% block content %}
 
 <h2>Hesap Listesi</h2>
-<a href="" class="btn btn-success mb-2">Hesaplar Arası Transfer</a>
+<a href="{% url 'order:transfer_money' %}" class="btn btn-success mb-2">Hesaplar Arası Transfer</a>
 <br>
 <br>
 
@@ -14,7 +14,7 @@
             <th>Hesap Adı</th>
             <th>Kasa Kur</th>
             <th>Tutar</th>
-            <th>Hesap Hareketleri</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -24,14 +24,14 @@
             <td>{{ bankaccounts.name }}</td>
             <td>{{ bankaccounts.currency }}</td>
             {%if bankaccounts.currency.currency == "USD" %}
-                <td>{{ bankaccounts.balance_USD }}</td>
+                <td>{{ bankaccounts.balance_USD }} USD</td>
             {%elif  bankaccounts.currency.currency == "EUR" %}
-                <td>{{ bankaccounts.balance_EUR }}</td>
+                <td>{{ bankaccounts.balance_EUR }} EUR</td>
             {%elif bankaccounts.currency.currency == "TL" %}
-            <td>{{ bankaccounts.balance_tl }}</td>
+            <td>{{ bankaccounts.balance_tl }} TL</td>
             {% endif %}
             <td>
-                <a href="{% url 'order:account_detail_list' id=bankaccounts.id %}">hareketler</a>
+                <a href="{% url 'order:account_detail_list' id=bankaccounts.id %}">Hesap Ekstresi</a>
             </td>
         </tr>
         {% endfor %}

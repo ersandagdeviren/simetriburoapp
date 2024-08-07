@@ -1,44 +1,29 @@
 {% extends "order/navbar.html" %}
 
 {% block content %}
-    <h2>Hesap Detayları</h2>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Kayıt Numarası</th>
-                <th>Tarih</th>
-                <th>Kullanıcı</th>
-                <th>işlem Türü</th>
-                <th>İşlem Hesap Adı</th>
-                <th>Miktar</th>
+<h2>{{ account.name }} - Transactions</h2>
+<p>Currency: {{ currency_account }}</p>
 
-              
-            </tr>
-        </thead>
-        <tbody>
-            {% for payment in payments %}
-                <tr>
-                    <td>{{ payment.transaction_number }}</a></td>
-                    <td>{{ payment.date|date:"Y-m-d H:i" }}</a></td>
-                    <td>{{ payment.user }}</a></td>
-                    <td>{{ payment.transaction_type }}</a></td>
-                    {% if payment.customer is None and  payment.supplier is None %}
-                        <td>{{ payment.expense_item }}</a></td>
-                    {%elif payment.expense_item is None and  payment.supplier is None %}
-                        <td>{{ payment.customer }}</a></td>
-                    {% elif payment.customer is None and   payment.expense_item is None %}
-                        <td>{{ payment.supplier }}</a></td>
-                    {% endif %}
-                    {% if currency_account == "TL"%}
-                        <td>{{ payment.amount }} TL</a></td>
-                    {% elif currency_account == "USD"%}
-                        <td>{{ payment.usd_amount }} USD</a></td>
-                    {% elif currency_account == "EUR"%}
-                        <td>{{ payment.eur_amount }} EUR</a></td>
-                    {% endif %}
-
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<table>
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Transaction Type</th>
+            <th>Amount</th>
+            <th>Fee</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for transaction in transactions %}
+        <tr>
+            <td>{{ transaction.user }}</td>
+            <td>{{ transaction.get_transaction_type_display }}</td>
+            <td>{{ transaction.amount }}</td>
+            <td>{{ transaction.fee }}</td>
+            <td>{{ transaction.date }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
     {% endblock %}

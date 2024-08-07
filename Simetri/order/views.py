@@ -6,8 +6,8 @@ import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib import messages
-from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt, CustomerUpdateRequest, Place, Inventory, Transfer,Production,Supplier,BuyingInvoice,BuyingItem,CashRegister
-from .forms import ProductSearchForm ,PaymentReceiptForm,CustomerForm, CustomerUpdateRequestForm,SupplierForm
+from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt, CustomerUpdateRequest, Place, Inventory, Transfer,Production,Supplier,BuyingInvoice,BuyingItem,CashRegister,Transaction
+from .forms import ProductSearchForm ,PaymentReceiptForm,CustomerForm, CustomerUpdateRequestForm,SupplierForm,TransferForm
 from decimal import Decimal, ROUND_HALF_UP
 from django.http import JsonResponse
 import datetime
@@ -2110,7 +2110,7 @@ def loc_supplier_list(request):
 @user_passes_test(is_admin)
 def accounts_listed(request):
     bankaccounts = CashRegister.objects.all()
-    paginator = Paginator(bankaccounts, 50)  # Show 20 customers per page
+    paginator = Paginator(bankaccounts, 50)  # Show 50 accounts per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -2119,17 +2119,29 @@ def accounts_listed(request):
 
 @login_required
 @user_passes_test(is_admin)
-def account_detail_list (request, id ):
+def account_detail_list(request, id):
     account = get_object_or_404(CashRegister, id=id)
-    payments = PaymentReceipt.objects.filter(cash_register=account)
-    currency_account=account.currency.currency
+    transactions = Transaction.objects.filter(cash_register=account)
+    currency_account = account.currency
 
-    return render(request,'order/account_detail_list.html', {'payments':payments,'currency_account':currency_account})
-
-
-
-
-
-
+    return render(request, 'order/account_detail_list.html', {'transactions': transactions, 'currency_account': currency_account})
+@login_required
+def transfer_money(request):
+    if request.method == 'POST':
+        form = TransferForm(request.POST)
+        if form.is_valid():
+            source_register = form.cleaned_data['source_register']
+            target_register = form.cleaned_data['target_register']
+            amount = form.cleaned_data['amount']
+            fee = form.cleaned_data['fee']
+            expense_item = form.cleaned_data['expense_item']
+            
+            if source_register.transfer(amount, target_register, fee, expense_item, request.user):
+                messages.success(request, 'Money transferred successfully.')
+                return redirect('order:accounts_list')
+            else:
+                form.add_error(None, 'Insufficient funds in the source register.')
+    else:
+        form = TransferForm()
     
-
+    return render(request, 'order/transfer_money.html', {'form': form})
