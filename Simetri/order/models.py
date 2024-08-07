@@ -286,6 +286,7 @@ class Invoice(models.Model):
 class CashRegister(models.Model):
     cash_code = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
+    currency = models.ForeignKey('Currency', on_delete=models.CASCADE, related_name="currency_name_bank")
     balance_USD = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     balance_EUR = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     balance_tl = models.DecimalField(max_digits=10, decimal_places=2, default=0)

@@ -1,0 +1,44 @@
+{% extends "order/navbar.html" %}
+
+{% block content %}
+    <h2>Hesap Detayları</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Kayıt Numarası</th>
+                <th>Tarih</th>
+                <th>Kullanıcı</th>
+                <th>işlem Türü</th>
+                <th>İşlem Hesap Adı</th>
+                <th>Miktar</th>
+
+              
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+                <tr>
+                    <td>{{ payment.transaction_number }}</a></td>
+                    <td>{{ payment.date|date:"Y-m-d H:i" }}</a></td>
+                    <td>{{ payment.user }}</a></td>
+                    <td>{{ payment.transaction_type }}</a></td>
+                    {% if payment.customer is None and  payment.supplier is None %}
+                        <td>{{ payment.expense_item }}</a></td>
+                    {%elif payment.expense_item is None and  payment.supplier is None %}
+                        <td>{{ payment.customer }}</a></td>
+                    {% elif payment.customer is None and   payment.expense_item is None %}
+                        <td>{{ payment.supplier }}</a></td>
+                    {% endif %}
+                    {% if currency_account == "TL"%}
+                        <td>{{ payment.amount }} TL</a></td>
+                    {% elif currency_account == "USD"%}
+                        <td>{{ payment.usd_amount }} USD</a></td>
+                    {% elif currency_account == "EUR"%}
+                        <td>{{ payment.eur_amount }} EUR</a></td>
+                    {% endif %}
+
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endblock %}

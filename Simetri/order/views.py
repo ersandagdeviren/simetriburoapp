@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib import messages
-from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt, CustomerUpdateRequest, Place, Inventory, Transfer,Production,Supplier,BuyingInvoice,BuyingItem
+from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt, CustomerUpdateRequest, Place, Inventory, Transfer,Production,Supplier,BuyingInvoice,BuyingItem,CashRegister
 from .forms import ProductSearchForm ,PaymentReceiptForm,CustomerForm, CustomerUpdateRequestForm,SupplierForm
 from decimal import Decimal, ROUND_HALF_UP
 from django.http import JsonResponse
@@ -61,7 +61,7 @@ def customer_details(request, id):
 def search(request):
     form = ProductSearchForm(request.POST or None)
     query = ''
-    productresult = Product.objects.all()
+    productresult = None
 
     if request.method == "POST" and form.is_valid():
         query = form.cleaned_data["product_name"]
@@ -78,17 +78,20 @@ def search(request):
             # Filter products based on the Q object
             productresult = Product.objects.filter(q_objects)
 
-    # Retrieve stock amount from Inventory where place is "D1"
-    for product in productresult:
-        inventory = Inventory.objects.filter(product=product, place__name="D1").first()
-        product.stockAmount = inventory.quantity if inventory else 0
+            # Retrieve stock amount from Inventory where place is "D1"
+            for product in productresult:
+                inventory = Inventory.objects.filter(product=product, place__name="D1").first()
+                product.stockAmount = inventory.quantity if inventory else 0
 
-
-    paginator = Paginator(productresult, 50)  # Show 20 products per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    if productresult is not None:
+        paginator = Paginator(productresult, 20)  # Show 20 products per page
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+    else:
+        page_obj = None
 
     return render(request, "order/product.html", {"form": form, "page_obj": page_obj, "query": query})
+
 @login_required
 def main(request):
     try:
@@ -2101,3 +2104,32 @@ def loc_supplier_list(request):
             "supplier_selected": supplier_selected,
             "places": places,  # Pass places to the template
         })
+
+
+@login_required
+@user_passes_test(is_admin)
+def accounts_listed(request):
+    bankaccounts = CashRegister.objects.all()
+    paginator = Paginator(bankaccounts, 50)  # Show 20 customers per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'order/accounts_list.html', {'page_obj': page_obj})
+
+
+@login_required
+@user_passes_test(is_admin)
+def account_detail_list (request, id ):
+    account = get_object_or_404(CashRegister, id=id)
+    payments = PaymentReceipt.objects.filter(cash_register=account)
+    currency_account=account.currency.currency
+
+    return render(request,'order/account_detail_list.html', {'payments':payments,'currency_account':currency_account})
+
+
+
+
+
+
+    
+

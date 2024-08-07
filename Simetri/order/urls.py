@@ -40,6 +40,8 @@ urlpatterns = [
     path('buying_invoice/<str:invoice_number>/', views.buying_invoice_detail, name='buying_invoice_detail'),
     path('supplier/<int:supplier_id>/financials/', views.supplier_financials, name='supplier_financials'),
     path('loc_supplier_list', views.loc_supplier_list, name='loc_supplier_list'),
+    path('accounts_list', views.accounts_listed, name='accounts_list'),
+    path('account_detail_list/<int:id>/', views.account_detail_list, name='account_detail_list'),
     
     
 

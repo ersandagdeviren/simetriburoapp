@@ -1,0 +1,59 @@
+{% extends "order/navbar.html" %}
+
+{% block content %}
+
+<h2>Hesap Listesi</h2>
+<a href="" class="btn btn-success mb-2">Hesaplar Arası Transfer</a>
+<br>
+<br>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Hesap Kodu</th>
+            <th>Hesap Adı</th>
+            <th>Kasa Kur</th>
+            <th>Tutar</th>
+            <th>Hesap Hareketleri</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for bankaccounts in page_obj %}
+        <tr>
+            <td>{{ bankaccounts.cash_code }}</td>
+            <td>{{ bankaccounts.name }}</td>
+            <td>{{ bankaccounts.currency }}</td>
+            {%if bankaccounts.currency.currency == "USD" %}
+                <td>{{ bankaccounts.balance_USD }}</td>
+            {%elif  bankaccounts.currency.currency == "EUR" %}
+                <td>{{ bankaccounts.balance_EUR }}</td>
+            {%elif bankaccounts.currency.currency == "TL" %}
+            <td>{{ bankaccounts.balance_tl }}</td>
+            {% endif %}
+            <td>
+                <a href="{% url 'order:account_detail_list' id=bankaccounts.id %}">hareketler</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">&laquo; İlk</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Önceki</a>
+        {% endif %}
+
+        <span class="current">
+            Sayfa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Sonraki</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Son &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+
+{% endblock %}
