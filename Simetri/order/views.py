@@ -370,10 +370,9 @@ def customer_list(request):
         request.session['products'] = []
         request.session['customers'] = []
         request.session['product_query'] = ""
+        return redirect('order:order_detail', order_number=order.order_number)
 
-        return render(request, 'order/order_create.html', {
-            "product_form": product_form,
-        })
+       
     else:
         return render(request, 'order/order_create.html', {
             "product_form": product_form,
@@ -586,12 +585,14 @@ def order_detail(request, order_number):
                 price = request.POST.get(f'price_{item.id}')
                 currency_rate = request.POST.get(f'currency_rate_{item.id}')
                 discount_rate = request.POST.get(f'discount_rate_{item.id}')
+                tax = request.POST.get(f'tax_{item.id}')  # Get the tax amount
 
-                if quantity is not None and price is not None and currency_rate is not None and discount_rate is not None:
+                if quantity is not None and price is not None and currency_rate is not None and discount_rate is not None and  tax is not None :
                     item.quantity = int(quantity)
                     item.price = float(price)
                     item.currency_rate = float(currency_rate)
                     item.discount_rate = float(discount_rate)
+                    item.tax = float(tax)  # Save the tax amount
                     item.save()
             return redirect('order:order_detail', order_number=order.order_number)
 
@@ -605,7 +606,7 @@ def order_detail(request, order_number):
         currency_rate = item.currency_rate
         discount_amount = item.price * item.discount_rate / 100
         tl_value = round((item.price - discount_amount) * currency_rate * item.quantity, 2)
-        item_tax = round(tl_value * item.product.tax / 100, 2)
+        item_tax = round(tl_value * item.tax / 100, 2)
         item_total = tl_value + item_tax
 
         total_amount += tl_value
@@ -668,7 +669,7 @@ def create_invoice(request, order_number):
         if str(item.product.currency) == 'USD':
             usd_value = round((item.price - (item.price * item.discount_rate / 100)) * item.quantity, 2)
             usd_discount_value = (item.price * item.discount_rate / 100)
-            usd_tax_value = round(usd_value * item.product.tax / 100, 2)
+            usd_tax_value = round(usd_value * item.tax / 100, 2)
         else:
             usd_value = 0
             usd_discount_value = 0
@@ -677,7 +678,7 @@ def create_invoice(request, order_number):
         if str(item.product.currency) == 'EUR':
             eur_value = round((item.price - (item.price * item.discount_rate / 100)) * item.quantity, 2)
             eur_discount_value = (item.price * item.discount_rate / 100)
-            eur_tax_value = round(eur_value * item.product.tax / 100, 2)
+            eur_tax_value = round(eur_value * item.tax / 100, 2)
         else:
             eur_value = 0
             eur_discount_value = 0
@@ -685,7 +686,7 @@ def create_invoice(request, order_number):
 
         tl_value = round((item.price - (item.price * item.discount_rate / 100)) * item.currency_rate * item.quantity, 2)
         discount_value_tl = (item.price * item.discount_rate / 100) * item.currency_rate
-        tax_value_tl = round(tl_value * item.product.tax / 100, 2)
+        tax_value_tl = round(tl_value * item.tax / 100, 2)
 
         total_amount += tl_value
         total_tax += tax_value_tl
@@ -755,7 +756,7 @@ def invoice_detail(request, invoice_number):
         currency_rate = item.currency_rate
         discount_amount = item.price * item.discount_rate / 100
         tl_value = round((item.price - discount_amount) * currency_rate * item.quantity, 2)
-        item_tax = round(tl_value * item.product.tax / 100, 2)
+        item_tax = round(tl_value * item.tax / 100, 2)
         item_total = tl_value + item_tax
 
         total_amount += tl_value
@@ -864,22 +865,39 @@ def payment_receipt_delete(request, pk):
 def customer_financials(request, customer_id):
     customer = Customer.objects.get(id=customer_id)
     invoices = Invoice.objects.filter(order__customer=customer)
-    payments = PaymentReceipt.objects.filter(customer=customer)
+    payments=PaymentReceipt.objects.filter(customer=customer)
+    payments_tahsilat = PaymentReceipt.objects.filter(customer=customer, transaction_type=PaymentReceipt.RECEIPT)
+    payments_tediye = PaymentReceipt.objects.filter(customer=customer, transaction_type=PaymentReceipt.PAYMENT)
     buyinginvoices=BuyingInvoice.objects.filter(customer=customer)
 
 
     # Calculate the total balance
     total_invoiced = sum(invoice.grand_total for invoice in invoices)
-    total_payments = sum(payment.amount for payment in payments)
+    total_payment_tahsilat = sum(payment.amount for payment in payments_tahsilat)
+    total_payment_tediye = sum(payment.amount for payment in payments_tediye)
     total_buyinginvoices=sum(buyinginvoice.grand_total_tl for buyinginvoice in buyinginvoices )
-    total_balance = total_invoiced - total_buyinginvoices - total_payments
+    total_balance = total_invoiced - total_buyinginvoices - total_payment_tahsilat + total_payment_tediye
+
+    total_invoiced_usd = sum(invoice.grand_total_USD for invoice in invoices)
+    total_payment_tahsilat_usd = sum(payment.usd_amount for payment in payments_tahsilat)
+    total_payment_tediye_usd = sum(payment.usd_amount for payment in payments_tediye)
+    total_buyinginvoices_usd=sum(buyinginvoice.grand_total_USD for buyinginvoice in buyinginvoices )
+    total_balance_usd = total_invoiced_usd - total_buyinginvoices_usd - total_payment_tahsilat_usd + total_payment_tediye_usd
+
+    total_invoiced_eur = sum(invoice.grand_total_EUR for invoice in invoices)
+    total_payment_tahsilat_eur = sum(payment.eur_amount for payment in payments_tahsilat)
+    total_payment_tediye_eur = sum(payment.eur_amount for payment in payments_tediye)
+    total_buyinginvoices_eur=sum(buyinginvoice.grand_total_EUR for buyinginvoice in buyinginvoices )
+    total_balance_eur = total_invoiced_eur - total_buyinginvoices_eur - total_payment_tahsilat_eur + total_payment_tediye_eur
 
     context = {
         'customer': customer,
         'invoices': invoices,
         'payments': payments,
         'buyinginvoices':buyinginvoices,
-        'total_balance': total_balance
+        'total_balance': total_balance,
+        'total_balance_usd':total_balance_usd,
+        'total_balance_eur':total_balance_eur
     }
     
     return render(request, 'order/customer_financials.html', context)
@@ -1062,7 +1080,6 @@ def user_order(request):
 
         request.session['products'] = []
         request.session['customers'] = []
-
         return render(request, 'order/user_order.html', {
             "product_form": product_form,
         })
@@ -1155,7 +1172,7 @@ def post_invoice(request, invoice_number):
         currency_rate = item.currency_rate
         discount_amount = item.price * item.discount_rate / 100
         tl_value = round((item.price - discount_amount) * currency_rate * item.quantity, 2)
-        item_tax = round(tl_value * item.product.tax / 100, 2)
+        item_tax = round(tl_value * item.tax / 100, 2)
         item_total = tl_value + item_tax
         products.append(item.product.description)
         product_price.append((item.price - discount_amount) * currency_rate)
@@ -1507,6 +1524,7 @@ def supplier_list(request):
         description = Product.objects.get(id=product_id).description
         currency=Product.objects.get(id=product_id).currency.currency
         tax=Product.objects.get(id=product_id).tax
+        #tax = request.POST.get(f'tax_{item.id}')
 
         product_entry = {
             'id': product_id,
@@ -1718,7 +1736,7 @@ def buying_invoice_detail(request, invoice_number):
         currency_rate = item.currency_rate
         discount_amount = item.price * item.discount_rate / 100
         tl_value = round((item.price - discount_amount) * currency_rate * item.quantity, 2)
-        item_tax = round(tl_value * item.product.tax / 100, 2)
+        item_tax = round(tl_value * item.tax / 100, 2)
         item_total = tl_value + item_tax
         total_amount_tl += tl_value
         total_tax += item_tax
@@ -1810,6 +1828,7 @@ def buying_invoice_detail(request, invoice_number):
                     item.price = request.POST.get(f'price_{item.id}', item.price)
                     item.currency_rate = request.POST.get(f'currency_rate_{item.id}', item.currency_rate)
                     item.discount_rate = request.POST.get(f'discount_rate_{item.id}', item.discount_rate)
+                    item.tax = request.POST.get(f'tax_rate_{item.id}', item.tax)  # Update tax rate
                     item.save()
 
                     # Update inventory quantity based on the difference between old and new quantity

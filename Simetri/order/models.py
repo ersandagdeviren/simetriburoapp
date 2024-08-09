@@ -191,6 +191,7 @@ class OrderItem(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     currency_rate=models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     discount_rate=models.PositiveIntegerField(blank=True, default=0)
+    tax = models.DecimalField(max_digits=5, decimal_places=2, default=20)  # Add this line
     def __str__(self):
         return f"{self.order.order_number} - {self.product.description}"
 
@@ -299,6 +300,16 @@ class CashRegister(models.Model):
         if self.balance_tl >= amount + fee:
             self.balance_tl -= amount
             target_register.balance_tl += amount
+            self.save()
+            target_register.save()
+        if self.balance_USD >= amount + fee:
+            self.balance_USD -= amount
+            target_register.balance_USD += amount
+            self.save()
+            target_register.save()
+        if self.balance_EUR >= amount + fee:
+            self.balance_EUR -= amount
+            target_register.balance_EUR += amount
             self.save()
             target_register.save()
             
@@ -529,7 +540,7 @@ class BuyingInvoice(models.Model):
             currency_rate = item.currency_rate
             discount_amount = item.price * item.discount_rate / 100
             tl_value = round((item.price - discount_amount) * currency_rate * item.quantity, 2)
-            item_tax = round(tl_value * item.product.tax / 100, 2)
+            item_tax = round(tl_value * item.tax / 100, 2)
             item_total = tl_value + item_tax
             self.total_amount_tl += tl_value
             self.tax_amount += item_tax
@@ -553,6 +564,7 @@ class BuyingItem(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     currency_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     discount_rate = models.PositiveIntegerField(blank=True, default=0)
+    tax = models.DecimalField(max_digits=5, decimal_places=2, default=20)  # Add this line
 
     def __str__(self):
         return f"{self.buying_invoice.invoice_number} - {self.product.description}"

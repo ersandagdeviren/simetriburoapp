@@ -22,7 +22,7 @@
                     <th>Kur</th>
                     <th>İskonto%</th>
                     <th>TL</th>
-                    <th>KDV</th>
+                    <th>KDV tutarı</th>
                     <th>Toplam</th>
                     <th>Güncelle</th>
                     <th>Sil</th>
@@ -56,7 +56,13 @@
                         {% endif %}
                     </td>
                     <td>{{ item_with_tl.tl_value }}</td>
-                    <td>{{ item_with_tl.tax }}</td>
+                    <td>
+                        {% if order.customer.user == request.user %}
+                            {{ item_with_tl.tax }}
+                        {% else %}
+                            <input type="number" name="tax_{{ item_with_tl.item.id }}" value="{{ item_with_tl.tax }}" step="0.01" min="0" style="width: 70px" required>
+                        {% endif %}
+                    </td>
                     <td>{{ item_with_tl.total }}</td>
                     <td>
                         <button type="submit" class="btn btn-primary">Güncelle</button>
