@@ -1744,9 +1744,10 @@ def buying_invoice_detail(request, invoice_number):
         grand_total = total_amount_tl + total_tax
 
         if str(item.product.currency) == "USD":
-            total_amount_USD = item.price * item.quantity
+            total_amount_USD =round((item.price - discount_amount) * item.quantity, 2)
+
         if str(item.product.currency) == "EUR":
-            total_amount_EUR = item.price * item.quantity
+            total_amount_EUR = round((item.price - discount_amount) * item.quantity, 2)
 
         invoice_items.append({
             'item': item,
