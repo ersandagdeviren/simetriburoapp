@@ -1,5 +1,6 @@
 {% extends "order/navbar.html" %}
 
+{% load static %}
 {% block content %}
 
 <form action="{% url 'order:search' %}" method="POST">
@@ -26,7 +27,7 @@
     <tbody>
         {% for item in page_obj %}
         <tr>
-            <td><img src="{{ item.photoPath }}" alt="" width="100"></td>
+            <td><img src="{% static item.photoPath %}" alt="" width="100"></td>
             <td>{{ item.codeUyum }}</td>
             <td>{{ item.description}}</td>
             <td>{{ item.unit }}</td>

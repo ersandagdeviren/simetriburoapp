@@ -1,4 +1,5 @@
 {% extends "order/navbar.html" %}
+{% load static %}
 
 {% block content %}
 <form method="POST">
@@ -60,7 +61,7 @@
         <tbody>
         {% for item in product %}
             <tr>
-                <td><img src="{{ item.photoPath }}" alt="" width="100"></td>
+                <td><img src="{% static  item.photoPath %}" alt="" width="100"></td>
                 <td>{{ item.codeUyum }}</td>
                 <td>{{ item.description|slice:":100" }}</td>
                 <td>{{ item.brand }}</td>

@@ -1,5 +1,5 @@
 {% extends "order/navbar.html" %}
-
+{% load static %}
 {% block content %}
 <body>
     {% if order_items_with_tl %}
@@ -31,7 +31,7 @@
             <tbody>
                 {% for item_with_tl in order_items_with_tl %}
                 <tr>
-                    <td><img src="{{ item_with_tl.item.product.photoPath }}" alt="" width="50"></td>
+                    <td><img src="{% static item_with_tl.item.product.photoPath %}" alt="" width="50"></td>
                     <td>{{ item_with_tl.item.product.description|slice:":100" }}</td>
                     <td>
                         <input type="number" name="quantity_{{ item_with_tl.item.id }}" value="{{ item_with_tl.item.quantity }}" min="1" style="width: 70px" required>
@@ -111,7 +111,7 @@
         <tbody>
             {% for item in productresult %}
             <tr>
-                <td><img src="{{ item.photoPath }}" alt="" width="100"></td>
+                <td><img src="{% static item.photoPath %}" alt="" width="100"></td>
                 <td>{{ item.codeUyum }}</td>
                 <td>{{ item.description|slice:":100" }}</td>
                 <td>{{ item.brand }}</td>

@@ -1,5 +1,5 @@
 {% extends "order/navbar.html" %}
-
+{% load static %}
 
 {% block content %}
 {% load humanize %}
@@ -40,7 +40,7 @@
             <tbody>
                 {% for item_with_tl in invoice_items %}
                 <tr>
-                    <td><img src="{{ item_with_tl.item.product.photoPath }}" alt="" width="50"></td>
+                    <td><img src="{% static item_with_tl.item.product.photoPath %}" alt="" width="50"></td>
                     <td>{{ item_with_tl.item.product.description }}</td>
                     <td>
                         <input type="number" name="quantity_{{ item_with_tl.item.id }}" value="{{ item_with_tl.item.quantity|intcomma }}" min="1" style="width: 70px" required>
@@ -74,7 +74,7 @@
         </table>
     </form>
     <div class="row">
-        <div class="col-md-9 bg-secondary">
+        <div class="col-md-6 bg-secondary">
             <h2>Ürün Ekle</h2>
             <form method="POST">
                 {% csrf_token %}
@@ -84,20 +84,20 @@
                 </div>
             </form>
         </div>  
-        <div class="col-md-1">
+        <div class="col-md-2">
             <p><strong>Toplam Tutar (TL):</strong> {{ total_amount_tl|intcomma }}</p>
             <p><strong>Toplam KDV (TL):</strong> {{ total_tax|intcomma }}</p>
             <p><strong>Toplam İskonto (TL):</strong> {{ total_discount|intcomma }}</p>
             <p><strong>Genel Toplam (TL):</strong> {{ grand_total|intcomma }}</p>
         </div>
-        <div class="col-md-1">
+        <div class="col-md-2">
             <p><strong>Toplam Tutar (TL):</strong> {{ total_amount_tl|intcomma }}</p>
             <p><strong>Toplam KDV (TL):</strong> {{ total_tax|intcomma }}</p>
             <p><strong>Toplam İskonto (TL):</strong> {{ total_discount|intcomma }}</p>
             <p><strong>Genel Toplam (TL):</strong> {{ grand_total|intcomma }}</p>
            
         </div>
-        <div class="col-md-1">
+        <div class="col-md-2">
             <p><strong>Toplam Tutar (TL):</strong> {{ total_amount_tl|intcomma }}</p>
             <p><strong>Toplam KDV (TL):</strong> {{ total_tax|intcomma }}</p>
             <p><strong>Toplam İskonto (TL):</strong> {{ total_discount|intcomma }}</p>
@@ -127,7 +127,7 @@
             <form method="POST">
                 {% csrf_token %}
                 <tr>
-                    <td><img src="{{ product.photoPath }}" alt="Product Image" width="50"></td>
+                    <td><img src="{% static product.photoPath %}" alt="Product Image" width="50"></td>
                     <td>{{ product.codeUyum }}</td>
                     <td>{{ product.description }}</td>
                     <td>{{ product.brand }}</td>

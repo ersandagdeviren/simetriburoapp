@@ -1,5 +1,5 @@
 {% extends "order/navbar.html" %}
-
+{% load static%}
 {% block content %}
 <form method="POST">
     {% csrf_token %}
@@ -126,7 +126,7 @@
         <tbody>
             {% for item in product %}
             <tr>
-                <td><img src="{{ item.photoPath }}" alt="" width="100"></td>
+                <td><img src="{% static item.photoPath %}" alt="" width="100"></td>
                 <td>{{ item.codeUyum }}</td>
                 <td>
                     <a href="{% url 'order:product_order_history' item.id %}" class="popup-link">{{ item.description|slice:":100" }}</a>

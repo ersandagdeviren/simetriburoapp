@@ -1,5 +1,5 @@
 {% extends "order/navbar.html" %}
-
+{% load static%}
 {% block content %}
 <form action="{% url 'order:make_production' %}" method="POST">
     {% csrf_token %}
@@ -29,7 +29,7 @@
     <tbody>
         {% for item in product %}
         <tr>
-            <td><img src="{{ item.photoPath }}" alt="" width="100"></td>
+            <td><img src="{% static item.photoPath %}" alt="" width="100"></td>
             <td>{{ item.product.codeUyum|default_if_none:'' }}</td>
             <td>{{ item.empty_cartridge|default_if_none:'' }}</td>
             <td>{{ item.chip|default_if_none:'' }}</td>
