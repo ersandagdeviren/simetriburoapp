@@ -148,7 +148,6 @@ class Product(models.Model):
     barcode = models.CharField(max_length=50, blank=True)
     mainCategory = models.ForeignKey('MainCategory', on_delete=models.CASCADE, related_name="mainCategories_name")
     category = models.ForeignKey('Category', on_delete=models.CASCADE, related_name="categories_name")
-    priceBuying = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     priceSelling = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     priceSelling2 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     priceSelling3 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)

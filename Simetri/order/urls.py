@@ -43,9 +43,7 @@ urlpatterns = [
     path('accounts_list', views.accounts_listed, name='accounts_list'),
     path('account_detail_list/<int:id>/', views.account_detail_list, name='account_detail_list'),
     path('transfer-money/', views.transfer_money, name='transfer_money'),
-
+    path('customer_signup/', views.customer_signup, name='customer_signup'),
+    path('signup_success/', views.signup_success, name='signup_success'),
     
-    
-
-
 ]

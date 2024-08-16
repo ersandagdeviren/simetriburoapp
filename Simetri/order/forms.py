@@ -3,6 +3,11 @@ from .models import Customer, Product , Order, PaymentReceipt, Production, Suppl
 from .models import CustomerUpdateRequest
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
 
 class ProductForm(forms.Form):
     class Meta:
@@ -93,3 +98,10 @@ class TransferForm(forms.Form):
     amount = forms.DecimalField(max_digits=10, decimal_places=2)
     fee = forms.DecimalField(max_digits=10, decimal_places=2)
     expense_item = forms.ModelChoiceField(queryset=ExpenseItem.objects.all())
+
+class CustomerSignUpForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+    
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password1', 'password2')

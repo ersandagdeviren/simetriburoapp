@@ -12,7 +12,7 @@ from order.models import Product, unit, brand, mainCategory, category, currency
 from django.core.exceptions import ObjectDoesNotExist
 
 # Read Excel File
-df = pd.read_excel(r'C:\Users\MALIHP\Desktop\simetriburoapp\Simetri\order\static\products.xls')
+df = pd.read_excel('/Users/ersandagdeviren/Desktop/simetriburoapp/Simetri/order/static/ProductFinal.xls')
 
 # Iterate Through Rows
 for index, row in df.iterrows():
@@ -67,14 +67,15 @@ for index, row in df.iterrows():
         barcode=row['barcode'],
         mainCategory=main_category_instance,
         category=category_instance,
-        priceBuying=row['priceBuying'],
         priceSelling=row['priceSelling'],
         priceSelling2=row['priceSelling2'],
         priceSelling3=row['priceSelling3'],
         tax=row['tax'],
         currency=currency_instance,
         #stockAmount=row['stockAmount'],
-        photoPath=row['photoPath']
+        photoPath=row['photoPath'],
+        final_product=row['final_product']
+
     )
 
     # Save the instance to the database

@@ -6,20 +6,44 @@
     {% csrf_token %}
     <div class="form-group">
         {{ product_form.product_name }}
-        <input type="submit" class="btn btn-primary" name="product_submit" value="Ara"
+        
+        <!-- Main Category Filter -->
+        <label for="maincategory">Main Category:</label>
+        <select name="maincategory" id="maincategory" class="form-control">
+            <option value="">All Main Categories</option>
+            {% for maincategory in maincategories %}
+                <option value="{{ maincategory.id }}" {% if request.POST.maincategory == maincategory.id|stringformat:"s" %}selected{% endif %}>
+                    {{ maincategory}}
+                </option>
+            {% endfor %}
+        </select>
+
+        <!-- Category Filter -->
+        <label for="category">Category:</label>
+        <select name="category" id="category" class="form-control">
+            <option value="">All Categories</option>
+            {% for category in categories %}
+                <option value="{{ category.id }}" {% if request.POST.category == category.id|stringformat:"s" %}selected{% endif %}>
+                    {{ category }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <!-- Search Button -->
+        <input type="submit" class="btn btn-primary" name="product_submit" value="Search" 
                style="padding: 4px 8px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
     </div>
 </form>
 
 {% if products %}
-    <h3>Sepete Eklenen Ürünler</h3>
+    <h3>Added Products</h3>
     <table class="table">
         <thead>
         <tr>
-            <th>Ürün Açıklaması</th>
-            <th>Fiyat</th>
-            <th>Miktar</th>
-            <th>Sil</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Delete</th>
         </tr>
         </thead>
         <tbody>
@@ -32,7 +56,7 @@
                     <form method="POST">
                         {% csrf_token %}
                         <input type="hidden" name="product_id" value="{{ product.id }}">
-                        <button type="submit" name="delete_product" class="btn btn-danger">Sil</button>
+                        <button type="submit" name="delete_product" class="btn btn-danger">Delete</button>
                     </form>
                 </td>
             </tr>
@@ -42,20 +66,19 @@
 {% endif %}
 
 {% if product %}
-    <h3>Ürünler</h3>
+    <h3>Products</h3>
     <table class="table">
         <thead>
         <tr>
-            <th>Görsel</th>
-            <th>Kod</th>
-            <th>Açıklama</th>
-            <th>Marka</th>
-            <th>Kategori</th>
-            <th>Fiyat</th>
-            <th>Döviz</th>
-            <th>Stok</th>
-            <th>Miktar</th>
-         
+            <th>Image</th>
+            <th>Code</th>
+            <th>Description</th>
+            <th>Main Category</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Currency</th>
+            <th>Stock</th>
+            <th>Quantity</th>
         </tr>
         </thead>
         <tbody>
@@ -64,8 +87,8 @@
                 <td><img src="{% static  item.photoPath %}" alt="" width="100"></td>
                 <td>{{ item.codeUyum }}</td>
                 <td>{{ item.description|slice:":100" }}</td>
-                <td>{{ item.brand }}</td>
                 <td>{{ item.mainCategory }}</td>
+                <td>{{ item.category}}</td>
                 <td>{{ item.priceSelling }}</td>
                 <td>{{ item.currency }}</td>
                 <td>{{ item.stockAmount }}</td>
@@ -75,10 +98,10 @@
                             {% csrf_token %}
                             <input type="hidden" name="item_id" value="{{ item.id }}">
                             <input type="number" name="quantity" value="1" min="1" max="{{ item.stockAmount }}">
-                            <button type="submit" name="product_add" class="btn btn-success">Ekle</button>
+                            <button type="submit" name="product_add" class="btn btn-success">Add</button>
                         </form>
                     {% else %}
-                        <span class="text-danger">Stokta Yok</span>
+                        <span class="text-danger">Out of Stock</span>
                     {% endif %}
                 </td>
             </tr>
@@ -90,12 +113,10 @@
 <form method="POST">
     {% csrf_token %}
     {% if products %}
-        <input type="submit" name="complete_order" value="Siparişi Tamamla" class="btn btn-success">
+        <input type="submit" name="complete_order" value="Complete Order" class="btn btn-success">
     {% else %}
-        <input type="submit" name="complete_order" value="Siparişi Tamamla" class="btn btn-success" disabled style="opacity: 0.5; cursor: not-allowed;">
+        <input type="submit" name="complete_order" value="Complete Order" class="btn btn-success" disabled style="opacity: 0.5; cursor: not-allowed;">
     {% endif %}
 </form>
 
 {% endblock %}
-
-ChatGPT

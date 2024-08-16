@@ -1,9 +1,14 @@
 {% extends "order/navbar.html" %}
 {%block content %}
 {% load static %}
+<style>
+    body {
+      background-color: #e8eaed;
+    }
+  </style>
 {%if request.user.is_superuser%}
     <div class="row">
-      <div class="col-md-2 bg-secondary">
+      <div class="col-md-2 bg-secondary" >
         <br>
         <a href="{% url 'order:customer_list' %}"> <img src="{% static 'new_order.png' %}" width="150px" alt=""></a>
         <a href="{% url 'order:payment_receipt_create' %}"> <img src="{% static 'new_cash.png' %}" width="150px" alt=""></a>
