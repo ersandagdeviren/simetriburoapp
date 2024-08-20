@@ -1,5 +1,5 @@
 {% extends "order/navbar.html" %}
-{% load static %}
+
 {% block content %}
 <body>
     {% if order_items_with_tl %}
@@ -22,7 +22,7 @@
                     <th>Kur</th>
                     <th>İskonto%</th>
                     <th>TL</th>
-                    <th>KDV tutarı</th>
+                    <th>KDV</th>
                     <th>Toplam</th>
                     <th>Güncelle</th>
                     <th>Sil</th>
@@ -31,7 +31,7 @@
             <tbody>
                 {% for item_with_tl in order_items_with_tl %}
                 <tr>
-                    <td><img src="{% static item_with_tl.item.product.photoPath %}" alt="" width="50"></td>
+                    <td><img src="{{ item_with_tl.item.product.photoPath }}" alt="" width="50"></td>
                     <td>{{ item_with_tl.item.product.description|slice:":100" }}</td>
                     <td>
                         <input type="number" name="quantity_{{ item_with_tl.item.id }}" value="{{ item_with_tl.item.quantity }}" min="1" style="width: 70px" required>
@@ -56,16 +56,14 @@
                         {% endif %}
                     </td>
                     <td>{{ item_with_tl.tl_value }}</td>
-                    <td>
-                        {% if order.customer.user == request.user %}
-                            {{ item_with_tl.tax }}
-                        {% else %}
-                            <input type="number" name="tax_{{ item_with_tl.item.id }}" value="{{ item_with_tl.tax }}" step="0.01" min="0" style="width: 70px" required>
-                        {% endif %}
-                    </td>
+                    <td>{{ item_with_tl.tax }}</td>
                     <td>{{ item_with_tl.total }}</td>
                     <td>
-                        <button type="submit" class="btn btn-primary">Güncelle</button>
+                        {% if order.customer.user == request.user %}
+                        <button type="submit" name="update_user"class="btn btn-primary">Güncelle</button>
+                        {% else %}
+                        <button type="submit" name="update"class="btn btn-primary">Güncelle</button>
+                        {% endif %}
                     </td>
                     <td>
                         <button type="submit" name="delete_item" value="{{ item_with_tl.item.id }}" class="btn btn-danger">Sil</button>
@@ -111,7 +109,7 @@
         <tbody>
             {% for item in productresult %}
             <tr>
-                <td><img src="{% static item.photoPath %}" alt="" width="100"></td>
+                <td><img src="{{ item.photoPath }}" alt="" width="100"></td>
                 <td>{{ item.codeUyum }}</td>
                 <td>{{ item.description|slice:":100" }}</td>
                 <td>{{ item.brand }}</td>

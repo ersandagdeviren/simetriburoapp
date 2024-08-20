@@ -21,7 +21,8 @@
             <th>Kategori</th>
             <th>Fiyat</th>
             <th>Kur</th>
-            <th>Stok</th>
+            <th>Stok D1</th>
+            <th>Stok D4</th> <!-- New column for D4 -->
         </tr>
     </thead>
     <tbody>
@@ -29,13 +30,14 @@
         <tr>
             <td><img src="{% static item.photoPath %}" alt="" width="100"></td>
             <td>{{ item.codeUyum }}</td>
-            <td>{{ item.description}}</td>
+            <td>{{ item.description }}</td>
             <td>{{ item.unit }}</td>
             <td>{{ item.brand }}</td>
             <td>{{ item.mainCategory }}</td>
             <td><a href="{% url 'order:product_order_history' item.id %}" class="popup-link">{{ item.priceSelling }}</a></td>
             <td>{{ item.currency }}</td>
-            <td>{{ item.stockAmount }}</td>
+            <td>{{ item.stockAmountD1 }}</td> <!-- Stock for D1 -->
+            <td>{{ item.stockAmountD4 }}</td> <!-- Stock for D4 -->
         </tr>
         {% endfor %}
     </tbody>
@@ -61,7 +63,6 @@
 {% endif %}
 
 <script>
-    // Function to open links in a popup window
     function openInPopup(event) {
         event.preventDefault();
         var width = 600;
@@ -72,7 +73,6 @@
         window.open(url, 'Product Order History', 'width=' + width + ', height=' + height + ', top=' + top + ', left=' + left + ', resizable=yes, scrollbars=yes');
     }
 
-    // Attach the function to all links with the class "popup-link"
     document.querySelectorAll('.popup-link').forEach(function(link) {
         link.addEventListener('click', openInPopup);
     });

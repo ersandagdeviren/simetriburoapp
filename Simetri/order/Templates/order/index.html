@@ -1,15 +1,9 @@
 {% extends "order/navbar.html" %}
 {%block content %}
 {% load static %}
-<style>
-    body {
-      background-color: #e8eaed;
-    }
-  </style>
 {%if request.user.is_superuser%}
     <div class="row">
       <div class="col-md-2 bg-secondary" >
-        <br>
         <a href="{% url 'order:customer_list' %}"> <img src="{% static 'new_order.png' %}" width="150px" alt=""></a>
         <a href="{% url 'order:payment_receipt_create' %}"> <img src="{% static 'new_cash.png' %}" width="150px" alt=""></a>
         <a href="{% url 'order:supplier_list' %}"> <img src="{% static 'new_import.png' %}" width="150px" alt=""></a>
@@ -118,14 +112,20 @@
 {%if not request.user.is_superuser%}
 
 <div class="row">
-    <div class="col-md-2 bg-secondary" >
-      <br>
-      <a href="{% url 'order:user_order' %}"> <img src="{% static 'new_order.png' %}" width="150px" alt=""></a>
-      <a href="{% url 'order:payment_receipt_create' %}"> <img src="{% static 'new_cash.png' %}" width="150px" alt=""></a>
-    </div>
+    <div class="col-md-1" >
+      <p></p>
+      <a href="{% url 'order:user_order' %}"> <img src="{% static 'user_order.png' %}" width="115px" alt=""></a>
+      <p></p>
+      <a href="{% url 'order:user_order' %}"> <img src="{% static 'user_products.png' %}" width="115px" alt=""></a>
+      <p></p>
+      <a href="{% url 'order:user_order' %}"> <img src="{% static 'user_pay.png' %}" width="115px" alt=""></a>
+      <p></p>
+      <a href="{% url 'order:user_order' %}"> <img src="{% static 'user_about_us.png' %}" width="115px" alt=""></a>
+</div>
 
-<div class="col-md-8">
-    <img src="{% static "simetriflyer.jpeg" %}" width="950px" alt="">
+<div class="col-md-11">
+    <img src="{% static "simetriflyernew.png" %}" width="1300px" alt="">
+</div>
 
 {% endif %}
 {% endblock %}
