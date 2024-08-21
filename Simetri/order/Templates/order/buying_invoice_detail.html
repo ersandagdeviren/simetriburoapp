@@ -1,0 +1,161 @@
+{% extends "order/navbar.html" %}
+
+
+{% block content %}
+{% load humanize %}
+<body>
+    {% if invoice_items %}
+        {% if  invoice.supplier is not none %}
+        <h1>{{ invoice.supplier }}</h1>
+        {%else%}
+        <h1>{{ invoice.customer }}</h1>
+        {%endif%}
+    
+    <p>Fatura Numarası: {{ invoice.invoice_number }}</p>
+    <p>Fatura Tarihi: {{ invoice.invoice_date }}</p>
+    <p>Fatura Adresi: {{ invoice.billing_address }}</p>
+
+    <h2>Fatura Detayları</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Ürün Görseli</th>
+                    <th>Ürün Açıklaması</th>
+                    <th>Miktar</th>
+                    <th>Fiyat</th>
+                    <th>Döviz</th>
+                    <th>Kur</th>
+                    <th>İskonto%</th>
+                    <th>Toplam USD</th>
+                    <th>Toplam EUR</th>
+                    <th>TL</th>
+                    <th>KDV%</th>
+                    <th>Toplam</th>
+                    <th>Güncelle</th>
+                    <th>Sil</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item_with_tl in invoice_items %}
+                <tr>
+                    <td><img src="{{ item_with_tl.item.product.photoPath }}" alt="" width="50"></td>
+                    <td>{{ item_with_tl.item.product.description }}</td>
+                    <td>
+                        <input type="number" name="quantity_{{ item_with_tl.item.id }}" value="{{ item_with_tl.item.quantity|intcomma }}" min="1" style="width: 70px" required>
+                    </td>
+                    <td>
+                        <input type="number" name="price_{{ item_with_tl.item.id }}" value="{{ item_with_tl.item.price|intcomma }}" step="0.01" min="0" style="width: 70px" required>
+                    </td>
+                    <td>{{ item_with_tl.item.product.currency }}</td>
+                    <td>
+                        <input type="number" name="currency_rate_{{ item_with_tl.item.id }}" value="{{ item_with_tl.currency_rate|intcomma }}" step="0.01" min="0" style="width: 70px" required>
+                    </td>
+                    <td>
+                        <input type="number" name="discount_rate_{{ item_with_tl.item.id }}" value="{{ item_with_tl.discount_rate }}" step="0.01" min="0" style="width: 70px" required>
+                    </td>
+                    <td>{{ item_with_tl.total_amount_USD|intcomma }}</td>
+                    <td>{{ item_with_tl.total_amount_EUR|intcomma }}</td>
+                    <td>{{ item_with_tl.tl_value|intcomma }}</td>
+                    <td>
+                        <input type="number" name="tax_rate_{{ item_with_tl.item.id }}" value="{{ item_with_tl.item.tax|intcomma }}" step="0.01" min="0" max="100" style="width: 70px" required>
+                    </td>
+                    <td>{{ item_with_tl.total|intcomma }}</td>
+                    <td>
+                        <button type="submit" name="update_item_{{ item_with_tl.item.id }}" class="btn btn-primary">Güncelle</button>
+                    </td>
+                    <td>
+                        <button type="submit" name="delete_item" value="{{ item_with_tl.item.id }}" class="btn btn-danger">Sil</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </form>
+    <div class="row">
+        <div class="col-md-9 bg-secondary">
+            <h2>Ürün Ekle</h2>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ product_form.product_name }}
+                    <input type="submit" class="btn btn-primary" name="product_submit" value="Ara" style="padding: 4px 8px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                </div>
+            </form>
+        </div>  
+        <div class="col-md-1">
+            <p><strong>Toplam Tutar (TL):</strong> {{ total_amount_tl|intcomma }}</p>
+            <p><strong>Toplam KDV (TL):</strong> {{ total_tax|intcomma }}</p>
+            <p><strong>Toplam İsk. (TL):</strong> {{ total_discount|intcomma }}</p>
+            <p><strong>Genel Toplam (TL):</strong> {{ grand_total|intcomma }}</p>
+        </div>
+        <div class="col-md-1">
+            <p><strong>Toplam Tutar (TL):</strong> {{ total_amount_tl|intcomma }}</p>
+            <p><strong>Toplam KDV (TL):</strong> {{ total_tax|intcomma }}</p>
+            <p><strong>Toplam İsk. (TL):</strong> {{ total_discount|intcomma }}</p>
+            <p><strong>Genel Toplam (TL):</strong> {{ grand_total|intcomma }}</p>
+           
+        </div>
+        <div class="col-md-1">
+            <p><strong>Toplam Tutar (TL):</strong> {{ total_amount_tl|intcomma }}</p>
+            <p><strong>Toplam KDV (TL):</strong> {{ total_tax|intcomma }}</p>
+            <p><strong>Toplam İsk. (TL):</strong> {{ total_discount|intcomma }}</p>
+            <p><strong>Genel Toplam (TL):</strong> {{ grand_total|intcomma }}</p>
+        </div>
+    </div>
+    
+    </div>  
+    {% if productresult %}
+    <h2>Arama Sonuçları</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Görsel</th>
+                <th>Kod</th>
+                <th>Açıklama</th>
+                <th>Marka</th>
+                <th>Kategori</th>
+                <th>Döviz</th>
+                <th>Miktar</th>
+                <th>Fiyat</th>
+                <th>Ekle</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in productresult %}
+            <form method="POST">
+                {% csrf_token %}
+                <tr>
+                    <td><img src="{{ product.photoPath }}" alt="Product Image" width="50"></td>
+                    <td>{{ product.codeUyum }}</td>
+                    <td>{{ product.description }}</td>
+                    <td>{{ product.brand }}</td>
+                    <td>{{ product.category }}</td>
+                    <td>{{ product.currency|intcomma }}</td>
+                    <td><input type="number" name="quantity" value="1" min="1" required></td>
+                    <td><input type="number" name="new_price" value="{{ product.price|intcomma }}" step="0.01" required></td>
+                    <td>
+                        <select name="place_id" required>
+                            {% for place in places %}
+                                <option value="{{ place.id }}">{{ place.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>    
+
+                    <td>
+                        <input type="hidden" name="item_id" value="{{ product.id }}">
+                        <button type="submit" name="product_add" class="btn btn-primary">Ekle</button>
+                    </td>
+                    
+                </tr>
+            </form>
+            {% endfor %}
+        </tbody>    
+    </table>
+    {% endif %}
+    
+    
+    {% endif %}
+</body>
+{% endblock %}
