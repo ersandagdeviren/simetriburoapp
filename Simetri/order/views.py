@@ -1016,12 +1016,12 @@ def user_order(request):
                             inventory = Inventory.objects.filter(product=product, place__name="D1").first()
 
                             # Ensure inventory quantity is handled properly and sum the max stock with product quantity
-                            product_quantity = float(inventory.quantity) if inventory else 0
-                            product.stockAmount = product_quantity + float(stock_max)
+                            product_quantity = int(inventory.quantity) if inventory else 0
+                            product.stockAmount = product_quantity + int(stock_max)
                     else:
                         # Handle case when no product_production exists
                         inventory = Inventory.objects.filter(product=product, place__name="D1").first()
-                        product.stockAmount = float(inventory.quantity) if inventory else 0
+                        product.stockAmount = int(inventory.quantity) if inventory else 0
 
                         print("Product Stock Amount:", product.stockAmount)
                 productresult = sorted(productresult, key=lambda x: x.stockAmount, reverse=True)

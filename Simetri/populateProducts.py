@@ -12,8 +12,8 @@ from order.models import Product, unit, brand, mainCategory, category, currency
 from django.core.exceptions import ObjectDoesNotExist
 
 # Read Excel File
-df = pd.read_excel('/Users/ersandagdeviren/Desktop/simetriburoapp/Simetri/order/static/ProductFinal.xls')
-
+#df = pd.read_excel('/Users/ersandagdeviren/Desktop/simetriburoapp/Simetri/order/static/ProductFinal.xls')
+df= pd.read_excel(r'C:\Users\MALIHP\Desktop\simetriburoapp\Simetri\order\static\ProductFinal.xls')
 # Iterate Through Rows
 for index, row in df.iterrows():
     try:
@@ -21,31 +21,27 @@ for index, row in df.iterrows():
         unit_instance = unit.objects.get(unitProduct=row['unit'])
     except unit.DoesNotExist:
         # Handle the case where the unit does not exist
-        # You can choose to skip this product or handle it differently
         continue
-    
+
     try:
         # Query for brand
         brand_instance = brand.objects.get(brand=row['brand'])
     except brand.DoesNotExist:
         # Handle the case where the brand does not exist
-        # You can choose to skip this product or handle it differently
         continue
-    
+
     try:
         # Query for main category
         main_category_instance = mainCategory.objects.get(mainCategory=row['mainCategory'])
     except mainCategory.DoesNotExist:
         # Handle the case where the main category does not exist
-        # You can choose to skip this product or handle it differently
         continue
-    
+
     try:
         # Query for category
         category_instance = category.objects.get(category=row['category'])
     except category.DoesNotExist:
         # Handle the case where the category does not exist
-        # You can choose to skip this product or handle it differently
         continue
 
     try:
@@ -53,30 +49,47 @@ for index, row in df.iterrows():
         currency_instance = currency.objects.get(currency=row['currency'])
     except currency.DoesNotExist:
         # Handle the case where the currency does not exist
-        # You can choose to skip this product or handle it differently
         continue
 
-    # Create an instance of Product
-    product_instance = Product(
-        codeUyum=row['codeUyum'],
-        code=row['code'],
-        description=row['description'],
-        unit=unit_instance,
-        status=row['status'],
-        brand=brand_instance,
-        barcode=row['barcode'],
-        mainCategory=main_category_instance,
-        category=category_instance,
-        priceSelling=row['priceSelling'],
-        priceSelling2=row['priceSelling2'],
-        priceSelling3=row['priceSelling3'],
-        tax=row['tax'],
-        currency=currency_instance,
-        #stockAmount=row['stockAmount'],
-        photoPath=row['photoPath'],
-        final_product=row['final_product']
+    # Try to retrieve the product by its unique identifier (e.g., code or codeUyum)
+    try:
+        product_instance = Product.objects.get(codeUyum=row['codeUyum'])
+        # If the product exists, update the relevant fields
+        product_instance.priceSelling = row['priceSelling']
+        product_instance.priceSelling2 = row['priceSelling2']
+        product_instance.priceSelling3 = row['priceSelling3']
+        product_instance.description = row['description']
+        product_instance.unit = unit_instance
+        product_instance.status = row['status']
+        product_instance.brand = brand_instance
+        product_instance.barcode = row['barcode']
+        product_instance.mainCategory = main_category_instance
+        product_instance.category = category_instance
+        product_instance.tax = row['tax']
+        product_instance.currency = currency_instance
+        product_instance.photoPath = row['photoPath']
+        product_instance.final_product = row['final_product']
+        
+    except Product.DoesNotExist:
+        # If the product does not exist, create a new one
+        product_instance = Product(
+            codeUyum=row['codeUyum'],
+            code=row['code'],
+            description=row['description'],
+            unit=unit_instance,
+            status=row['status'],
+            brand=brand_instance,
+            barcode=row['barcode'],
+            mainCategory=main_category_instance,
+            category=category_instance,
+            priceSelling=row['priceSelling'],
+            priceSelling2=row['priceSelling2'],
+            priceSelling3=row['priceSelling3'],
+            tax=row['tax'],
+            currency=currency_instance,
+            photoPath=row['photoPath'],
+            final_product=row['final_product']
+        )
 
-    )
-
-    # Save the instance to the database
+    # Save the instance (whether updated or newly created) to the database
     product_instance.save()
