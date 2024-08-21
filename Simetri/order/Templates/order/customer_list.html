@@ -27,7 +27,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for customer in page_obj %}
+        {% for customer in customers %}
         <tr>
             <td>
                 <a href="{% url 'order:customer_details' customer.id %}">{{ customer.companyName }}</a>
@@ -44,23 +44,5 @@
         {% endfor %}
     </tbody>
 </table>
-
-<div class="pagination">
-    <span class="step-links">
-        {% if page_obj.has_previous %}
-            <a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">&laquo; İlk</a>
-            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Önceki</a>
-        {% endif %}
-
-        <span class="current">
-            Sayfa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
-        </span>
-
-        {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Sonraki</a>
-            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Son &raquo;</a>
-        {% endif %}
-    </span>
-</div>
 
 {% endblock %}

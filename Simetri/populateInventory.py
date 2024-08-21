@@ -46,6 +46,6 @@ for index, row in df.iterrows():
 
         if not created:
             # If the inventory record already exists, update the quantity and priceBuying
-            inventory_instance.update_quantity(row['quantity'], increase=True)
+            inventory_instance.quantity = row['quantity']  # Set quantity directly
             inventory_instance.priceBuying = row['price buying']
             inventory_instance.save()

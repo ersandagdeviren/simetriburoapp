@@ -18,42 +18,24 @@
         </tr>
     </thead>
     <tbody>
-        {% for bankaccounts in page_obj %}
+        {% for bankaccount in bankaccounts %}
         <tr>
-            <td>{{ bankaccounts.cash_code }}</td>
-            <td>{{ bankaccounts.name }}</td>
-            <td>{{ bankaccounts.currency }}</td>
-            {%if bankaccounts.currency.currency == "USD" %}
-                <td>{{ bankaccounts.balance_USD }} USD</td>
-            {%elif  bankaccounts.currency.currency == "EUR" %}
-                <td>{{ bankaccounts.balance_EUR }} EUR</td>
-            {%elif bankaccounts.currency.currency == "TL" %}
-            <td>{{ bankaccounts.balance_tl }} TL</td>
+            <td>{{ bankaccount.cash_code }}</td>
+            <td>{{ bankaccount.name }}</td>
+            <td>{{ bankaccount.currency }}</td>
+            {% if bankaccount.currency.currency == "USD" %}
+                <td>{{ bankaccount.balance_USD }} USD</td>
+            {% elif bankaccount.currency.currency == "EUR" %}
+                <td>{{ bankaccount.balance_EUR }} EUR</td>
+            {% elif bankaccount.currency.currency == "TL" %}
+                <td>{{ bankaccount.balance_tl }} TL</td>
             {% endif %}
             <td>
-                <a href="{% url 'order:account_detail_list' id=bankaccounts.id %}">Hesap Ekstresi</a>
+                <a href="{% url 'order:account_detail_list' id=bankaccount.id %}">Hesap Ekstresi</a>
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
-
-<div class="pagination">
-    <span class="step-links">
-        {% if page_obj.has_previous %}
-            <a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">&laquo; İlk</a>
-            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Önceki</a>
-        {% endif %}
-
-        <span class="current">
-            Sayfa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
-        </span>
-
-        {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Sonraki</a>
-            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Son &raquo;</a>
-        {% endif %}
-    </span>
-</div>
 
 {% endblock %}

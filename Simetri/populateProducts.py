@@ -12,7 +12,17 @@ from order.models import Product, unit, brand, mainCategory, category, currency
 from django.core.exceptions import ObjectDoesNotExist
 
 # Read Excel File
-df = pd.read_excel(r'C:\Users\MALIHP\Desktop\simetriburoapp\Simetri\order\static\ProductFinal.xls')
+df = pd.read_excel("/Users/ersandagdeviren/Desktop/simetriburoapp/Simetri/order/static/missing.xls")
+
+# Check for duplicate codeUyum values in the Excel file
+duplicated_codes = df[df.duplicated(subset=['codeUyum'], keep=False)]
+
+# Print out the duplicated codeUyum values in a table format
+if not duplicated_codes.empty:
+    print("Duplicated codeUyum values in the Excel file:")
+    print(duplicated_codes[['codeUyum', 'description']].to_string(index=False))
+else:
+    print("No duplicated codeUyum values found in the Excel file.")
 
 # Iterate Through Rows
 for index, row in df.iterrows():

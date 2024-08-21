@@ -9,7 +9,7 @@
     <input type="Submit" value="Ara">
 </form>
 
-{% if page_obj %}
+{% if productresult %}
 <table class="table table-striped">
     <thead>
         <tr>
@@ -22,11 +22,11 @@
             <th>Fiyat</th>
             <th>Kur</th>
             <th>Stok D1</th>
-            <th>Stok D4</th> <!-- New column for D4 -->
+            <th>Stok D4</th>
         </tr>
     </thead>
     <tbody>
-        {% for item in page_obj %}
+        {% for item in productresult %}
         <tr>
             <td><img src="{% static item.photoPath %}" alt="" width="100"></td>
             <td>{{ item.codeUyum }}</td>
@@ -36,30 +36,12 @@
             <td>{{ item.mainCategory }}</td>
             <td><a href="{% url 'order:product_order_history' item.id %}" class="popup-link">{{ item.priceSelling }}</a></td>
             <td>{{ item.currency }}</td>
-            <td>{{ item.stockAmountD1 }}</td> <!-- Stock for D1 -->
-            <td>{{ item.stockAmountD4 }}</td> <!-- Stock for D4 -->
+            <td>{{ item.stockAmountD1 }}</td>
+            <td>{{ item.stockAmountD4 }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
-
-<div class="pagination">
-    <span class="step-links">
-        {% if page_obj.has_previous %}
-            <a href="?page=1{% if query %}&product_name={{ query }}{% endif %}">&laquo; İlk</a>
-            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&product_name={{ query }}{% endif %}">Önceki</a>
-        {% endif %}
-
-        <span class="current">
-            Sayfa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
-        </span>
-
-        {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if query %}&product_name={{ query }}{% endif %}">Sonraki</a>
-            <a href="?page={{ page_obj.paginator.num_pages }}{% if query %}&product_name={{ query }}{% endif %}">Son &raquo;</a>
-        {% endif %}
-    </span>
-</div>
 {% endif %}
 
 <script>

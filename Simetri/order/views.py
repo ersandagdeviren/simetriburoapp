@@ -26,7 +26,7 @@ import time
 from selenium.common.exceptions import NoSuchElementException ,TimeoutException
 from .forms import ProductForm 
 from selenium.webdriver.chrome.service import Service
-from django.core.paginator import Paginator
+
 
 
 
@@ -85,14 +85,8 @@ def search(request):
                 product.stockAmountD1 = inventory_d1.quantity if inventory_d1 else 0
                 product.stockAmountD4 = inventory_d4.quantity if inventory_d4 else 0
 
-    if productresult is not None:
-        paginator = Paginator(productresult, 20)  # Show 20 products per page
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-    else:
-        page_obj = None
-
-    return render(request, "order/product.html", {"form": form, "page_obj": page_obj, "query": query})
+    # Remove pagination logic, simply pass the full list
+    return render(request, "order/product.html", {"form": form, "productresult": productresult, "query": query})
 
 @login_required
 def main(request):
@@ -509,11 +503,9 @@ def order_list(request):
             'order_date': order.date.strftime('%d-%m-%Y'),  # Adding the order date
         })
 
-    paginator = Paginator(orders_with_totals, 50)  # Show 20 orders per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    # No pagination, just pass the full list
+    return render(request, 'order/order_list.html', {'orders_with_totals': orders_with_totals})
 
-    return render(request, 'order/order_list.html', {'page_obj': page_obj})
 @login_required
 def order_detail(request, order_number):
     defaultUSD, defaultEUR = get_currency_rates()
@@ -739,11 +731,9 @@ def invoice_list(request):
         return redirect('order:invoice_list')
 
     invoices = Invoice.objects.all().order_by('-invoice_date')
-    paginator = Paginator(invoices, 50)  # Show 20 invoices per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
 
-    return render(request, 'order/invoice_list.html', {'page_obj': page_obj})
+    # Removed pagination logic
+    return render(request, 'order/invoice_list.html', {'invoices': invoices})
 
 def invoice_detail(request, invoice_number):
     invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
@@ -794,11 +784,9 @@ def invoice_detail(request, invoice_number):
 def payment_receipt_list(request):
     payment_receipts = PaymentReceipt.objects.all().order_by('-date')
 
-    paginator = Paginator(payment_receipts, 50)  # Show 20 payment receipts per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    # Removed pagination logic
+    return render(request, 'order/payment_receipt_list.html', {'payment_receipts': payment_receipts})
 
-    return render(request, 'order/payment_receipt_list.html', {'page_obj': page_obj})
 @login_required
 def payment_receipt_detail(request, pk):
     payment_receipt = get_object_or_404(PaymentReceipt, pk=pk)
@@ -918,11 +906,9 @@ def customer_listed(request):
     if search_query:
         customers = customers.filter(companyName__icontains=search_query)
     
-    paginator = Paginator(customers, 50)  # Show 20 customers per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    return render(request, 'order/customer_list.html', {'page_obj': page_obj})
+    # Removed pagination logic
+    return render(request, 'order/customer_list.html', {'customers': customers})
+
 @login_required
 @user_passes_test(is_admin)
 def customer_new(request):
@@ -1445,19 +1431,13 @@ def supplier_new(request):
 @user_passes_test(is_admin)
 def supplier_listed(request):
     suppliers = Supplier.objects.all()
-    
+
     search_query = request.GET.get('search')
     if search_query:
         suppliers = suppliers.filter(companyName__icontains=search_query)
 
-    paginator = Paginator(suppliers, 50)  # Show 20 suppliers per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    context = {
-        'page_obj': page_obj
-    }
-    return render(request, 'order/supplier_list.html', context)
+    # Removed pagination logic
+    return render(request, 'order/supplier_list.html', {'suppliers': suppliers})
 
 
 @login_required
@@ -1716,11 +1696,10 @@ def buying_invoice_list(request):
         return redirect('order:buying_invoice_list')
 
     invoices = BuyingInvoice.objects.all().order_by('-invoice_date')
-    paginator = Paginator(invoices, 50)  # Show 50 invoices per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    
+    # Removed pagination logic
+    return render(request, 'order/buying_invoice_list.html', {'invoices': invoices})
 
-    return render(request, 'order/buying_invoice_list.html', {'page_obj': page_obj})
 @login_required
 def buying_invoice_detail(request, invoice_number):
     invoice = get_object_or_404(BuyingInvoice, invoice_number=invoice_number)
@@ -2138,11 +2117,9 @@ def loc_supplier_list(request):
 @user_passes_test(is_admin)
 def accounts_listed(request):
     bankaccounts = CashRegister.objects.all()
-    paginator = Paginator(bankaccounts, 50)  # Show 50 accounts per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
     
-    return render(request, 'order/accounts_list.html', {'page_obj': page_obj})
+    # Removed pagination logic
+    return render(request, 'order/accounts_list.html', {'bankaccounts': bankaccounts})
 
 
 @login_required

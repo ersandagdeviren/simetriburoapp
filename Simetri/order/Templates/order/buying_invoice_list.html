@@ -22,14 +22,14 @@
             </tr>
         </thead>
         <tbody>
-            {% for invoice in page_obj %}
+            {% for invoice in invoices %}
                 <tr>
                     <td><a href="{% url 'order:buying_invoice_detail' invoice.invoice_number %}">{{ invoice.invoice_number }}</a></td>
-                    {%if invoice.supplier is None %}
-                    <td>{{ invoice.customer }}</td>
-                    {%else%}
-                    <td>{{ invoice.supplier }}</td>
-                    {%endif%}
+                    {% if invoice.supplier is None %}
+                        <td>{{ invoice.customer }}</td>
+                    {% else %}
+                        <td>{{ invoice.supplier }}</td>
+                    {% endif %}
                     <td>{{ invoice.invoice_date|date:"Y-m-d H:i" }}</td>
                     <td>{{ invoice.total_amount_EUR }}</td>
                     <td>{{ invoice.total_amount_USD }}</td>
@@ -50,24 +50,6 @@
             {% endfor %}
         </tbody>
     </table>
-
-    <div class="pagination">
-        <span class="step-links">
-            {% if page_obj.has_previous %}
-                <a href="?page=1">&laquo; İlk</a>
-                <a href="?page={{ page_obj.previous_page_number }}">Önceki</a>
-            {% endif %}
-
-            <span class="current">
-                Sayfa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
-            </span>
-
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}">Sonraki</a>
-                <a href="?page={{ page_obj.paginator.num_pages }}">Son &raquo;</a>
-            {% endif %}
-        </span>
-    </div>
 
     <script>
         function confirmDelete() {
