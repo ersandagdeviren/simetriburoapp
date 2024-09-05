@@ -62,7 +62,7 @@ ROOT_URLCONF = "Simetri.Simetri.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, "Templates")],
+        "DIRS": [os.path.join(BASE_DIR, "order", "Templates")], 
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -74,6 +74,7 @@ TEMPLATES = [
         },
     },
 ]
+
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 WSGI_APPLICATION = "Simetri.wsgi.application"
