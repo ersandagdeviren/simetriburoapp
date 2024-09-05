@@ -36,7 +36,7 @@
 
         <img src="{% static 'simetrilogo.png' %}" alt="Logo">
 
-        <form action="{% url 'users:login' %}" method="post">
+        <form action="{% url 'Simetri.users:login' %}" method="post">
             {% csrf_token %}
             <div class="form-group">
                 <input type="text" name="username" class="form-control" placeholder="Username" required>
