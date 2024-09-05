@@ -1,6 +1,6 @@
 from django.urls import path
-from users import views
-app_name="users"
+from Simetri.users import views
+app_name="Simetri.users"
 urlpatterns=[
     path("",views.index, name="index"),
     path("login",views.login_view, name="login"),
