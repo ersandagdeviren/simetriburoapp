@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path , include
-from users import views
+from Simetri.users import views
 
 
 
@@ -24,6 +24,6 @@ from users import views
 urlpatterns = [
     path("", views.login_view, name="login_view"),
     path("admin/", admin.site.urls),
-    path("order/",include("order.urls")),
-    path("users/",include("users.urls"))
+    path("order/",include("Simetri.order.urls")),
+    path("users/",include("Simetri.users.urls"))
 ]
