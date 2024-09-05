@@ -56,7 +56,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "Simetri.urls"
+ROOT_URLCONF = "Simetri.Simetri.urls"
 
 TEMPLATES = [
     {
