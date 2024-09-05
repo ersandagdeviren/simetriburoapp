@@ -1,5 +1,4 @@
 
-Python==3.11.3
 pandas==1.5.3
 Django==5.0
 openpyxl==3.1.2
