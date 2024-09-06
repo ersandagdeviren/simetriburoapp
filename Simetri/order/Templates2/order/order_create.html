@@ -1,0 +1,182 @@
+{% extends "order/navbar.html" %}
+{%load static %}
+{% block content %}
+<form method="POST">
+    {% csrf_token %}
+    <div style="margin-bottom: 10px;">
+        <input type="text" name="customer" placeholder="Cari Ünvan Giriniz" size="50">
+        <input type="submit" name="customer_searched" value="Ara" style="padding: 4px 8px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+    </div>
+</form>
+
+{% if customer_list %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Cari</th>
+                <th>İsim</th>
+                <th>Soyisim</th>
+                <th>Vergi Numarası</th>
+                <th>Şehir</th>
+                <th>Eposta</th>
+                <th>Ekle</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for customer in customer_list %}
+            <tr>
+                <td>
+                    <form method="POST" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="customer_id" value="{{ customer.id }}">
+                        <button type="submit" name="customer_selected" style="background:none; border:none; color:blue; text-decoration:underline; cursor:pointer;">{{ customer.companyName }}</button>
+                    </form>
+                </td>
+                <td>{{ customer.name }}</td>
+                <td>{{ customer.surname }}</td>
+                <td>{{ customer.tax_number }}</td>
+                <td>{{ customer.city }}</td>
+                <td>{{ customer.email }}</td>
+                <td>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="customer_id" value="{{ customer.id }}">
+                        <button type="submit" name="customer_selected">Seç</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+{% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% if customer_name %}
+    <p> Seçilen Müşteri {{ customer_name }} </p>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ product_form.product_name }}
+            <input type="submit" class="btn btn-primary" name="product_submit" value="Ara" style="padding: 4px 8px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        </div>
+    </form>
+
+    {% if products %}
+    <h3>Sepete Eklenen Ürünler</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Ürün Açıklaması</th>
+                <th>Fiyat</th>
+                <th>Miktar</th>
+                <th>Sil</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td>{{ product.description|slice:":100" }}</td>
+                <td>{{ product.price }}</td>
+                <td>{{ product.quantity }}</td>
+                <td>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        <button type="submit" name="delete_product">Sil</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        {% if products %}
+        <input type="submit" name="complete_order" value="Siparişi Tamamla" class="btn btn-success">
+        {% else %}
+        <input type="submit" name="complete_order" value="Siparişi Tamamla" class="btn btn-success" disabled style="opacity: 0.5; cursor: not-allowed;">
+        {% endif %}
+    </form>
+
+    {% if product %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Görsel</th>
+                <th>Kod</th>
+                <th>Açıklama</th>
+                <th>Marka</th>
+                <th>Kategori</th>
+                <th>Fiyat</th>
+                <th>Döviz</th>
+                <th>Stok</th>
+                <th>Miktar</th>
+                <th>Ekle</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in product %}
+            <tr>
+                <td><img src="{% static item.photoPath %}" alt="" width="100"></td>
+                <td>{{ item.codeUyum }}</td>
+                <td>
+                    <a href="{% url 'order:product_order_history' item.id %}" class="popup-link">{{ item.description }}</a>
+                </td>
+                <td>{{ item.brand }}</td>
+                <td>{{ item.mainCategory }}</td>
+                <td>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="number" name="new_price" value="{{ item.priceSelling }}" step="0.01" min="0.01" required>
+                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                </td>
+                <td>{{ item.currency }}</td>
+                <td>{{ item.stockAmount }}</td>
+                <td>
+                    {% if item.stockAmount > 0 %}
+                    <input type="number" name="quantity" value="1" min="1" max="{{ item.stockAmount }}">
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                    <td><button type="submit" name="product_add" class="add-button" data-product-id="{{ item.id }}">Ekle</button></td>
+                    {% else %}
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                    {% endif %}
+                </td>
+                </form>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+{% endif %}
+
+<script>
+    // Function to open links in a popup window
+    function openInPopup(event) {
+        event.preventDefault();
+        var width = 600;
+        var height = 400;
+        var left = (screen.width - width) / 2;
+        var top = (screen.height - height) / 2;
+        var url = this.href;
+        window.open(url, 'Product Order History', 'width=' + width + ', height=' + height + ', top=' + top + ', left=' + left + ', resizable=yes, scrollbars=yes');
+    }
+
+    // Attach the function to all links with the class "popup-link"
+    document.querySelectorAll('.popup-link').forEach(function(link) {
+        link.addEventListener('click', openInPopup);
+    });
+
+    // Run the update function on page load
+    document.addEventListener('DOMContentLoaded', updateAddButtonStatus);
+</script>
+
+{% endblock %}

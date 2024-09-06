@@ -1,0 +1,48 @@
+{% extends "order/navbar.html" %}
+
+{% block content %}
+
+<h2>Cari Listesi</h2>
+<a href="{% url 'order:customer_new' %}" class="btn btn-success mb-2">Yeni Cari</a>
+<br>
+<br>
+
+<div class="search-container">
+    <form action="{% url 'order:customer_listed' %}" method="get">
+        <input type="text" placeholder="Cari Ünvanı" name="search">
+        <button type="submit">Ara</button>
+    </form>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Cari</th>
+            <th>İsim</th>
+            <th>Soyisim</th>
+            <th>Vergi Numarası</th>
+            <th>Şehir</th>
+            <th>Eposta</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for customer in customers %}
+        <tr>
+            <td>
+                <a href="{% url 'order:customer_details' customer.id %}">{{ customer.companyName }}</a>
+            </td>
+            <td>{{ customer.name }}</td>
+            <td>{{ customer.surname }}</td>
+            <td>{{ customer.tax_number }}</td>
+            <td>{{ customer.city }}</td>
+            <td>{{ customer.email }}</td>
+            <td>
+                <a href="{% url 'order:customer_financials' customer_id=customer.id %}">Cari Ekstre</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

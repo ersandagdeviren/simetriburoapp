@@ -1,0 +1,41 @@
+{% extends "order/navbar.html" %}
+
+{% block content %}
+    <h2>Faturalar</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Fatura Numarası</th>
+                <th>Fatura Tarihi</th>
+                <th>Müşteri</th>
+                <th>Toplam TL</th>
+                <th>Total İskonto</th>
+                <th>Toplam KDV</th>
+                <th>Genel Toplam (USD)</th>
+                <th>Genel Toplam (EUR)</th>
+                <th>Genel Toplam TL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for invoice in invoices %}
+
+            {% if invoice.order.customer.user == request.user %}
+                <tr>
+                    <td><a href="{% url 'order:invoice_detail' invoice.invoice_number %}">{{ invoice.invoice_number }}</td>
+                    <td>{{ invoice.invoice_date|date:"Y-m-d H:i" }}</td>
+                    <td>{{ invoice.order.customer }}</td>
+                    <td>{{ invoice.total_amount }}</td>
+                    <td>{{ invoice.total_discount }}</td>
+                    <td>{{ invoice.tax_amount }}</td>
+                    <td>{{ invoice.grand_total_USD }}</td>
+                    <td>{{ invoice.grand_total_EUR }}</td>
+                    <td><b>{{ invoice.grand_total }}</b></td>
+                </tr>
+                 {% endif%}
+            {% endfor %}
+           
+        </tbody>
+    </table>
+{% endblock %}
+
+

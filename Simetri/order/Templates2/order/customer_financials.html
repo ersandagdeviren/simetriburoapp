@@ -1,0 +1,102 @@
+{% extends "order/navbar.html" %}
+
+{% block content %}
+
+<body>
+    <h1>Cari Ekstre: {{ customer.companyName }}</h1>
+
+    <h2>Satış Faturaları</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Fatura</th>
+                <th>Tarih</th>
+                <th>Tutar</th>
+                <th>KDV</th>
+                <th>İskonto</th>
+                <th>Tutar USD</th>
+                <th>Tutar EUR</th>
+                <th>Toplam Tutar</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for invoice in invoices %}
+            <tr>
+                <td><a href="{% url 'order:invoice_detail' invoice.invoice_number %}">{{ invoice.invoice_number }}</td>
+                <td>{{ invoice.invoice_date|date:"d-m-Y" }}</td>
+                <td>{{ invoice.total_amount }}</td>
+                <td>{{ invoice.tax_amount }}TL</td>
+                <td>{{ invoice.total_discount }}</td>
+                <td>${{ invoice.grand_total_USD }}</td>
+                <td>€{{ invoice.grand_total_EUR }}</td>
+                <td><b>{{ invoice.grand_total }}TL</b></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Alım Faturaları</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Fatura</th>
+                <th>Tarih</th>
+                <th>Tutar</th>
+                <th>KDV</th>
+                <th>İskonto</th>
+                <th>Tutar USD</th>
+                <th>Tutar EUR</th>
+                <th>Toplam Tutar</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for buyinginvoice in buyinginvoices %}
+            <tr>
+                <td><a href="{% url 'order:buying_invoice_detail' buyinginvoice.invoice_number %}">{{ buyinginvoice.invoice_number }}</td>
+                <td>{{ buyinginvoice.invoice_date|date:"d-m-Y" }}</td>
+                <td>{{ buyinginvoice.total_amount_tl }}</td>
+                <td>{{ buyinginvoice.tax_amount }}TL</td>
+                <td>{{ buyinginvoice.total_discount }}</td>
+                <td>${{ buyinginvoice.grand_total_USD }}</td>
+                <td>€{{ buyinginvoice.grand_total_EUR }}</td>
+                <td><b>{{ buyinginvoice.grand_total_tl }}TL</b></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Tahsilat / Tediye</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>İşlem No</th>
+                <th>Tarih</th>
+                <th>İşlem</th>
+                <th>Tutar USD</th>
+                <th>Tutar EUR</th>
+                <th>Tutar TL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+            <tr>
+                <td><a href="{% url 'order:payment_receipt_detail' payment.pk %}">{{ payment.transaction_number }}</a></td>
+                <td>{{ payment.date|date:"d-m-Y" }}</td>
+                <td>{{ payment.transaction_type }}</td>
+                <td>${{ payment.usd_amount }}</td>
+                <td>€{{ payment.eur_amount }}</td>
+                <td><b>{{ payment.amount }}TL</b></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-balance">
+        <h2>Cari Tutar TL: {{ total_balance }} TL</h2>
+        <h2>Cari Tutar USD: {{ total_balance_usd }} TL</h2>
+        <h2>Cari Tutar EUR: {{ total_balance_eur }} TL</h2>
+    </div>
+</body>
+</html>
+
+{% endblock %}

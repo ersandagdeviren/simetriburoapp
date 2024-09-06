@@ -1,0 +1,59 @@
+{% extends "order/navbar.html" %}
+
+{% block content %}
+    <h2>Alım Faturaları</h2>
+    <a href="{% url 'order:supplier_list' %}" class="btn btn-success mb-2">Yeni İthalat</a>
+    <a href="{% url 'order:loc_supplier_list' %}" class="btn btn-success mb-2">Yeni Alım</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Fatura Numarası</th>
+                <th>Tedarikçi</th>
+                <th>Fatura Tarihi</th>
+                <th>Toplam EUR</th>
+                <th>Toplam USD</th>
+                <th>Toplam TL</th>
+                <th>Toplam KDV</th>
+                <th>Genel Toplam EUR</th>
+                <th>Genel Toplam USD</th>
+                <th>Genel Toplam TL</th>
+                <th>Durum</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for invoice in invoices %}
+                <tr>
+                    <td><a href="{% url 'order:buying_invoice_detail' invoice.invoice_number %}">{{ invoice.invoice_number }}</a></td>
+                    {% if invoice.supplier is None %}
+                        <td>{{ invoice.customer }}</td>
+                    {% else %}
+                        <td>{{ invoice.supplier }}</td>
+                    {% endif %}
+                    <td>{{ invoice.invoice_date|date:"Y-m-d H:i" }}</td>
+                    <td>{{ invoice.total_amount_EUR }}</td>
+                    <td>{{ invoice.total_amount_USD }}</td>
+                    <td>{{ invoice.total_amount_tl }}</td>
+                    <td>{{ invoice.tax_amount }}</td>
+                    <td>{{ invoice.grand_total_EUR }}</td>
+                    <td>{{ invoice.grand_total_USD }}</td>
+                    <td>{{ invoice.grand_total_tl }}</td>
+                    <td>{{ invoice.status }}</td>
+                    <td>
+                        <form method="POST" onsubmit="return confirmDelete();">
+                            {% csrf_token %}
+                            <input type="hidden" name="invoice_id" value="{{ invoice.id }}">
+                            <button type="submit" name="delete_invoice" class="btn btn-danger">Sil</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        function confirmDelete() {
+            return confirm("Faturayı silmek istediğinizden emin misiniz?");
+        }
+    </script>
+{% endblock %}
