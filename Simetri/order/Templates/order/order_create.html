@@ -128,7 +128,7 @@
                 <td><img src="{% static item.photoPath %}" alt="" width="100"></td>
                 <td>{{ item.codeUyum }}</td>
                 <td>
-                    <a href="{% url 'Simetri.order:product_order_history' item.id %}" class="popup-link">{{ item.description }}</a>
+                    <a href="{% url 'order:product_order_history' item.id %}" class="popup-link">{{ item.description }}</a>
                 </td>
                 <td>{{ item.brand }}</td>
                 <td>{{ item.mainCategory }}</td>

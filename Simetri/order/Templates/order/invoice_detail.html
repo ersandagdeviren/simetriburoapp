@@ -50,7 +50,7 @@
     {% if invoice.published %}
         <button class="btn btn-primary" disabled>Fatura Yayınlanmış</button>
     {% else %}
-    <a href="{% url 'Simetri.order:invoice_publish' invoice.invoice_number %}" class="btn btn-primary" id="publishInvoiceBtn">Faturayı Yayınla</a>
+    <a href="{% url 'order:invoice_publish' invoice.invoice_number %}" class="btn btn-primary" id="publishInvoiceBtn">Faturayı Yayınla</a>
     {% endif %}
     {% endif %}  
     {% else %}

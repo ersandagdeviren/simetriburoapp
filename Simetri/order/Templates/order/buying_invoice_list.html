@@ -2,8 +2,8 @@
 
 {% block content %}
     <h2>Alım Faturaları</h2>
-    <a href="{% url 'Simetri.order:supplier_list' %}" class="btn btn-success mb-2">Yeni İthalat</a>
-    <a href="{% url 'Simetri.order:loc_supplier_list' %}" class="btn btn-success mb-2">Yeni Alım</a>
+    <a href="{% url 'order:supplier_list' %}" class="btn btn-success mb-2">Yeni İthalat</a>
+    <a href="{% url 'order:loc_supplier_list' %}" class="btn btn-success mb-2">Yeni Alım</a>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -24,7 +24,7 @@
         <tbody>
             {% for invoice in invoices %}
                 <tr>
-                    <td><a href="{% url 'Simetri.order:buying_invoice_detail' invoice.invoice_number %}">{{ invoice.invoice_number }}</a></td>
+                    <td><a href="{% url 'order:buying_invoice_detail' invoice.invoice_number %}">{{ invoice.invoice_number }}</a></td>
                     {% if invoice.supplier is None %}
                         <td>{{ invoice.customer }}</td>
                     {% else %}
