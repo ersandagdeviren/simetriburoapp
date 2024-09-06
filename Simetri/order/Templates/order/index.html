@@ -4,14 +4,14 @@
 {%if request.user.is_superuser%}
     <div class="row">
       <div class="col-md-2 bg-secondary" >
-        <a href="{% url 'order:customer_list' %}"> <img src="{% static 'new_order.png' %}" width="150px" alt=""></a>
-        <a href="{% url 'order:payment_receipt_create' %}"> <img src="{% static 'new_cash.png' %}" width="150px" alt=""></a>
-        <a href="{% url 'order:supplier_list' %}"> <img src="{% static 'new_import.png' %}" width="150px" alt=""></a>
-        <a href="{% url 'order:customer_new' %}"> <img src="{% static 'new_customer.png' %}" width="150px" alt=""></a>
-        <a href="{% url 'order:customer_list' %}"> <img src="{% static 'new_product.png' %}" width="150px" alt=""></a>
-        <a href="{% url 'order:make_production' %}"> <img src="{% static 'new_production.png' %}" width="150px" alt=""></a>
-        <a href="{% url 'order:supplier_new' %}"> <img src="{% static 'new_supplier.png' %}" width="150px" alt=""></a>
-        <a href="{% url 'order:supplier_new' %}"> <img src="{% static 'new_buy.png' %}" width="150px" alt=""></a>
+        <a href="{% url 'Simetri.order:customer_list' %}"> <img src="{% static 'new_order.png' %}" width="150px" alt=""></a>
+        <a href="{% url 'Simetri.order:payment_receipt_create' %}"> <img src="{% static 'new_cash.png' %}" width="150px" alt=""></a>
+        <a href="{% url 'Simetri.order:supplier_list' %}"> <img src="{% static 'new_import.png' %}" width="150px" alt=""></a>
+        <a href="{% url 'Simetri.order:customer_new' %}"> <img src="{% static 'new_customer.png' %}" width="150px" alt=""></a>
+        <a href="{% url 'Simetri.order:customer_list' %}"> <img src="{% static 'new_product.png' %}" width="150px" alt=""></a>
+        <a href="{% url 'Simetri.order:make_production' %}"> <img src="{% static 'new_production.png' %}" width="150px" alt=""></a>
+        <a href="{% url 'Simetri.order:supplier_new' %}"> <img src="{% static 'new_supplier.png' %}" width="150px" alt=""></a>
+        <a href="{% url 'Simetri.order:supplier_new' %}"> <img src="{% static 'new_buy.png' %}" width="150px" alt=""></a>
         
       </div>
       <div class="col-md-8">
@@ -31,7 +31,7 @@
                 {%if order_with_total.order.is_billed == False %}
                 <tr>
                     <td>{{ order_with_total.order_date }}</td> <!-- Displaying the order date -->
-                    <td><a href="{% url 'order:order_detail' order_with_total.order.order_number %}">{{ order_with_total.order.order_number }}</a></td>
+                    <td><a href="{% url 'Simetri.order:order_detail' order_with_total.order.order_number %}">{{ order_with_total.order.order_number }}</a></td>
                     <td>{{ order_with_total.order.customer }}</td>
                     <td>{{ order_with_total.order.user.username }}</td> <!-- Add this line -->
                     <td><b>{{ order_with_total.grand_total }} TL</b></td>
@@ -56,7 +56,7 @@
             {% for invoice in invoices %}
                 <tr>
                     <td>{{ invoice.invoice_date|date:"d-m-Y" }}</td>
-                    <td><a href="{% url 'order:invoice_detail' invoice.invoice_number %}">{{ invoice.invoice_number }}</td>
+                    <td><a href="{% url 'Simetri.order:invoice_detail' invoice.invoice_number %}">{{ invoice.invoice_number }}</td>
                     <td>{{ invoice.order.customer }}</td>
                     <td>{{ invoice.order.user.username  }}</td>
                     <td><b>{{ invoice.grand_total }}TL</b></td>
@@ -83,7 +83,7 @@
             {% for payment_receipt in payment_receipts %}
                 <tr>
                     <td>{{ payment_receipt.date|date:"d-m-Y" }}</td>
-                    <td><a href="{% url 'order:payment_receipt_detail' payment_receipt.pk %}">{{ payment_receipt.transaction_number }}</td>
+                    <td><a href="{% url 'Simetri.order:payment_receipt_detail' payment_receipt.pk %}">{{ payment_receipt.transaction_number }}</td>
                     <td>{{ payment_receipt.customer }}</td>
                     <td>{{ payment_receipt.cash_register }}</td>
                     <td>{{ payment_receipt.get_transaction_type_display }}</td>
@@ -113,13 +113,13 @@
 <div class="row">
     <div class="col-md-1">
         <p></p>
-        <a href="{% url 'order:user_order' %}"><img src="{% static 'user_order.png' %}" class="img-fluid" width="115px" alt=""></a>
+        <a href="{% url 'Simetri.order:user_order' %}"><img src="{% static 'user_order.png' %}" class="img-fluid" width="115px" alt=""></a>
         <p></p>
-        <a href="{% url 'order:user_order' %}"><img src="{% static 'user_products.png' %}" class="img-fluid" width="115px" alt=""></a>
+        <a href="{% url 'Simetri.order:user_order' %}"><img src="{% static 'user_products.png' %}" class="img-fluid" width="115px" alt=""></a>
         <p></p>
-        <a href="{% url 'order:user_order' %}"><img src="{% static 'user_pay.png' %}" class="img-fluid" width="115px" alt=""></a>
+        <a href="{% url 'Simetri.order:user_order' %}"><img src="{% static 'user_pay.png' %}" class="img-fluid" width="115px" alt=""></a>
         <p></p>
-        <a href="{% url 'order:user_order' %}"><img src="{% static 'user_about_us.png' %}" class="img-fluid" width="115px" alt=""></a>
+        <a href="{% url 'Simetri.order:user_order' %}"><img src="{% static 'user_about_us.png' %}" class="img-fluid" width="115px" alt=""></a>
     </div>
 
     <div class="col-md-11">
