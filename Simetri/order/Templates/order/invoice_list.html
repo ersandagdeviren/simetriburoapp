@@ -2,7 +2,7 @@
 
 {% block content %}
     <h2>Faturalar</h2>
-    <a href="{% url 'order:loc_supplier_list' %}" class="btn btn-success mb-2">Yeni Alım Faturası</a>
+    <a href="{% url 'Simetri.order:loc_supplier_list' %}" class="btn btn-success mb-2">Yeni Alım Faturası</a>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -23,7 +23,7 @@
         <tbody>
             {% for invoice in invoices %}
                 <tr>
-                    <td><a href="{% url 'order:invoice_detail' invoice.invoice_number %}">{{ invoice.invoice_number }}</a></td>
+                    <td><a href="{% url 'Simetri.order:invoice_detail' invoice.invoice_number %}">{{ invoice.invoice_number }}</a></td>
                     <td>{{ invoice.invoice_date|date:"Y-m-d H:i" }}</td>
                     <td>{{ invoice.order.customer }}</td>
                     <td>{{ invoice.total_amount }}</td>

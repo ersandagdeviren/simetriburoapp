@@ -22,7 +22,7 @@
         <tbody>
             {% for invoice in invoices %}
             <tr>
-                <td><a href="{% url 'order:invoice_detail' invoice.invoice_number %}">{{ invoice.invoice_number }}</td>
+                <td><a href="{% url 'Simetri.order:invoice_detail' invoice.invoice_number %}">{{ invoice.invoice_number }}</td>
                 <td>{{ invoice.invoice_date|date:"d-m-Y" }}</td>
                 <td>{{ invoice.total_amount }}</td>
                 <td>{{ invoice.tax_amount }}TL</td>
@@ -52,7 +52,7 @@
         <tbody>
             {% for buyinginvoice in buyinginvoices %}
             <tr>
-                <td><a href="{% url 'order:buying_invoice_detail' buyinginvoice.invoice_number %}">{{ buyinginvoice.invoice_number }}</td>
+                <td><a href="{% url 'Simetri.order:buying_invoice_detail' buyinginvoice.invoice_number %}">{{ buyinginvoice.invoice_number }}</td>
                 <td>{{ buyinginvoice.invoice_date|date:"d-m-Y" }}</td>
                 <td>{{ buyinginvoice.total_amount_tl }}</td>
                 <td>{{ buyinginvoice.tax_amount }}TL</td>
@@ -80,7 +80,7 @@
         <tbody>
             {% for payment in payments %}
             <tr>
-                <td><a href="{% url 'order:payment_receipt_detail' payment.pk %}">{{ payment.transaction_number }}</a></td>
+                <td><a href="{% url 'Simetri.order:payment_receipt_detail' payment.pk %}">{{ payment.transaction_number }}</a></td>
                 <td>{{ payment.date|date:"d-m-Y" }}</td>
                 <td>{{ payment.transaction_type }}</td>
                 <td>${{ payment.usd_amount }}</td>

@@ -3,12 +3,12 @@
 {% block content %}
 
 <h2>Cari Listesi</h2>
-<a href="{% url 'order:customer_new' %}" class="btn btn-success mb-2">Yeni Cari</a>
+<a href="{% url 'Simetri.order:customer_new' %}" class="btn btn-success mb-2">Yeni Cari</a>
 <br>
 <br>
 
 <div class="search-container">
-    <form action="{% url 'order:customer_listed' %}" method="get">
+    <form action="{% url 'Simetri.order:customer_listed' %}" method="get">
         <input type="text" placeholder="Cari Ünvanı" name="search">
         <button type="submit">Ara</button>
     </form>
@@ -30,7 +30,7 @@
         {% for customer in customers %}
         <tr>
             <td>
-                <a href="{% url 'order:customer_details' customer.id %}">{{ customer.companyName }}</a>
+                <a href="{% url 'Simetri.order:customer_details' customer.id %}">{{ customer.companyName }}</a>
             </td>
             <td>{{ customer.name }}</td>
             <td>{{ customer.surname }}</td>
@@ -38,7 +38,7 @@
             <td>{{ customer.city }}</td>
             <td>{{ customer.email }}</td>
             <td>
-                <a href="{% url 'order:customer_financials' customer_id=customer.id %}">Cari Ekstre</a>
+                <a href="{% url 'Simetri.order:customer_financials' customer_id=customer.id %}">Cari Ekstre</a>
             </td>
         </tr>
         {% endfor %}

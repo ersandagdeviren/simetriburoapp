@@ -74,7 +74,7 @@
         </table>
     </form>
     {% if order.customer.user != request.user %}
-    <form method="POST" action="{% url 'order:create_invoice' order_number=order.order_number %}">
+    <form method="POST" action="{% url 'Simetri.order:create_invoice' order_number=order.order_number %}">
         {% csrf_token %}
         <button type="submit" class="btn btn-success">Faturaya Çevir</button>
     </form>
@@ -142,7 +142,7 @@
     <h5>Toplam KDV: {{ total_tax }} TL</h5>
     <h5>Genel Toplam: {{ grand_total }} TL</h5>
 
-    <a href="{% url 'order:order_list' %}">Siparişlere Dön</a>
+    <a href="{% url 'Simetri.order:order_list' %}">Siparişlere Dön</a>
     {% else %}
     <h1>Sipariş Detayları silinmiştir</h1>
     {% endif %}
