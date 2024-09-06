@@ -3,7 +3,7 @@
 {% block content %}
 <body>
     <h2>Siparişler</h2>
-    <a href="{% url 'order:user_order' %}" class="btn btn-success mb-2">Yeni Sipariş</a>
+    <a href="{% url 'Simetri.order:user_order' %}" class="btn btn-success mb-2">Yeni Sipariş</a>
     <table class="table">
         <thead>
             <tr>
@@ -27,7 +27,7 @@
 
 
             <tr>
-                <td><a href="{% url 'order:order_detail' order_with_total.order.order_number %}">{{ order_with_total.order.order_number }}</a></td>
+                <td><a href="{% url 'Simetri.order:order_detail' order_with_total.order.order_number %}">{{ order_with_total.order.order_number }}</a></td>
                 <td>{{ order_with_total.order_date }}</td>
                 <td>{{ order_with_total.order.customer }}</td>
                 <td>{{ order_with_total.order.user.username }}</td> <!-- Add this line -->
