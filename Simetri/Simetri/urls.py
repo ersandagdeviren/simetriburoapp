@@ -24,6 +24,6 @@ from users import views
 urlpatterns = [
     path("", views.login_view, name="login_view"),
     path("admin/", admin.site.urls),
-    path("order/",include("Simetri.order.urls")),
-    path("users/",include("Simetri.users.urls"))
+    path("order/",include("order.urls")),
+    path("users/",include("users.urls"))
 ]
