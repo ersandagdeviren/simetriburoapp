@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib import messages
-from Simetri.order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt, CustomerUpdateRequest, Place,Production, Inventory, Transfer,Production,Supplier,BuyingInvoice,BuyingItem,CashRegister,Transaction,mainCategory,category
+from order.models import Product, Customer, Order, OrderItem, Invoice,CashRegister,ExpenseItem,PaymentReceipt, CustomerUpdateRequest, Place,Production, Inventory, Transfer,Production,Supplier,BuyingInvoice,BuyingItem,CashRegister,Transaction,mainCategory,category
 from .forms import ProductSearchForm ,PaymentReceiptForm,CustomerForm, CustomerUpdateRequestForm,SupplierForm,TransferForm,CustomerSignUpForm
 from decimal import Decimal, ROUND_HALF_UP
 from django.http import JsonResponse
