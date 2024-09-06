@@ -30,7 +30,6 @@ DEBUG=os.environ.get("DEBUG","False").lower()=="true"
 #ALLOWED_HOSTS = []
 ALLOWED_HOSTS =os.environ.get("ALLOWED_HOSTS").split(" ")
 
-
 # Application definition
 
 INSTALLED_APPS = [
