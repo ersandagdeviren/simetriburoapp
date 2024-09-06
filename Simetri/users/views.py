@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth import authenticate, login,logout
+from django.views.decorators.cache import never_cache
 # Create your views here.
 
 def index(request):
@@ -9,7 +10,7 @@ def index(request):
         return HttpResponseRedirect(reverse("login"))
     return render (request,"users/user.html")
     
-
+@never_cache
 def login_view(request):
     if request.method == "POST":
         username= request.POST["username"]
