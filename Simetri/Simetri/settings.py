@@ -15,7 +15,7 @@ import dj_database_url
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 
 
 # Quick-start development settings - unsuitable for production
@@ -34,8 +34,8 @@ ALLOWED_HOSTS =os.environ.get("ALLOWED_HOSTS").split(" ")
 # Application definition
 
 INSTALLED_APPS = [
-    "Simetri.order",
-    "Simetri.users",
+    "order",
+    "users",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -57,7 +57,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
-ROOT_URLCONF = "Simetri.Simetri.urls"
+ROOT_URLCONF = "Simetri.urls"
 
 TEMPLATES = [
     {
