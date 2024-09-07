@@ -1,0 +1,12 @@
+{% extends "order/navbar.html" %}
+
+{%block content %}
+<h2>Update Customer Information</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Submit Update Request</button>
+  </form>
+
+
+{% endblock %}
