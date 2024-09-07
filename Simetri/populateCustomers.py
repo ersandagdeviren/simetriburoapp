@@ -11,7 +11,7 @@ django.setup()
 from order.models import customer
 
 
-df=pd.read_excel("/Users/ersandagdeviren/Desktop/simetriburoapp/Simetri/order/static/customerData.xls")
+df=pd.read_excel("Simetri/order/static/customerData.xls")
 
 for index, row in df.iterrows():
     customer_instance=customer(
