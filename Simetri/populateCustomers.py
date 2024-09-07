@@ -8,13 +8,13 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'Simetri.settings'
 # Initialize Django
 django.setup()
 
-from order.models import customer
+from order.models import Customer
 
 
 df=pd.read_excel("Simetri/order/static/customerData.xls")
 
 for index, row in df.iterrows():
-    customer_instance=customer(
+    customer_instance=Customer(
         customerCode=row['customerCode'],
         companyName=row['companyName'],
         taxOffice=row['taxOffice'],
