@@ -49,14 +49,14 @@
                         <li><a href="{% url 'order:user_invoice_list' %}">Faturalarım</a></li>
                         <li><a href="{% url 'order:user_financial' %}">Cari Ekstrem</a></li>
                     {% endif %}
-                    <li><a href="{% url 'Simetri.users:logout' %}">Çıkış</a></li>
+                    <li><a href="{% url 'users:logout' %}">Çıkış</a></li>
                     {% if not user.is_staff %}
                         <li><a href="{% url 'order:customer_update_request' user.pk %}"> <b>Merhaba {{user.username}}</b></a></li>
                     {% else %}
                         <li> <b>Kullanıcı: {{user.username}}</li>
                     {% endif %}
                 {% else %}
-                    <li><a href="{% url 'Simetri.users:login' %}">Giriş</a></li>
+                    <li><a href="{% url 'users:login' %}">Giriş</a></li>
                     <li><a href="">Üye Ol</a></li>
                 {% endif %}
             </ul>
