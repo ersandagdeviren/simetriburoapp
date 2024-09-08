@@ -10,10 +10,12 @@ django.setup()
 
 from order.models import Customer
 
+# Load data from the Excel file
+df = pd.read_excel("order/static/customerData.xls")
 
-df=pd.read_excel("order/static/customerData.xls")
-
+# Iterate through each row in the DataFrame
 for index, row in df.iterrows():
+    # Print the length of each field
     print(f"Customer Code: {row['customerCode']} (Length: {len(str(row['customerCode']))})")
     print(f"Company Name: {row['companyName']} (Length: {len(str(row['companyName']))})")
     print(f"Tax Office: {row['taxOffice']} (Length: {len(str(row['taxOffice']))})")
@@ -31,25 +33,28 @@ for index, row in df.iterrows():
     print(f"Customer Type: {row['customerType']} (Length: {len(str(row['customerType']))})")
     print(f"Contact Person: {row['contactPerson']} (Length: {len(str(row['contactPerson']))})")
 
-customer_instance = Customer(
-    customerCode=row['customerCode'],  # Truncate to 50 characters
-    companyName=row['companyName'][:100],  # Truncate to 100 characters
-    taxOffice=row['taxOffice'][:50],
-    tax_number=row['tax_number'][:50],
-    name=row['name'][:100],
-    middleName=row['middleName'][:100],
-    surname=row['surname'][:100],
-    city=row['city'][:50],
-    district=row['district'][:50],
-    adress=row['adress'][:300],
-    shipping_adress=row['shipping_adress'][:300],
-    country=row['country'][:50],
-    email=row['email'][:100],
-    telephone=row['telephone'][:30],
-    customerType=row['customerType'][:50],
-    contactPerson=row['contactPerson'][:50],
-)
-customer_instance.save()
+    # Check if the customer already exists based on customerCode or email
+    if Customer.objects.filter(customerCode=row['customerCode']).exists():
+        print(f"Skipping existing customer: {row['customerCode']}")
+        continue  # Skip this customer if they already exist
 
-
-
+    # Create and save the customer instance
+    customer_instance = Customer(
+        customerCode=row['customerCode']  # Truncate to 50 characters
+        companyName=row['companyName'][:100],  # Truncate to 100 characters
+        taxOffice=row['taxOffice'][:50],
+        tax_number=row['tax_number'][:50],
+        name=row['name'][:100],
+        middleName=row['middleName'][:100],
+        surname=row['surname'][:100],
+        city=row['city'][:50],
+        district=row['district'][:50],
+        adress=row['adress'][:300],
+        shipping_adress=row['shipping_adress'][:300],
+        country=row['country'][:50],
+        email=row['email'][:100],
+        telephone=row['telephone'][:30],
+        customerType=row['customerType'][:50],
+        contactPerson=row['contactPerson'][:50],
+    )
+    customer_instance.save()
