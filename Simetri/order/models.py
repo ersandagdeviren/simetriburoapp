@@ -101,7 +101,7 @@ class category (models.Model):
 class Customer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_customers",blank=True,null=True)
     customerCode = models.CharField(max_length=50)
-    companyName = models.CharField(max_length=100)
+    companyName = models.CharField(max_length=150)
     taxOffice = models.CharField(max_length=50)
     tax_number = models.CharField(max_length=50, blank=True)
     name = models.CharField(max_length=100, blank=True)
