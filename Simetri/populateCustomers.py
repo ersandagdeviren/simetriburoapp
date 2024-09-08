@@ -26,7 +26,6 @@ for index, row in df.iterrows():
     print(f"City: {row['city']} (Length: {len(str(row['city']))})")
     print(f"District: {row['district']} (Length: {len(str(row['district']))})")
     print(f"Address: {row['adress']} (Length: {len(str(row['adress']))})")
-    #print(f"Shipping Address: {row['shipping_adress']} (Length: {len(str(row['shipping_adress']))})")
     print(f"Country: {row['country']} (Length: {len(str(row['country']))})")
     print(f"Email: {row['email']} (Length: {len(str(row['email']))})")
     print(f"Telephone: {row['telephone']} (Length: {len(str(row['telephone']))})")
@@ -50,7 +49,6 @@ for index, row in df.iterrows():
         city=row['city'],
         district=row['district'],
         adress=row['adress'][:300],
-        shipping_adress=row['shipping_adress'],
         country=row['country'][:50],
         email=row['email'],
         telephone=row['telephone'][:30],
