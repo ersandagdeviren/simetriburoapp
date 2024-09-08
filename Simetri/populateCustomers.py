@@ -50,7 +50,7 @@ for index, row in df.iterrows():
         city=row['city'],
         district=row['district'],
         adress=row['adress'][:300],
-        shipping_adress=row['shipping_adress'][:300],
+        shipping_adress=row['shipping_adress'],
         country=row['country'][:50],
         email=row['email'],
         telephone=row['telephone'][:30],
