@@ -110,7 +110,7 @@ class Customer(models.Model):
     city = models.CharField(max_length=50)
     district = models.CharField(max_length=50)
     adress = models.TextField(blank=True)
-    shipping_adress=models.CharField(max_length=300, blank=True)
+    shipping_adress=models.TextField(blank=True)
     country = models.CharField(max_length=50, blank=True, default="Türkiye")
     email = models.EmailField(blank=True)
     telephone = models.CharField(max_length=30, blank=True)
