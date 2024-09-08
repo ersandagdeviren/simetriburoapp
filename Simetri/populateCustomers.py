@@ -40,7 +40,7 @@ for index, row in df.iterrows():
 
     # Create and save the customer instance
     customer_instance = Customer(
-        customerCode=row['customerCode']  # Truncate to 50 characters
+        customerCode=row['customerCode'], # Truncate to 50 characters
         companyName=row['companyName'][:100],  # Truncate to 100 characters
         taxOffice=row['taxOffice'][:50],
         tax_number=row['tax_number'][:50],
