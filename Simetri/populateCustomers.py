@@ -32,7 +32,7 @@ for index, row in df.iterrows():
     print(f"Contact Person: {row['contactPerson']} (Length: {len(str(row['contactPerson']))})")
 
 customer_instance = Customer(
-    customerCode=row['customerCode'][:50],  # Truncate to 50 characters
+    customerCode=row['customerCode'],  # Truncate to 50 characters
     companyName=row['companyName'][:100],  # Truncate to 100 characters
     taxOffice=row['taxOffice'][:50],
     tax_number=row['tax_number'][:50],
