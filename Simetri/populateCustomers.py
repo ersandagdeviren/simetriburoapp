@@ -51,8 +51,8 @@ for index, row in df.iterrows():
         adress=row['adress'][:300],
         country=row['country'][:50],
         email=row['email'],
-        telephone=row['telephone'][:30],
-        customerType=row['customerType'][:50],
-        contactPerson=row['contactPerson'][:50],
+        telephone=row['telephone'],
+        customerType=row['customerType'],
+        contactPerson=row['contactPerson'],
     )
     customer_instance.save()
