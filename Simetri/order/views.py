@@ -1192,7 +1192,7 @@ def post_invoice(request, invoice_number):
     #chrome_options.binary_location = "../usr/local/share/chrome/chrome-linux/chromedriver-linux64/"
 
     # Specify the ChromeDriver's path
-    service = Service("../usr/local/share/chrome/chrome-linux/chromedriver-linux64/chromedriver") 
+    #service = Service("../usr/local/share/chrome/chrome-linux/chromedriver-linux64/chromedriver") 
     service = Service(ChromeDriverManager().install())
 
     # Create the WebDriver instance
