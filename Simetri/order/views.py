@@ -1192,7 +1192,7 @@ def post_invoice(request, invoice_number):
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service,options=chrome_options)#options=chrome_options 
 
-    driver.maximize_window()
+    #driver.maximize_window()
 
 
 
