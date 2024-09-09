@@ -12,7 +12,7 @@ django.setup()
 from order.models import Product, Place, Inventory
 
 # Read Excel File
-df = pd.read_excel('/Users/ersandagdeviren/Desktop/simetriburoapp/Simetri/order/static/Inventory.xls')
+df = pd.read_excel('order/static/Inventory.xls')
 count = 0
 
 # Iterate Through Rows
