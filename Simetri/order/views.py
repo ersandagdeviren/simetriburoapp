@@ -1191,13 +1191,12 @@ def post_invoice(request, invoice_number):
     chrome_options.page_load_strategy = 'normal'
     chrome_options.binary_location = "../usr/local/share/chrome/chrome-linux/chrome"
 
-    service = Service("../usr/local/share/chrome/chrome-linux/chromedriver")  # Point to the correct location of chromedriver
-    driver = webdriver.Chrome(service=service,options=chrome_options)#options=chrome_options 
+    # Specify the ChromeDriver's path
+    service = Service("../usr/local/share/chrome/chrome-linux/chromedriver")
 
-    #driver.maximize_window()
-   
-
-
+    # Create the WebDriver instance
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    
 
     try:
         driver.get('https://portal.smartdonusum.com/accounting/login')
