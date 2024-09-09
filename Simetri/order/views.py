@@ -30,6 +30,8 @@ from selenium.webdriver.chrome.service import Service
 
 
 
+
+
 """
     webpage_response = requests.get('https://canlidoviz.com/doviz-kurlari/garanti-bankasi')
     webpage = webpage_response.content
@@ -1181,15 +1183,14 @@ def post_invoice(request, invoice_number):
 
     # Configure webdriver options for headless mode
     chrome_options = Options()
-    chrome_options.add_argument("--headless")
+    chrome_options.binary_location = "/usr/local/share/chrome/chrome-linux/chrome"
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--window-size=1920x1080")
-    chrome_options.page_load_strategy = 'normal'
 
-    chrome_options.binary_location = "/usr/local/share/chrome/chrome-linux/chrome"
-    service = Service(ChromeDriverManager().install())
+    
+    service = Service("/usr/local/share/chrome/chrome-linux/chromedriver")  # Point to the correct location of chromedriver
     driver = webdriver.Chrome(service=service,options=chrome_options)#options=chrome_options 
 
     #driver.maximize_window()
