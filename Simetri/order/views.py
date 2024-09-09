@@ -17,11 +17,11 @@ from django.contrib.auth import get_user_model
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from chromedriver_autoinstaller import install
 import time
 from selenium.common.exceptions import NoSuchElementException ,TimeoutException
 from .forms import ProductForm 
@@ -1148,6 +1148,106 @@ def user_invoice_list(request):
 
 @user_passes_test(lambda u: u.is_superuser)
 def post_invoice(request, invoice_number):
+    invoices = Invoice.objects.all().order_by('-invoice_date')
+    invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
+    order = invoice.order
+
+    products = []
+    product_price = []
+    product_quantity = []
+
+    total_amount = 0
+    total_discount = 0
+    total_tax = 0
+    grand_total = 0
+
+    for item in order.order_items.all():
+        currency_rate = item.currency_rate
+        discount_amount = item.price * item.discount_rate / 100
+        tl_value = round((item.price - discount_amount) * currency_rate * item.quantity, 2)
+        item_tax = round(tl_value * item.tax / 100, 2)
+        item_total = tl_value + item_tax
+
+        products.append(item.product.description)
+        product_price.append((item.price - discount_amount) * currency_rate)
+        product_quantity.append(item.quantity)
+
+        total_amount += tl_value
+        total_tax += item_tax
+        total_discount += round(discount_amount * item.quantity * currency_rate, 2)
+        grand_total = total_amount + total_tax
+
+    customer_tax_number = str(order.customer.tax_number)
+
+    # Ensure ChromeDriver is installed and matches the Chrome version
+    install()
+
+    # Configure webdriver options for headless mode
+    chrome_options = Options()
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--window-size=1920x1080")
+    chrome_options.add_argument("--headless")  # Optional for headless mode
+
+    # Create Chrome WebDriver instance
+    driver = webdriver.Chrome(options=chrome_options)
+    
+    driver.maximize_window()
+
+    try:
+        driver.get('https://portal.smartdonusum.com/accounting/login')
+
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#username')))
+
+        username_field = driver.find_element(By.CSS_SELECTOR, '#username')
+        password_field = driver.find_element(By.CSS_SELECTOR, '#password')
+
+        username_field.send_keys('admin_005256')
+        password_field.send_keys('x&2U*bnD')
+        password_field.send_keys(Keys.RETURN)
+
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#style-7 > ul > li:nth-child(5) > a'))).click()
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#pagesTransformation > ul > li:nth-child(1) > a'))).click()
+
+        input_field = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.CSS_SELECTOR, '#react-select-4--value > div.Select-input > input')))
+        input_field.send_keys(customer_tax_number)
+        time.sleep(3)
+        input_field.send_keys(Keys.TAB)
+
+        try:
+            pop_up_button = WebDriverWait(driver, 5).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "#react > div > div:nth-child(1) > div.wrapper > div.main-panel > div.content > div > div:nth-child(1) > div.sweet-alert > p > span:nth-child(2) > button"))
+            )
+            pop_up_button.click()
+        except (TimeoutException, NoSuchElementException):
+            print("No popup appeared")
+
+        for i in range(len(products)):
+            item_name_field = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.CSS_SELECTOR, f'#itemName_{i}')))
+            item_name_field.send_keys(str(products[i]))
+            item_name_field.send_keys(Keys.TAB)
+            item_quantity_field = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.CSS_SELECTOR, f'#quantity_{i}')))
+            item_quantity_field.clear()
+            item_quantity_field.send_keys(str(product_quantity[i]))
+            item_quantity_field.send_keys(Keys.TAB)
+            item_price_field = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.CSS_SELECTOR, f'#unitPrice_{i}')))
+            item_price_field.clear()
+            item_price_field.send_keys(str(product_price[i]).replace('.', ','))
+            item_price_field.send_keys(Keys.TAB)
+
+            if i < len(products) - 1:
+                WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#react > div > div:nth-child(1) > div.wrapper > div.main-panel > div.content > div > div.col-sm-12.satirBasi > div.col-sm-12.baseDashboard > div > div.card-header > div > div.col-sm-9 > div > div:nth-child(2) > button'))).click()
+                time.sleep(1)
+
+        time.sleep(10)
+    finally:
+        driver.quit()
+
+    invoice.published = True
+    invoice.save()
+
+    return render(request, 'order/invoice_publish_success.html', {'invoices': invoices})
     #pip install --upgrade webdriver-manager
     invoices = Invoice.objects.all().order_by('-invoice_date')
     invoice = get_object_or_404(Invoice, invoice_number=invoice_number)

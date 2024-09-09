@@ -11,3 +11,9 @@ psycopg2==2.9.9
 brotli==1.1.0
 whitenoise==6.7.0
 xlrd
+chromedriver-autoinstaller
+blosc2
+cython
+pyqt5
+pyqtwebengine
+black
