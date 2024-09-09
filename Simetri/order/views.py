@@ -1187,12 +1187,13 @@ def post_invoice(request, invoice_number):
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--window-size=1920x1080")
     chrome_options.page_load_strategy = 'normal'
+    chrome_options.binary_location = "/usr/bin/chromium-browser"
 
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service,options=chrome_options)#options=chrome_options 
-
-    driver.maximize_window()
+    
+    #driver.maximize_window()
 
 
 
