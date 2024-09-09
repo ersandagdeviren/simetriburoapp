@@ -17,3 +17,4 @@ cython
 pyqt5
 pyqtwebengine
 black
+chromedriver_binary

@@ -26,6 +26,7 @@ import time
 from selenium.common.exceptions import NoSuchElementException ,TimeoutException
 from .forms import ProductForm 
 from selenium.webdriver.chrome.service import Service
+import chromedriver_binary
 
 
 
@@ -1193,10 +1194,11 @@ def post_invoice(request, invoice_number):
 
     # Specify the ChromeDriver's path
     #service = Service("../usr/local/share/chrome/chrome-linux/chromedriver-linux64/chromedriver") 
-    service = Service(ChromeDriverManager().install())
+    #service = Service(ChromeDriverManager().install())
 
     # Create the WebDriver instance
-    driver = webdriver.Chrome(service=service, options=chrome_options)
+    #driver = webdriver.Chrome(service=service, options=chrome_options)
+    driver = webdriver.Chrome()
     
 
     try:
