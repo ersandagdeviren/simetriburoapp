@@ -1189,10 +1189,10 @@ def post_invoice(request, invoice_number):
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--window-size=1920x1080")
     chrome_options.page_load_strategy = 'normal'
-    chrome_options.binary_location = "../../usr/local/share/chrome/chrome-linux/chrome"
+    chrome_options.binary_location = "../usr/local/share/chrome/chrome-linux/chrome"
 
     # Specify the ChromeDriver's path
-    service = Service("../../usr/local/share/chrome/chrome-linux/chromedriver")
+    service = Service("../usr/local/share/chrome/chrome-linux/chromedriver")
 
     # Create the WebDriver instance
     driver = webdriver.Chrome(service=service, options=chrome_options)
