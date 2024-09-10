@@ -26,7 +26,6 @@ import time
 from selenium.common.exceptions import NoSuchElementException ,TimeoutException
 from .forms import ProductForm 
 from selenium.webdriver.chrome.service import Service
-import chromedriver_binary
 
 
 
@@ -1188,8 +1187,12 @@ def post_invoice(request, invoice_number):
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--remote-debugging-port=9222")
+    chrome_options.add_argument("--disable-infobars")
+    chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--window-size=1920x1080")
-    chrome_options.page_load_strategy = 'normal'
+    chrome_options.add_argument("--user-data-dir=/tmp/chrome-user-data")
+    
     #chrome_options.binary_location = "../usr/local/share/chrome/chrome-linux/chromedriver-linux64/"
 
     # Specify the ChromeDriver's path
@@ -1198,7 +1201,7 @@ def post_invoice(request, invoice_number):
 
     # Create the WebDriver instance
     #driver = webdriver.Chrome(service=service, options=chrome_options)
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
     
 
     try:
