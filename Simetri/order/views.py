@@ -1201,7 +1201,9 @@ def post_invoice(request, invoice_number):
 
     # Create the WebDriver instance
     #driver = webdriver.Chrome(service=service, options=chrome_options)
-    driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+    service = Service(ChromeDriverManager().install())
+
+    driver = webdriver.Chrome(service=service, options=chrome_options)
     
 
     try:
