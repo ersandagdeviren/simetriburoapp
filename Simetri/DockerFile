@@ -1,10 +1,8 @@
 # Use an official Python runtime as a parent image
 FROM python:3
-COPY .  /usr/src/app
-WORKDIR /usr/src/app/Simetri
 
-# Install Chrome
-RUN apt-get update && apt-get install -y wget gnupg \
+# Install dependencies for Chrome and ChromeDriver
+RUN apt-get update && apt-get install -y wget gnupg unzip \
     && wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
     && apt-get update && apt-get install -y google-chrome-stable
@@ -14,15 +12,16 @@ RUN wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/12
     && unzip /tmp/chromedriver.zip -d /usr/local/bin/ \
     && rm /tmp/chromedriver.zip
 
+# Set the working directory
+WORKDIR /Simetri
+
 # Install Python dependencies
-COPY ../requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r ../requirements.txt
 
-# Copy the rest of your application code
-#COPY . .
+# Copy the rest of the application code
+COPY . /app/
 
-# Expose port 8000 and run the Django app
-EXPOSE 8000
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "Simetri.wsgi:application"]
-
-
+# Expose port 8000 and run the Django app with Gunicorn
+EXPOSE 10000
+CMD ["gunicorn", "--bind", "0.0.0.0:10000", "Simetri.wsgi:application"]
