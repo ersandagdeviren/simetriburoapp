@@ -1195,7 +1195,6 @@ def post_invoice(request, invoice_number):
     driver.maximize_window()
 
 
-
     try:
         driver.get('https://portal.smartdonusum.com/accounting/login')
 
@@ -1207,8 +1206,8 @@ def post_invoice(request, invoice_number):
         username_field.send_keys('admin_005256')
         password_field.send_keys('x&2U*bnD')
         password_field.send_keys(Keys.RETURN)
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#style-7 > ul > li:nth-child(5) > a'))).click()
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#pagesTransformation > ul > li:nth-child(1) > a'))).click()
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#style-7 > ul > li:nth-child(6) > a > p'))).click()
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#invoiceCreate > a > span'))).click()
 
         input_field = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.CSS_SELECTOR, '#react-select-4--value > div.Select-input > input')))
         input_field.send_keys(customer_tax_number)
