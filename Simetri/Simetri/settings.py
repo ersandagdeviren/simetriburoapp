@@ -28,7 +28,9 @@ SECRET_KEY=os.environ.get("SECRET_KEY")
 #DEBUG = True
 DEBUG=os.environ.get("DEBUG","False").lower()=="true"
 #ALLOWED_HOSTS = []
-ALLOWED_HOSTS =os.environ.get("ALLOWED_HOSTS").split(" ")
+#ALLOWED_HOSTS =os.environ.get("ALLOWED_HOSTS").split(" ")
+ALLOWED_HOSTS = ['simetri.onrender.com']
+
 
 # Application definition
 
@@ -81,6 +83,7 @@ WSGI_APPLICATION = "Simetri.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+
 
 DATABASES = {
     "default": {
