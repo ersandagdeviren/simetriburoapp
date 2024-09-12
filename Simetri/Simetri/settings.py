@@ -79,6 +79,8 @@ CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 WSGI_APPLICATION = "Simetri.wsgi.application"
 
+CSRF_TRUSTED_ORIGINS = ['https://simetriweb.onrender.com']
+
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
