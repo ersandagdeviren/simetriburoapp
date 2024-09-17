@@ -134,7 +134,7 @@ class CustomerSignUpForm(UserCreationForm):
         model = User
         fields = ('username', 'email', 'password1', 'password2')
         labels = {
-            'username': "E Posta Adresi",
+            'username': "Email",
             'email': 'E Posta Adresi (onay)',
             'password1': "Şifre",
             'password2': 'Şifre Tekrar'

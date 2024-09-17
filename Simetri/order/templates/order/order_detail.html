@@ -117,8 +117,13 @@
                 <td>
                     <form method="POST">
                         {% csrf_token %}
+                        {% if order.customer.user == request.user %}
+                        <input type="number" name="new_price" value="{{ item.priceSelling }}" step="0.01" min="0.01" required readonly>
+                        {%else%}
                         <input type="number" name="new_price" value="{{ item.priceSelling }}" step="0.01" min="0.01" required>
+                        {%endif%}
                         <input type="hidden" name="item_id" value="{{ item.id }}">
+
                 </td>
                 <td>{{ item.currency }}</td>
                 <td>{{ item.stockAmount }}</td>

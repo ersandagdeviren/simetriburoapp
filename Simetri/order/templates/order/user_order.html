@@ -98,13 +98,10 @@
                 <td>{{ item.mainCategory }}</td>
                 <td>{{ item.category }}</td>
                 {%if user.is_authenticated%}
-                    <td>{{ item.priceSelling }}</td>
-                    <td>{{ item.currency }}</td>
-                    <td>{{ item.stockAmount }}</td>
-                    <td>{{ item.currency }}</td>
-                    <td>{{ item.stockAmount }}</td>
+                    <td><b>{{ item.priceSelling }}</b></td>
+                    <td><b>{{ item.currency }}</b></td>
+                    <td>{{ item.stockAmount }}</b></td>
                 {%else%}
-                    <td><a href={% url "order:customer_signup"%}>Üye_ol</a></td>
                     <td><a href={% url "order:customer_signup"%}>Üye_ol</a></td>
                     <td><a href={% url "order:customer_signup"%}>Üye_ol</a></td>
                     <td><a href={% url "order:customer_signup"%}>Üye_ol</a></td>

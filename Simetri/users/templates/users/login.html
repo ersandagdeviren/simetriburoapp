@@ -39,12 +39,12 @@
         <form action="{% url 'users:login' %}" method="post">
             {% csrf_token %}
             <div class="form-group">
-                <input type="text" name="username" class="form-control" placeholder="Username" required>
+                <input type="text" name="username" class="form-control" placeholder="Eposta" required>
             </div>
             <div class="form-group">
-                <input type="password" name="password" class="form-control" placeholder="Password" required>
+                <input type="password" name="password" class="form-control" placeholder="Şifre" required>
             </div>
-            <button type="submit" class="btn btn-primary btn-block">Login</button>
+            <button type="submit" class="btn btn-primary btn-block">Giriş</button>
             <br>
         </form>
     </div>
