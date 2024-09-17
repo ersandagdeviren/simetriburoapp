@@ -40,6 +40,12 @@ from selenium.webdriver.chrome.service import Service
     target_data_eur = Decimal(str(target_data_eur).replace(" ", "").replace("\n", "")).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 """
 
+def home(request):
+    return render(request, "order/main.html")
+def about(request):
+    return render(request, "order/about.html")
+
+
 
 def get_currency_rates():
 
@@ -948,7 +954,7 @@ def user_financial(request):
     }
     
     return render(request, 'order/user_financial.html', context)
-@login_required
+
 def user_order(request):
     if "products" not in request.session:
         request.session["products"] = []
@@ -2162,7 +2168,7 @@ def customer_signup(request):
             customer = customer_form.save(commit=False)
             customer.user = user
             customer.save()
-            return redirect('order/signup_succes.html')
+            return redirect('users:success')
     else:
         user_form = CustomerSignUpForm()
         customer_form = CustomerForm()
@@ -2170,6 +2176,3 @@ def customer_signup(request):
         'user_form': user_form,
         'customer_form': customer_form
     })
-
-def signup_success(request):
-    return render(request, 'order/signup_succes.html')

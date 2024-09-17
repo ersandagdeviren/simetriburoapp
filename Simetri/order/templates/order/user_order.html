@@ -97,9 +97,21 @@
                 <td>{{ item.description|slice:":100" }}</td>
                 <td>{{ item.mainCategory }}</td>
                 <td>{{ item.category }}</td>
-                <td>{{ item.priceSelling }}</td>
-                <td>{{ item.currency }}</td>
-                <td>{{ item.stockAmount }}</td>
+                {%if user.is_authenticated%}
+                    <td>{{ item.priceSelling }}</td>
+                    <td>{{ item.currency }}</td>
+                    <td>{{ item.stockAmount }}</td>
+                    <td>{{ item.currency }}</td>
+                    <td>{{ item.stockAmount }}</td>
+                {%else%}
+                    <td><a href={% url "order:customer_signup"%}>Üye_ol</a></td>
+                    <td><a href={% url "order:customer_signup"%}>Üye_ol</a></td>
+                    <td><a href={% url "order:customer_signup"%}>Üye_ol</a></td>
+                    <td><a href={% url "order:customer_signup"%}>Üye_ol</a></td>
+                    
+                    
+                {%endif%}
+                {%if user.is_authenticated%}
                 <td>
                     {% if item.stockAmount > 0 %}
                         <form method="POST">
@@ -107,6 +119,7 @@
                             <input type="hidden" name="item_id" value="{{ item.id }}">
                             <input type="number" name="quantity" value="1" min="1" max="{{ item.stockAmount }}">
                 <td>
+                
                 <button type="submit" name="product_add" class="btn btn-success">Ekle</button>
                 </td>
                         </form>
@@ -114,6 +127,7 @@
                         <span class="text-danger">Stokta Yok</span>
                     {% endif %}
                 </td>
+                {%endif%}
             </tr>
         {% endfor %}
         </tbody>

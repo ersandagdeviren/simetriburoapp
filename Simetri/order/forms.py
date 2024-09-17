@@ -5,6 +5,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
+import random
 
 User = get_user_model()
 
@@ -56,7 +57,7 @@ class CustomerForm(forms.ModelForm):
     class Meta:
         model = Customer
         fields = [
-            'customerCode',
+            # 'customerCode',  # Removed from the form fields to be hidden
             'companyName',
             'taxOffice',
             'tax_number',
@@ -70,14 +71,41 @@ class CustomerForm(forms.ModelForm):
             'country',
             'email',
             'telephone',
-            'customerType',
+            # 'customerType',  # Removed from the form fields to be hidden
             'contactPerson',
             'E_invoice',
         ]
+        labels = {
+            'companyName': 'Firma Ünvanı',
+            'taxOffice': 'Vergi Dairesi',
+            'tax_number': 'Vergi Numarası',
+            'name': 'Ad',
+            'middleName': 'Orta Ad',
+            'surname': 'Soyad',
+            'city': 'Şehir',
+            'district': 'İlçe',
+            'adress': 'Adres',
+            'shipping_adress': 'Kargo Adresi',
+            'country': 'Ülke',
+            'email': 'Fatura E Posta adresi',
+            'telephone': 'Telefon',
+            'contactPerson': 'İlgili Kişi',
+            'E_invoice': 'E Fatura Mükellefi',
+        }
         widgets = {
+            'adress': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),  # Make adress larger
+            'shipping_adress': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),  # Make shipping_adress larger
             'E_invoice': forms.CheckboxInput(),
         }
 
+    # Automatically generate a 6-digit customerCode
+    def save(self, commit=True):
+        instance = super(CustomerForm, self).save(commit=False)
+        if not instance.customerCode:
+            instance.customerCode = random.randint(100000, 999999)  # Generate a 6-digit number
+        if commit:
+            instance.save()
+        return instance
 class CustomerUpdateRequestForm(forms.ModelForm):
     class Meta:
         model = CustomerUpdateRequest
@@ -101,7 +129,13 @@ class TransferForm(forms.Form):
 
 class CustomerSignUpForm(UserCreationForm):
     email = forms.EmailField(required=True)
-    
+
     class Meta:
         model = User
         fields = ('username', 'email', 'password1', 'password2')
+        labels = {
+            'username': "E Posta Adresi",
+            'email': 'E Posta Adresi (onay)',
+            'password1': "Şifre",
+            'password2': 'Şifre Tekrar'
+        }

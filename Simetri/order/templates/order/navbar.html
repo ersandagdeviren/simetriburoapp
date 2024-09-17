@@ -26,9 +26,15 @@
     <nav class="navbar navbar-default">
         <div class="container-custom"><!-- Changed from container to container-custom -->
             <div class="navbar-header">
+                {% if user.is_authenticated %}
                 <a class="navbar-brand brand-font" href="{% url 'order:main' %}">
-                    <img src="{% static 'simetrilogo.png' %}" width="150px" alt="">
+                    <img src="{% static 'simetrilogo.png' %}" width="190px" alt="">
                 </a>
+                {% else %}
+                <a class="navbar-brand brand-font" href="{% url 'order:home' %}">
+                    <img src="{% static 'simetrilogo.png' %}" width="190px" alt="">
+                {% endif %}
+
             </div>
             <ul class="nav navbar-nav navbar-right">
                 {% if user.is_authenticated %}
@@ -56,8 +62,8 @@
                         <li> <b>Kullanıcı: {{user.username}}</li>
                     {% endif %}
                 {% else %}
-                    <li><a href="{% url 'users:login' %}">Giriş</a></li>
-                    <li><a href="">Üye Ol</a></li>
+                    <li><a class="btn btn-light" href="{% url 'users:login' %}">Üye Girişi</a></li>
+                    <li><a href={% url "order:customer_signup"%}>Üye Ol</a></li>
                 {% endif %}
             </ul>
         </div>

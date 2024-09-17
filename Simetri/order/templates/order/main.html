@@ -1,0 +1,39 @@
+{% extends "order/navbar.html" %}
+{%block content %}
+{% load static %}
+<div class=>
+    <img src="{% static 'simetriflyer2.png' %}" width="1400px" alt="">
+</div>
+
+<div class="col-md-4">
+<p></p>
+    <a class="btn btn-primary btn-lg btn-block" href="{% url 'users:login' %}">Üye Girişi</a>
+</div>
+<div class="col-md-4">
+<p></p>
+    <a class="btn btn-success btn-lg btn-block"href="{% url 'order:user_order' %}">Ürünler</a>
+</div>
+<div class="col-md-4">
+<p></p>
+    <a class="btn btn-warning btn-lg btn-block" href="{% url 'order:about' %}">Simetri Hakkında</a>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <p></p>
+        <img src="{% static 'toner.png' %}" width="430px" alt="">
+    </div>
+    <div class="col-md-4">
+        <p></p>
+        <img src="{% static 'spare.png' %}" width="430px" alt="">
+    </div>
+    <div class="col-md-4">
+        <p></p>
+        <img src="{% static 'printer.png' %}" width="430px" alt="">
+    </div>
+</div>
+<p></p>
+<center> Simetri Büro Makinaları ve Bilişim San. Tic. Ltd. Şti.</center>
+<center> Cevizlidere Cad. No: 133 Çankaya Ankara/Türkiye</center>
+<center> 0312 480 80 46 - info@simetriburo.com</center>
+{% endblock %}

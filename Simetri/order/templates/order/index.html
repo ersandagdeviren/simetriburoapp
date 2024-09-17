@@ -110,21 +110,38 @@
 {% endif %}
 
 {%if not request.user.is_superuser%}
-<div class="row">
-    <div class="col-md-1">
-        <p></p>
-        <a href="{% url 'order:user_order' %}"><img src="{% static 'user_order.png' %}" class="img-fluid" width="115px" alt=""></a>
-        <p></p>
-        <a href="{% url 'order:user_order' %}"><img src="{% static 'user_products.png' %}" class="img-fluid" width="115px" alt=""></a>
-        <p></p>
-        <a href="{% url 'order:user_order' %}"><img src="{% static 'user_pay.png' %}" class="img-fluid" width="115px" alt=""></a>
-        <p></p>
-        <a href="{% url 'order:user_order' %}"><img src="{% static 'user_about_us.png' %}" class="img-fluid" width="115px" alt=""></a>
+    <div class=>
+        <img src="{% static 'simetriflyer2.png' %}" width="1400px" alt="">
     </div>
 
-    <div class="col-md-11">
-        <img src="{% static 'simetriflyernew.png' %}" class="img-fluid" alt="">
+    <div class="col-md-6">
+    <p></p>
+        <a class="btn btn-success btn-lg btn-block"href="{% url 'order:user_order' %}">Yeni Sipariş</a>
     </div>
-</div>
+    <div class="col-md-6">
+    <p></p>
+        <button type="button" class="btn btn-success btn-lg btn-block">Yeni Ödeme</button>
+
+    </div>
+   
+    <div class="row">
+        <div class="col-md-4">
+            <p></p>
+            <img src="{% static 'toner.png' %}" width="430px" alt="">
+        </div>
+        <div class="col-md-4">
+            <p></p>
+            <img src="{% static 'spare.png' %}" width="430px" alt="">
+        </div>
+        <div class="col-md-4">
+            <p></p>
+            <img src="{% static 'printer.png' %}" width="430px" alt="">
+        </div>
+    </div>
+    <p></p>
+    <center> Simetri Büro Makinaları </center>
+    <center> Cevizlidere Cad. No: 133 Çankaya Ankara/Türkiye</center>
+    <center> info@simetriburo.com</center>
+
 {% endif %}
 {% endblock %}
