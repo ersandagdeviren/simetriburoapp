@@ -114,41 +114,21 @@
                 <td>{{ item.description|slice:":100" }}</td>
                 <td>{{ item.brand }}</td>
                 <td>{{ item.mainCategory }}</td>
-                {% if order.customer.user != request.user %}
-                <td><form method="POST">
-                    {% csrf_token %}
-                    <input type="number" name="new_price" value="{{ item.priceSelling }}" step="0.01" min="0.01" required>
-                    <input type="hidden" name="item_id" value="{{ item.id }}">
-                    <td>{{ item.currency }}</td>
-                    <td>{{ item.stockAmount }}</td>
-                    <td>
-                    <input type="number" name="quantity" value="1" min="1" max="{{ item.stockAmount }}">
-                    <input type="hidden" name="item_id" value="{{ item.id }}">
-                    </td>
-                    <td>
-                    <button type="submit" name="product_add" class="btn btn-primary">Ekle</button>
-                    <input type="hidden" name="item_id" value="{{ item.id }}">
-                    </td>
-                    </form>
-                {%else%}
-                    <td>{{item.priceSelling}}
+                <td>{{ item.priceSelling }}</td>
+                <td>{{ item.currency }}</td>
+                <td>{{ item.stockAmount }}</td>
+                <td>
                     <form method="POST">
-                    {% csrf_token %}
-                    <input type="hidden" name="new_price" value="{{ item.priceSelling }}" step="0.01" min="0.01" required>
-                    <input type="hidden" name="item_id" value="{{ item.id }}">
-                    <td>{{ item.currency }}</td>
-                    <td>{{ item.stockAmount }}</td>
-                    <td>
-                    <input type="number" name="quantity" value="1" min="1" max="{{ item.stockAmount }}">
-                    <input type="hidden" name="item_id" value="{{ item.id }}">
-                    </td>
-                    <td>
+                        {% csrf_token %}
+                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                        <input type="number" name="quantity" value="1" min="1" max="{{ item.stockAmount }}">
+                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                </td>
+                <td>
                     <button type="submit" name="product_add" class="btn btn-primary">Ekle</button>
                     <input type="hidden" name="item_id" value="{{ item.id }}">
-                    </td>
-                    </form>
-                {%endif%}
-                
+                </td>
+                </form>
             </tr>
             {% endfor %}
         </tbody>

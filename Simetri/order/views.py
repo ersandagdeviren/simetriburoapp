@@ -556,7 +556,6 @@ def order_detail(request, order_number):
         
         elif 'product_add' in request.POST:
             product_id = request.POST.get('item_id')
-            new_price = request.POST.get('new_price')
             
             quantity = request.POST.get('quantity')
             product = get_object_or_404(Product, id=product_id)
@@ -573,7 +572,7 @@ def order_detail(request, order_number):
                 order=order,
                 product=product,
                 quantity=int(quantity),
-                price=float(new_price),
+                price=product.priceSelling,
                 currency_rate=currency_rate,
             )
             order_item.save()
